@@ -7,8 +7,6 @@ enum WindowEvent {
     case structureChanged
     /// A window moved or resized. Might be the user dragging it.
     case frameChanged(AXUIElement)
-    /// Focus moved to another window.
-    case focusChanged
 }
 
 /// Subscribes to Accessibility notifications for one app.
@@ -19,11 +17,7 @@ final class AppObserver {
     private var observedWindows = Set<WindowID>()
     fileprivate let handler: (WindowEvent) -> Void
 
-    private static let appNotifications = [
-        kAXWindowCreatedNotification,
-        kAXFocusedWindowChangedNotification,
-        kAXMainWindowChangedNotification,
-    ]
+    private static let appNotifications = [kAXWindowCreatedNotification]
 
     private static let windowNotifications = [
         kAXUIElementDestroyedNotification,
@@ -73,10 +67,6 @@ final class AppObserver {
         }
     }
 
-    func forget(_ id: WindowID) {
-        observedWindows.remove(id)
-    }
-
     fileprivate func handle(_ element: AXUIElement, _ notification: String) {
         switch notification {
         case kAXWindowCreatedNotification:
@@ -86,8 +76,6 @@ final class AppObserver {
             handler(.structureChanged)
         case kAXWindowMovedNotification, kAXWindowResizedNotification:
             handler(.frameChanged(element))
-        case kAXFocusedWindowChangedNotification, kAXMainWindowChangedNotification:
-            handler(.focusChanged)
         default:
             break
         }
@@ -140,9 +128,6 @@ final class WorkspaceObserver {
                 }
             })
         }
-        tokens.append(center.addObserver(forName: NSWorkspace.didActivateApplicationNotification, object: nil, queue: .main) { [weak self] _ in
-            self?.handler(.focusChanged)
-        })
         tokens.append(NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main) { [weak self] _ in
             self?.onDisplaysChanged()
         })

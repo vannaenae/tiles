@@ -98,8 +98,6 @@ final class TilingManager {
         switch event {
         case .structureChanged:
             scheduleRefresh()
-        case .focusChanged:
-            break
         case .frameChanged(let element):
             guard isEnabled, Date() > ignoreMovesUntil, trackedWindow == nil,
                   // Only a mouse drag or resize counts as the user rearranging.
@@ -289,10 +287,8 @@ final class TilingManager {
         let mouse = Display.mouseLocation()
         guard let destination = Display.display(atX: mouse.x, y: mouse.y, in: displays) else { return }
         let ids = visibleOrder(destination.id)
-        let rects = ids.compactMap { targetFrames[$0] }
-        if ids.count == rects.count, let slot = Geometry.slot(at: mouse.x, mouse.y, in: rects),
-           rects[slot].contains(x: mouse.x, y: mouse.y), ids[slot] != id {
-            swapWindows(id, ids[slot])
+        if let other = ids.first(where: { targetFrames[$0]?.contains(x: mouse.x, y: mouse.y) == true }), other != id {
+            swapWindows(id, other)
         } else if destination.id != from {
             move(id, from: from, to: destination.id)
         }
@@ -365,7 +361,7 @@ final class TilingManager {
     }
 
     private func move(_ id: WindowID, from: String, to: String) {
-        orders[from] = TilingOrder.remove(orders[from] ?? [], id)
+        orders[from]?.removeAll { $0 == id }
         orders[to, default: []].append(id)
     }
 

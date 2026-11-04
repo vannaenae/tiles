@@ -1,5 +1,5 @@
 /// Every tiling layout Tiles can arrange windows in.
-public enum LayoutKind: String, Codable, CaseIterable, Identifiable {
+public enum LayoutKind: String, Codable, CaseIterable {
     /// Recursive binary split that follows the longer side (a.k.a. dwindle / BSP).
     case dwindle
     /// One or more master windows on the left, the rest stacked on the right.
@@ -19,8 +19,6 @@ public enum LayoutKind: String, Codable, CaseIterable, Identifiable {
     /// Tiles leaves this display alone.
     case float
 
-    public var id: String { rawValue }
-
     public var displayName: String {
         switch self {
         case .dwindle: return "Dwindle"
@@ -32,14 +30,6 @@ public enum LayoutKind: String, Codable, CaseIterable, Identifiable {
         case .grid: return "Grid"
         case .monocle: return "Monocle"
         case .float: return "Float (Off)"
-        }
-    }
-
-    /// Whether the master ratio / master count settings change this layout.
-    public var usesMaster: Bool {
-        switch self {
-        case .masterStack, .wideMaster, .centeredMaster, .dwindle: return true
-        default: return false
         }
     }
 }
@@ -192,31 +182,17 @@ public enum LayoutEngine {
     }
 
     static func grid(count: Int, in area: Rect, gap: Double) -> [Rect] {
-        // Pick the column count that keeps cells closest to the area's aspect.
-        let landscape = area.width >= area.height
-        var cols = Int(Double(count).squareRoot().rounded(.up))
-        var rows = Int((Double(count) / Double(cols)).rounded(.up))
-        if !landscape { swap(&cols, &rows) }
-        if landscape {
-            let rowRects = area.rows(rows, gap: gap)
-            var result: [Rect] = []
-            var remaining = count
-            for (r, row) in rowRects.enumerated() {
-                let inRow = r == rowRects.count - 1 ? remaining : min(cols, remaining)
-                result += row.columns(inRow, gap: gap)
-                remaining -= inRow
-            }
-            return result
-        } else {
-            let colRects = area.columns(cols, gap: gap)
-            var result: [Rect] = []
-            var remaining = count
-            for (c, col) in colRects.enumerated() {
-                let inCol = c == colRects.count - 1 ? remaining : min(rows, remaining)
-                result += col.rows(inCol, gap: gap)
-                remaining -= inCol
-            }
-            return result
+        let side = Int(Double(count).squareRoot().rounded(.up))
+        // Landscape: fewer rows than columns. Portrait: the other way round.
+        let rowCount = area.width >= area.height ? (count + side - 1) / side : side
+        var remaining = count
+        var result: [Rect] = []
+        for (i, row) in area.rows(rowCount, gap: gap).enumerated() {
+            let rowsLeft = rowCount - i
+            let inRow = (remaining + rowsLeft - 1) / rowsLeft
+            result += row.columns(inRow, gap: gap)
+            remaining -= inRow
         }
+        return result
     }
 }

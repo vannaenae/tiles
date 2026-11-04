@@ -1,7 +1,7 @@
 import Foundation
 
 /// Everything a hotkey, menu item, or `tiles://` URL can ask Tiles to do.
-public enum Command: Equatable, Hashable {
+public enum Command: Equatable {
     case focus(Direction)
     case swap(Direction)
     case promote
@@ -51,41 +51,21 @@ public enum Command: Equatable, Hashable {
         }
     }
 
-    public init?(name raw: String) {
-        let name = raw.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
-        for d in Direction.allCases {
-            if name == "focus-\(d.rawValue)" { self = .focus(d); return }
-            if name == "swap-\(d.rawValue)" { self = .swap(d); return }
-        }
-        if name.hasPrefix("layout-"), let kind = LayoutKind(rawValue: String(name.dropFirst("layout-".count))) {
-            self = .setLayout(kind)
-            return
-        }
-        let simple: [Command] = [
+    public static let all: [Command] =
+        Direction.allCases.map(Command.focus) + Direction.allCases.map(Command.swap)
+        + LayoutKind.allCases.map(Command.setLayout) + [
             .promote, .nextLayout, .previousLayout, .growMaster, .shrinkMaster,
             .increaseMasterCount, .decreaseMasterCount, .toggleFloat, .toggleTiling,
             .retile, .focusNextWindow, .focusPreviousWindow, .moveToNextDisplay,
             .moveToPreviousDisplay, .increaseGaps, .decreaseGaps, .saveScene, .restoreScene,
         ]
-        if let match = simple.first(where: { $0.name == name }) {
-            self = match
-            return
-        }
-        return nil
-    }
 
-    public static var allNames: [String] {
-        var names: [String] = []
-        for d in Direction.allCases { names.append("focus-\(d.rawValue)") }
-        for d in Direction.allCases { names.append("swap-\(d.rawValue)") }
-        names += LayoutKind.allCases.map { "layout-\($0.rawValue)" }
-        names += [
-            "promote", "next-layout", "previous-layout", "grow-master", "shrink-master",
-            "increase-master-count", "decrease-master-count", "toggle-float", "toggle-tiling",
-            "retile", "focus-next", "focus-previous", "move-to-next-display",
-            "move-to-previous-display", "increase-gaps", "decrease-gaps", "save-scene", "restore-scene",
-        ]
-        return names
+    public static var allNames: [String] { all.map(\.name) }
+
+    public init?(name: String) {
+        let name = name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let match = Command.all.first(where: { $0.name == name }) else { return nil }
+        self = match
     }
 }
 

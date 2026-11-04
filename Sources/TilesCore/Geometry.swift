@@ -1,7 +1,7 @@
 /// A rectangle in top-left-origin screen coordinates (the coordinate space the
 /// macOS Accessibility API uses). Kept independent of CoreGraphics so the core
 /// engine is portable and trivially testable.
-public struct Rect: Equatable, Hashable, Codable, CustomStringConvertible {
+public struct Rect: Equatable {
     public var x: Double
     public var y: Double
     public var width: Double
@@ -24,19 +24,9 @@ public struct Rect: Equatable, Hashable, Codable, CustomStringConvertible {
     public var midY: Double { y + height / 2 }
     public var area: Double { max(0, width) * max(0, height) }
 
-    public var description: String {
-        "(\(Int(x.rounded())), \(Int(y.rounded())), \(Int(width.rounded()))x\(Int(height.rounded())))"
-    }
-
     /// Shrinks the rect by `amount` on every side. Never produces negative sizes.
-    public func inset(by amount: Double) -> Rect {
-        inset(top: amount, left: amount, bottom: amount, right: amount)
-    }
-
-    public func inset(top: Double, left: Double, bottom: Double, right: Double) -> Rect {
-        let w = max(0, width - left - right)
-        let h = max(0, height - top - bottom)
-        return Rect(x: x + left, y: y + top, width: w, height: h)
+    public func inset(by d: Double) -> Rect {
+        Rect(x: x + d, y: y + d, width: max(0, width - 2 * d), height: max(0, height - 2 * d))
     }
 
     public func contains(x px: Double, y py: Double) -> Bool {
@@ -119,7 +109,7 @@ extension Comparable {
     }
 }
 
-public enum Direction: String, Codable, CaseIterable {
+public enum Direction: String, CaseIterable {
     case left, right, up, down
 }
 
@@ -167,15 +157,5 @@ public enum Geometry {
             }
         }
         return best?.index
-    }
-
-    /// Index of the rect containing the point, or the one whose centre is closest.
-    public static func slot(at px: Double, _ py: Double, in rects: [Rect]) -> Int? {
-        if let hit = rects.firstIndex(where: { $0.contains(x: px, y: py) }) { return hit }
-        return rects.indices.min { a, b in
-            let da = (rects[a].midX - px) * (rects[a].midX - px) + (rects[a].midY - py) * (rects[a].midY - py)
-            let db = (rects[b].midX - px) * (rects[b].midX - px) + (rects[b].midY - py) * (rects[b].midY - py)
-            return da < db
-        }
     }
 }

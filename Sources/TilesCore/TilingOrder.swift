@@ -51,10 +51,6 @@ public enum TilingOrder {
         return result
     }
 
-    public static func remove<ID: Equatable>(_ order: [ID], _ id: ID) -> [ID] {
-        order.filter { $0 != id }
-    }
-
     /// Next or previous id, wrapping around.
     public static func cycle<ID: Equatable>(_ order: [ID], from id: ID?, forward: Bool) -> ID? {
         guard !order.isEmpty else { return nil }

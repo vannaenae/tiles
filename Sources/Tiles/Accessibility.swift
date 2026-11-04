@@ -13,16 +13,11 @@ func _AXUIElementGetWindow(_ element: AXUIElement, _ id: UnsafeMutablePointer<CG
 enum AccessibilityPermission {
     static var isTrusted: Bool { AXIsProcessTrusted() }
 
-    /// Shows the system prompt that sends the user to Privacy & Security.
-    static func prompt() {
+    /// Adds Tiles to the Accessibility list and opens that settings pane.
+    static func request() {
         let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
         _ = AXIsProcessTrustedWithOptions([key: true] as CFDictionary)
-    }
-
-    static func openSettings() {
-        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
-            NSWorkspace.shared.open(url)
-        }
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
     }
 }
 

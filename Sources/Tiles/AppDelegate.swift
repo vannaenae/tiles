@@ -63,8 +63,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         alert.addButton(withTitle: "Open System Settings")
         alert.addButton(withTitle: "Later")
         if alert.runModal() == .alertFirstButtonReturn {
-            AccessibilityPermission.prompt()
-            AccessibilityPermission.openSettings()
+            AccessibilityPermission.request()
         }
         permissionTimer?.invalidate()
         permissionTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
@@ -199,7 +198,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         placement.submenu = placementMenu
         optionsMenu.addItem(placement)
         optionsMenu.addItem(.separator())
-        optionsMenu.addItem(check("Launch at Login", LoginItem.isEnabled, #selector(toggleLogin)))
+        optionsMenu.addItem(check("Launch at Login", SMAppService.mainApp.status == .enabled, #selector(toggleLogin)))
         options.submenu = optionsMenu
         menu.addItem(options)
 
@@ -279,7 +278,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func toggleLogin() {
         do {
-            try LoginItem.setEnabled(!LoginItem.isEnabled)
+            let login = SMAppService.mainApp
+            try login.status == .enabled ? login.unregister() : login.register()
         } catch {
             flash("Couldn't change login item")
             NSLog("Tiles login item error: \(error)")
@@ -293,16 +293,4 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func openRepo() { NSWorkspace.shared.open(Self.repoURL) }
     @objc private func quit() { NSApp.terminate(nil) }
-}
-
-enum LoginItem {
-    static var isEnabled: Bool { SMAppService.mainApp.status == .enabled }
-
-    static func setEnabled(_ enabled: Bool) throws {
-        if enabled {
-            try SMAppService.mainApp.register()
-        } else {
-            try SMAppService.mainApp.unregister()
-        }
-    }
 }

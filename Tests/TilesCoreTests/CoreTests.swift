@@ -30,12 +30,6 @@ final class GeometryTests: XCTestCase {
         XCTAssertEqual(Geometry.neighbor(of: 2, in: frames, direction: .left), 0)
     }
 
-    func testSlotAtPoint() {
-        XCTAssertEqual(Geometry.slot(at: 150, 150, in: grid), 3)
-        XCTAssertEqual(Geometry.slot(at: 10, 10, in: grid), 0)
-        XCTAssertEqual(Geometry.slot(at: 500, 10, in: grid), 1) // outside: nearest centre
-    }
-
     func testSplitHelpers() {
         let r = Rect(x: 0, y: 0, width: 1000, height: 500)
         let (a, b) = r.splitColumns(ratio: 0.3, gap: 10)
