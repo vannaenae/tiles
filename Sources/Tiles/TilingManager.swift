@@ -30,6 +30,8 @@ final class TilingManager {
     private var displayWork: DispatchWorkItem?
     private var mouseTimer: Timer?
     private var trackedWindow: WindowID?
+    /// Arrangement from just before the last scene restore, for one-step undo.
+    private(set) var undoSnapshot: (orders: [String: [WindowID]], layouts: [String: LayoutKind], parameters: [String: LayoutParameters])?
 
     private var sceneStore = SceneStore()
     private let scenesURL: URL = {
@@ -42,6 +44,10 @@ final class TilingManager {
     var onStateChange: (() -> Void)?
     /// Short status text to flash in the menu bar ("Scene saved").
     var onMessage: ((String) -> Void)?
+    /// Frame of the focused tiled window for the outline, or nil to hide it.
+    var onFocusFrame: ((Rect?) -> Void)?
+    /// Window temporarily filling its display (Focus).
+    private var zoomed: WindowID?
 
     init(configStore: ConfigStore) {
         self.configStore = configStore
@@ -71,6 +77,7 @@ final class TilingManager {
             refresh()
         } else {
             targetFrames = [:]
+            onFocusFrame?(nil)
         }
         onMessage?(enabled ? "Tiling on" : "Tiling off")
         onStateChange?()
@@ -98,11 +105,14 @@ final class TilingManager {
         switch event {
         case .structureChanged:
             scheduleRefresh()
+        case .focusChanged:
+            updateOutline()
         case .frameChanged(let element):
             guard isEnabled, Date() > ignoreMovesUntil, trackedWindow == nil,
                   // Only a mouse drag or resize counts as the user rearranging.
                   NSEvent.pressedMouseButtons & 1 == 1,
                   let id = element.windowID, targetFrames[id] != nil else { return }
+            onFocusFrame?(nil)
             trackMouse(for: id)
         }
     }
@@ -121,7 +131,7 @@ final class TilingManager {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: work)
     }
 
-    func scheduleRefresh(after delay: TimeInterval = 0.08) {
+    func scheduleRefresh(after delay: TimeInterval = 0.03) {
         refreshWork?.cancel()
         let work = DispatchWorkItem { [weak self] in self?.refresh() }
         refreshWork = work
@@ -223,6 +233,11 @@ final class TilingManager {
                                             parameters: parameters[display.id] ?? config.layout)
             for (id, rect) in zip(ids, rects) { targets[id] = rect }
         }
+        if let z = zoomed, targets[z] != nil, let d = displayID(of: z), let display = displays.first(where: { $0.id == d }) {
+            targets[z] = display.area.inset(by: (parameters[d] ?? config.layout).outerGap).integral
+        } else {
+            zoomed = nil
+        }
         targetFrames = targets
 
         let byApp = Dictionary(grouping: targets.keys.compactMap { windows[$0] }, by: \.pid)
@@ -245,10 +260,15 @@ final class TilingManager {
             }
         }
 
-        // In monocle, keep the focused window on top.
-        if let focused = focusedWindow(), let d = displayID(of: focused.id), layouts[d] == .monocle {
+        // In monocle or Focus, keep the focused window on top.
+        if let focused = focusedWindow(), let d = displayID(of: focused.id), layouts[d] == .monocle || zoomed == focused.id {
             AXUIElementPerformAction(focused.element, kAXRaiseAction as CFString)
         }
+        updateOutline()
+    }
+
+    private func updateOutline() {
+        onFocusFrame?(isEnabled ? focusedWindow().flatMap { targetFrames[$0.id] } : nil)
     }
 
     private func isFloating(_ window: Window) -> Bool {
@@ -484,6 +504,24 @@ final class TilingManager {
         case .restoreScene:
             restoreScene(silently: false)
 
+        case .toggleZoom:
+            guard let id = focusedID else { return }
+            zoomed = zoomed == id ? nil : id
+            refresh()
+
+        case .undoRestore:
+            guard let snapshot = undoSnapshot else {
+                onMessage?("Nothing to undo")
+                return
+            }
+            undoSnapshot = nil
+            orders = snapshot.orders
+            layouts = snapshot.layouts
+            parameters = snapshot.parameters
+            refresh()
+            scheduleAutosave()
+            onMessage?("Undone")
+
         case .toggleTiling:
             break
         }
@@ -599,6 +637,7 @@ final class TilingManager {
             }
         }
         let assignment = SceneMatcher.assign(scene: scene, windows: sceneWindows, displays: displays.map(\.id))
+        undoSnapshot = (orders, layouts, parameters)
         for display in displays {
             // Keep minimised windows' slots after the restored ones.
             let hidden = (orders[display.id] ?? []).filter { !visible.contains($0) }
@@ -612,6 +651,9 @@ final class TilingManager {
             }
         }
         refresh()
-        onMessage?("Scene restored")
+        // e.g. "Restored LG UltraFine · 3 windows". Undo sits at the top of the menu.
+        let external = displays.map(\.name).filter { !$0.contains("Built-in") }
+        let name = external.isEmpty ? "laptop" : external.joined(separator: " + ")
+        onMessage?("Restored \(name) · \(sceneWindows.count) windows · ⌃⌥Z to undo")
     }
 }

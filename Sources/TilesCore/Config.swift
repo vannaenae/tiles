@@ -58,6 +58,8 @@ public struct Config: Codable, Equatable {
     public var autoRestoreScenes: Bool
     /// Move the mouse pointer to the centre of a window focused with the keyboard.
     public var mouseFollowsFocus: Bool
+    /// Border drawn around the focused tiled window, as `#RRGGBB`. Empty turns it off.
+    public var outlineColor: String
     public var rules: [WindowRule]
     /// Shortcut → command name. Merged on top of the defaults; map a shortcut
     /// to `"none"` to remove a default binding.
@@ -74,6 +76,7 @@ public struct Config: Codable, Equatable {
         resizeToAdjustRatio: Bool = true,
         autoRestoreScenes: Bool = true,
         mouseFollowsFocus: Bool = false,
+        outlineColor: String = "#E8643C",
         rules: [WindowRule] = Config.defaultRules,
         hotkeys: [String: String] = [:]
     ) {
@@ -87,6 +90,7 @@ public struct Config: Codable, Equatable {
         self.resizeToAdjustRatio = resizeToAdjustRatio
         self.autoRestoreScenes = autoRestoreScenes
         self.mouseFollowsFocus = mouseFollowsFocus
+        self.outlineColor = outlineColor
         self.rules = rules
         self.hotkeys = hotkeys
     }
@@ -120,20 +124,21 @@ public struct Config: Codable, Equatable {
         "ctrl+alt+3": "layout-centered-master", "ctrl+alt+4": "layout-columns",
         "ctrl+alt+5": "layout-grid", "ctrl+alt+6": "layout-monocle",
         "ctrl+alt+7": "layout-wide-master", "ctrl+alt+8": "layout-rows",
+        "ctrl+alt+9": "layout-thirds",
         "ctrl+alt+0": "layout-float",
         "ctrl+alt+=": "grow-master", "ctrl+alt+-": "shrink-master",
         "ctrl+alt+,": "increase-master-count", "ctrl+alt+.": "decrease-master-count",
         "ctrl+alt+shift+=": "increase-gaps", "ctrl+alt+shift+-": "decrease-gaps",
-        "ctrl+alt+f": "toggle-float", "ctrl+alt+t": "toggle-tiling",
+        "ctrl+alt+f": "toggle-float", "ctrl+alt+m": "toggle-zoom", "ctrl+alt+t": "toggle-tiling",
         "ctrl+alt+r": "retile",
         "ctrl+alt+n": "focus-next", "ctrl+alt+p": "focus-previous",
         "ctrl+alt+]": "move-to-next-display", "ctrl+alt+[": "move-to-previous-display",
-        "ctrl+alt+s": "save-scene",
+        "ctrl+alt+s": "save-scene", "ctrl+alt+z": "undo-restore",
     ]
 
     enum CodingKeys: String, CodingKey {
         case enabled, defaultLayout, ultrawideLayout, displays, layout, newWindowPlacement
-        case dragToSwap, resizeToAdjustRatio, autoRestoreScenes, mouseFollowsFocus, rules, hotkeys
+        case dragToSwap, resizeToAdjustRatio, autoRestoreScenes, mouseFollowsFocus, outlineColor, rules, hotkeys
     }
 
     /// Every key is optional so a config file only needs the settings it changes.
@@ -150,6 +155,7 @@ public struct Config: Codable, Equatable {
         resizeToAdjustRatio = try c.decodeIfPresent(Bool.self, forKey: .resizeToAdjustRatio) ?? d.resizeToAdjustRatio
         autoRestoreScenes = try c.decodeIfPresent(Bool.self, forKey: .autoRestoreScenes) ?? d.autoRestoreScenes
         mouseFollowsFocus = try c.decodeIfPresent(Bool.self, forKey: .mouseFollowsFocus) ?? d.mouseFollowsFocus
+        outlineColor = try c.decodeIfPresent(String.self, forKey: .outlineColor) ?? d.outlineColor
         rules = try c.decodeIfPresent([WindowRule].self, forKey: .rules) ?? d.rules
         hotkeys = try c.decodeIfPresent([String: String].self, forKey: .hotkeys) ?? d.hotkeys
     }
@@ -227,6 +233,8 @@ struct PartialLayoutParameters: Decodable {
     var masterCount: Int?
     var ultrawideAspectRatio: Double?
     var ultrawideSingleWindowRatio: Double?
+    var maxTileWidth: Double?
+    var maxTiles: Int?
 
     var resolved: LayoutParameters {
         let d = LayoutParameters.default
@@ -236,7 +244,9 @@ struct PartialLayoutParameters: Decodable {
             masterRatio: masterRatio ?? d.masterRatio,
             masterCount: masterCount ?? d.masterCount,
             ultrawideAspectRatio: ultrawideAspectRatio ?? d.ultrawideAspectRatio,
-            ultrawideSingleWindowRatio: ultrawideSingleWindowRatio ?? d.ultrawideSingleWindowRatio
+            ultrawideSingleWindowRatio: ultrawideSingleWindowRatio ?? d.ultrawideSingleWindowRatio,
+            maxTileWidth: maxTileWidth ?? d.maxTileWidth,
+            maxTiles: maxTiles ?? d.maxTiles
         )
     }
 }

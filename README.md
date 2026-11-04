@@ -15,9 +15,12 @@ Every window snaps into place the moment it opens. Ultrawide displays get layout
 |---|---|
 | Price | Free, MIT licensed |
 | macOS | 13 Ventura and later |
-| Layouts | 9: Dwindle, Master & Stack, Wide Master, Centered Master, Columns, Rows, Grid, Monocle, Float |
-| Ultrawide | Detected automatically. A lone window is centred instead of stretched; Centered Master by default |
-| Scenes | Saved automatically per set of displays, restored when that set reconnects |
+| Layouts | 10: Dwindle, Master & Stack, Wide Master, Centered Master, Columns, Thirds, Rows, Grid, Monocle, Float |
+| Ultrawide | Detected automatically. Centered Master by default, and a width cap stops any tile stretching across a 49" screen |
+| Full screen | Each display holds as many tiles as fit its size; further windows stack on the last tile |
+| Focus | One shortcut lets a window fill its display; press again to put it back |
+| Settings | Settings window with a live preview for laptop, 27", 34" and 49" displays, plus a focus outline in your colour |
+| Scenes | Saved automatically per set of displays, restored when that set reconnects, one-step undo |
 | Mouse | Drag a window onto another to swap. Drag to another display to move. Resize to change the split |
 | Keyboard | 40+ global shortcuts, all remappable |
 | Automation | `tiles://` URL scheme and a `tiles` CLI for Raycast, Alfred, Shortcuts, skhd |
@@ -57,12 +60,13 @@ If you rebuild from source, macOS may treat the new build as a different app. Re
 | **Wide Master** | Main window on top, the rest side by side below | Vertical monitors |
 | **Centered Master** | Main window in the middle, others alternate right and left | Ultrawides (default there) |
 | **Columns** | Equal columns | Ultrawides, comparing documents |
+| **Thirds** | Two thirds + one third; the right third stacks from three windows | Main app + sidebar apps |
 | **Rows** | Equal rows | Vertical monitors |
 | **Grid** | Balanced grid | Dashboards, many small windows |
 | **Monocle** | Every window full-screen; cycle with focus keys | Small screens, deep focus |
 | **Float** | Tiles leaves this display alone | Presentations |
 
-Each display has its own layout. Pick one from the menu bar, cycle with `⌃⌥Space`, or jump with `⌃⌥1`–`⌃⌥8`.
+Each display has its own layout. Pick one from the menu bar, cycle with `⌃⌥Space`, or jump with `⌃⌥1`–`⌃⌥9`.
 
 ## Keyboard shortcuts
 
@@ -75,7 +79,8 @@ All defaults use **⌃⌥ (Control + Option)**, which apps rarely claim.
 | `⌃⌥↩` | Promote focused window to master (again to swap back) |
 | `⌃⌥N` / `⌃⌥P` | Focus next / previous window |
 | `⌃⌥Space` / `⌃⌥⇧Space` | Next / previous layout |
-| `⌃⌥1` … `⌃⌥8`, `⌃⌥0` | Dwindle, Master & Stack, Centered Master, Columns, Grid, Monocle, Wide Master, Rows; Float |
+| `⌃⌥1` … `⌃⌥9`, `⌃⌥0` | Dwindle, Master & Stack, Centered Master, Columns, Grid, Monocle, Wide Master, Rows, Thirds; Float |
+| `⌃⌥M` | Focus: fill the display with this window, again to put it back |
 | `⌃⌥=` / `⌃⌥-` | Grow / shrink master area |
 | `⌃⌥,` / `⌃⌥.` | More / fewer master windows |
 | `⌃⌥⇧=` / `⌃⌥⇧-` | Bigger / smaller gaps |
@@ -84,6 +89,7 @@ All defaults use **⌃⌥ (Control + Option)**, which apps rarely claim.
 | `⌃⌥T` | Turn tiling on or off |
 | `⌃⌥R` | Retile everything |
 | `⌃⌥S` | Save scene for this display setup |
+| `⌃⌥Z` | Undo the last scene restore |
 
 Remap anything in the config file (see below). Shortcuts use key positions on a US layout.
 
@@ -99,12 +105,13 @@ A scene is the arrangement for one combination of displays: each display's layou
 
 - Tiles saves the scene automatically a few seconds after you rearrange things.
 - When you dock or undock, Tiles waits for the displays to settle and restores the scene saved for that exact set.
+- A notice like *Restored LG UltraFine · 3 windows* appears in the menu bar. `⌃⌥Z` or **Undo Scene Restore** puts things back.
 - `⌃⌥S` saves on demand; **Restore Scene** in the menu re-applies it.
 - Scenes store bundle identifiers (`com.apple.Safari`), never window titles. They live in `~/Library/Application Support/Tiles/scenes.json`.
 
 ## Configuration
 
-Settings live in `~/.config/tiles/config.json`. **Edit Config File…** in the menu opens it. Tiles reloads it the moment you save. Every key is optional; anything you leave out uses the default.
+**Settings…** (`⌘,` from the menu) covers the everyday options with a live preview. Everything, including rules and shortcuts, lives in `~/.config/tiles/config.json`; **Edit Config File…** in the menu opens it. Tiles reloads it the moment you save. Every key is optional; anything you leave out uses the default.
 
 ```json
 {
@@ -120,8 +127,11 @@ Settings live in `~/.config/tiles/config.json`. **Edit Config File…** in the m
     "masterRatio": 0.55,
     "masterCount": 1,
     "ultrawideAspectRatio": 2.0,
-    "ultrawideSingleWindowRatio": 0.6
+    "ultrawideSingleWindowRatio": 0.6,
+    "maxTileWidth": 2600,
+    "maxTiles": 0
   },
+  "outlineColor": "#E8643C",
   "newWindowPlacement": "end",
   "dragToSwap": true,
   "resizeToAdjustRatio": true,
@@ -147,13 +157,16 @@ Settings live in `~/.config/tiles/config.json`. **Edit Config File…** in the m
 | `layout.masterRatio` | Share of the screen for the master area, 0.1–0.9 |
 | `layout.masterCount` | Windows in the master area |
 | `layout.ultrawideSingleWindowRatio` | Width share for a lone window on an ultrawide. Set `ultrawideAspectRatio` to 0 to always fill |
+| `layout.maxTileWidth` | Widest a tile may get, in points; wider tiles are centred. 0 turns it off |
+| `layout.maxTiles` | Most tiles per display before windows stack. 0 picks from display size |
+| `outlineColor` | Focus outline colour as `#RRGGBB`, `""` for none |
 | `newWindowPlacement` | `end`, `master`, or `after-focused` |
 | `rules` | Match on `app` (bundle ID or name) and/or `titleContains`. Last match wins. Replaces the default list when set |
 | `hotkeys` | Merged over the defaults. Map a shortcut to `"none"` to remove it |
 
 **Shortcut syntax:** modifiers `cmd`, `alt`/`opt`, `ctrl`, `shift`, plus `hyper` (all four) and `meh` (all but cmd), joined with `+` to a key: a letter, digit, `left` `right` `up` `down`, `return`, `space`, `tab`, `f1`–`f20`, or punctuation such as `-` `=` `[` `]` `,` `.` `/`.
 
-**Commands:** `focus-left|right|up|down`, `swap-left|right|up|down`, `promote`, `focus-next`, `focus-previous`, `layout-<name>`, `next-layout`, `previous-layout`, `grow-master`, `shrink-master`, `increase-master-count`, `decrease-master-count`, `increase-gaps`, `decrease-gaps`, `toggle-float`, `toggle-tiling`, `retile`, `move-to-next-display`, `move-to-previous-display`, `save-scene`, `restore-scene`.
+**Commands:** `focus-left|right|up|down`, `swap-left|right|up|down`, `promote`, `focus-next`, `focus-previous`, `layout-<name>`, `next-layout`, `previous-layout`, `grow-master`, `shrink-master`, `increase-master-count`, `decrease-master-count`, `increase-gaps`, `decrease-gaps`, `toggle-float`, `toggle-tiling`, `retile`, `move-to-next-display`, `move-to-previous-display`, `save-scene`, `restore-scene`, `undo-restore`, `toggle-zoom`.
 
 ## Automation
 

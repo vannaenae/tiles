@@ -4,7 +4,8 @@ import XCTest
 final class LayoutTests: XCTestCase {
     let screen = Rect(x: 0, y: 25, width: 1440, height: 875)
     let ultrawide = Rect(x: 0, y: 25, width: 3440, height: 1415)
-    let noGaps = LayoutParameters(innerGap: 0, outerGap: 0, masterRatio: 0.5, masterCount: 1)
+    let noGaps = LayoutParameters(innerGap: 0, outerGap: 0, masterRatio: 0.5, masterCount: 1, maxTileWidth: 0, maxTiles: 100)
+    let roomy = LayoutParameters(maxTiles: 100)
 
     func testEmptyAndFloatProduceNoFrames() {
         XCTAssertEqual(LayoutEngine.frames(count: 0, in: screen, kind: .dwindle).count, 0)
@@ -23,7 +24,7 @@ final class LayoutTests: XCTestCase {
     func testFramesStayInsideTheScreen() {
         for kind in LayoutKind.allCases where kind != .float {
             for n in 1...9 {
-                for frame in LayoutEngine.frames(count: n, in: screen, kind: kind) {
+                for frame in LayoutEngine.frames(count: n, in: screen, kind: kind, parameters: roomy) {
                     XCTAssertGreaterThanOrEqual(frame.minX, screen.minX, "\(kind) \(n)")
                     XCTAssertGreaterThanOrEqual(frame.minY, screen.minY, "\(kind) \(n)")
                     XCTAssertLessThanOrEqual(frame.maxX, screen.maxX, "\(kind) \(n)")
@@ -38,7 +39,7 @@ final class LayoutTests: XCTestCase {
     func testTilingLayoutsDoNotOverlap() {
         for kind in LayoutKind.allCases where kind != .float && kind != .monocle {
             for n in 1...9 {
-                let frames = LayoutEngine.frames(count: n, in: screen, kind: kind)
+                let frames = LayoutEngine.frames(count: n, in: screen, kind: kind, parameters: roomy)
                 for i in frames.indices {
                     for j in frames.indices where j > i {
                         XCTAssertEqual(frames[i].intersection(frames[j]).area, 0, "\(kind) n=\(n) frames \(i),\(j)")
@@ -128,5 +129,37 @@ final class LayoutTests: XCTestCase {
         XCTAssertEqual(frames[0].height, screen.height)
         XCTAssertEqual(frames[1].x, frames[2].x)
         XCTAssertLessThan(frames[1].y, frames[2].y)
+    }
+
+    func testThirds() {
+        let two = LayoutEngine.frames(count: 2, in: screen, kind: .thirds, parameters: noGaps)
+        XCTAssertEqual(two[0].width, 960)
+        let five = LayoutEngine.frames(count: 5, in: screen, kind: .thirds, parameters: noGaps)
+        XCTAssertEqual(Set(five[2...].map(\.x)).count, 1) // windows 3–5 share the right third
+    }
+
+    func testWidthCapCentresWideTiles() {
+        let wide = Rect(x: 0, y: 0, width: 5120, height: 1440)
+        var p = noGaps
+        p.maxTileWidth = 2000
+        let frames = LayoutEngine.frames(count: 2, in: wide, kind: .columns, parameters: p)
+        XCTAssertEqual(frames.map(\.width), [2000, 2000])
+        XCTAssertEqual(frames[0].midX, 1280, accuracy: 1)
+    }
+
+    func testFullScreenStacksExtraWindowsOnLastTile() {
+        var p = noGaps
+        p.maxTiles = 3
+        let frames = LayoutEngine.frames(count: 5, in: screen, kind: .columns, parameters: p)
+        XCTAssertEqual(frames.count, 5)
+        XCTAssertEqual(Set(frames.map(\.x)).count, 3)
+        XCTAssertEqual(frames[2], frames[4])
+    }
+
+    func testAutoTileLimitScalesWithDisplay() {
+        let laptop = LayoutEngine.maxTiles(in: Rect(x: 0, y: 0, width: 1512, height: 944), .default)
+        let ultrawide = LayoutEngine.maxTiles(in: Rect(x: 0, y: 0, width: 5120, height: 1415), .default)
+        XCTAssertEqual(laptop, 4)
+        XCTAssertGreaterThan(ultrawide, laptop)
     }
 }

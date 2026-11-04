@@ -10,6 +10,8 @@ public enum LayoutKind: String, Codable, CaseIterable {
     case centeredMaster = "centered-master"
     /// Equal-width columns.
     case columns
+    /// Two thirds + one third; from three windows on, the right third stacks.
+    case thirds
     /// Equal-height rows.
     case rows
     /// Even grid.
@@ -26,6 +28,7 @@ public enum LayoutKind: String, Codable, CaseIterable {
         case .wideMaster: return "Wide Master"
         case .centeredMaster: return "Centered Master (Ultrawide)"
         case .columns: return "Columns"
+        case .thirds: return "Thirds"
         case .rows: return "Rows"
         case .grid: return "Grid"
         case .monocle: return "Monocle"
@@ -48,6 +51,12 @@ public struct LayoutParameters: Equatable, Codable {
     public var ultrawideAspectRatio: Double
     /// Width share a lone window gets on an ultrawide display.
     public var ultrawideSingleWindowRatio: Double
+    /// No tile gets wider than this, so nothing stretches across a 49" screen.
+    /// Wider tiles are centred in their slot. 0 turns the cap off.
+    public var maxTileWidth: Double
+    /// Most tiles per display. Further windows stack on the last tile.
+    /// 0 picks a number from the display's size.
+    public var maxTiles: Int
 
     public init(
         innerGap: Double = 8,
@@ -55,7 +64,9 @@ public struct LayoutParameters: Equatable, Codable {
         masterRatio: Double = 0.55,
         masterCount: Int = 1,
         ultrawideAspectRatio: Double = 2.0,
-        ultrawideSingleWindowRatio: Double = 0.6
+        ultrawideSingleWindowRatio: Double = 0.6,
+        maxTileWidth: Double = 2600,
+        maxTiles: Int = 0
     ) {
         self.innerGap = innerGap
         self.outerGap = outerGap
@@ -63,6 +74,8 @@ public struct LayoutParameters: Equatable, Codable {
         self.masterCount = masterCount
         self.ultrawideAspectRatio = ultrawideAspectRatio
         self.ultrawideSingleWindowRatio = ultrawideSingleWindowRatio
+        self.maxTileWidth = maxTileWidth
+        self.maxTiles = maxTiles
     }
 
     public static let `default` = LayoutParameters()
@@ -71,17 +84,21 @@ public struct LayoutParameters: Equatable, Codable {
 public enum LayoutEngine {
     /// Computes one frame per window, in window order, inside `area` (the
     /// display's visible frame). Returns an empty array for `.float`.
-    public static func frames(count: Int, in area: Rect, kind: LayoutKind, parameters p: LayoutParameters = .default) -> [Rect] {
-        guard count > 0, kind != .float else { return [] }
+    public static func frames(count total: Int, in area: Rect, kind: LayoutKind, parameters p: LayoutParameters = .default) -> [Rect] {
+        guard total > 0, kind != .float else { return [] }
         let usable = area.inset(by: max(0, p.outerGap))
         let gap = max(0, p.innerGap)
         let ratio = p.masterRatio.clamped(to: 0.1...0.9)
         let masterCount = max(1, p.masterCount)
 
         // Ultrawide: a single window is centred rather than stretched.
-        if count == 1, kind != .monocle, isUltrawide(usable, p) {
-            return [centered(in: usable, widthRatio: p.ultrawideSingleWindowRatio).integral]
+        if total == 1, kind != .monocle, isUltrawide(usable, p) {
+            return [cap(centered(in: usable, widthRatio: p.ultrawideSingleWindowRatio), p.maxTileWidth).integral]
         }
+
+        // Screen full: extra windows stack on the last tile instead of shrinking everything.
+        let count = kind == .monocle ? total : min(total, maxTiles(in: usable, p))
+        let overflow = total - count
 
         let frames: [Rect]
         switch kind {
@@ -95,6 +112,8 @@ public enum LayoutEngine {
             frames = centeredMaster(count: count, in: usable, gap: gap, ratio: ratio, masterCount: masterCount)
         case .columns:
             frames = usable.columns(count, gap: gap)
+        case .thirds:
+            frames = thirds(count: count, in: usable, gap: gap)
         case .rows:
             frames = usable.rows(count, gap: gap)
         case .grid:
@@ -104,7 +123,29 @@ public enum LayoutEngine {
         case .float:
             frames = []
         }
-        return frames.map(\.integral)
+        let capped = frames.map { cap($0, p.maxTileWidth) }
+        return (capped + Array(repeating: capped[capped.count - 1], count: overflow)).map(\.integral)
+    }
+
+    public static func maxTiles(in area: Rect, _ p: LayoutParameters) -> Int {
+        if p.maxTiles > 0 { return p.maxTiles }
+        // ~600x420pt minimum per tile: 4 on a laptop, 12 on a 27", 24 on a 49".
+        return max(2, Int(area.width / 600)) * max(1, Int(area.height / 420))
+    }
+
+    static func cap(_ r: Rect, _ maxWidth: Double) -> Rect {
+        guard maxWidth > 0, r.width > maxWidth else { return r }
+        return Rect(x: r.x + (r.width - maxWidth) / 2, y: r.y, width: maxWidth, height: r.height)
+    }
+
+    static func thirds(count: Int, in area: Rect, gap: Double) -> [Rect] {
+        if count == 1 { return [area] }
+        if count == 2 {
+            let (a, b) = area.splitColumns(ratio: 2.0 / 3, gap: gap)
+            return [a, b]
+        }
+        let cols = area.columns(3, gap: gap)
+        return [cols[0], cols[1]] + cols[2].rows(count - 2, gap: gap)
     }
 
     static func isUltrawide(_ area: Rect, _ p: LayoutParameters) -> Bool {

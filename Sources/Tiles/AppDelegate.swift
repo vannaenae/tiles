@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 import ServiceManagement
 import TilesCore
 
@@ -12,6 +13,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var permissionTimer: Timer?
     private var messageWork: DispatchWorkItem?
     private var started = false
+    private let outline = FocusOutline()
+    private var settingsWindow: NSWindow?
 
     static let repoURL = URL(string: "https://github.com/vannaenae/tiles")!
 
@@ -27,6 +30,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         configStore.onChange = { [weak self] config in self?.configChanged(config) }
         manager.onStateChange = { [weak self] in self?.updateIcon() }
         manager.onMessage = { [weak self] text in self?.flash(text) }
+        manager.onFocusFrame = { [weak self] frame in
+            guard let self else { return }
+            self.outline.show(around: frame, hex: self.configStore.config.outlineColor)
+        }
         registerHotKeys()
 
         if AccessibilityPermission.isTrusted {
@@ -127,7 +134,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem.button?.title = " " + text
         let work = DispatchWorkItem { [weak self] in self?.statusItem.button?.title = "" }
         messageWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.6, execute: work)
+        DispatchQueue.main.asyncAfter(deadline: .now() + (text.count > 24 ? 5 : 1.6), execute: work)
     }
 
     func menuNeedsUpdate(_ menu: NSMenu) {
@@ -136,6 +143,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         if !AccessibilityPermission.isTrusted {
             menu.addItem(item("Grant Accessibility Access…", #selector(grantAccess)))
+            menu.addItem(.separator())
+        }
+
+        if manager.undoSnapshot != nil {
+            menu.addItem(item("Undo Scene Restore", #selector(undoRestore)))
             menu.addItem(.separator())
         }
 
@@ -203,6 +215,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(options)
 
         menu.addItem(shortcutsMenu())
+        menu.addItem(item("Settings…", #selector(openSettings), key: ","))
         menu.addItem(item("Edit Config File…", #selector(openConfig)))
         if let error = configStore.lastError {
             let warn = NSMenuItem(title: "⚠︎ Config: \(error)", action: nil, keyEquivalent: "")
@@ -254,6 +267,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func toggleFloat() { manager.perform(.toggleFloat) }
     @objc private func saveScene() { manager.perform(.saveScene) }
     @objc private func restoreScene() { manager.perform(.restoreScene) }
+    @objc private func undoRestore() { manager.perform(.undoRestore) }
 
     @objc private func pickLayout(_ sender: NSMenuItem) {
         guard let info = sender.representedObject as? [String], info.count == 2,
@@ -284,6 +298,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             flash("Couldn't change login item")
             NSLog("Tiles login item error: \(error)")
         }
+    }
+
+    @objc private func openSettings() {
+        if settingsWindow?.isVisible != true {
+            // Fresh model each time so it picks up edits made to the file meanwhile.
+            let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(model: SettingsModel(store: configStore))))
+            window.title = "Tiles Settings"
+            window.styleMask = [.titled, .closable]
+            window.isReleasedWhenClosed = false
+            window.center()
+            settingsWindow = window
+        }
+        NSApp.activate(ignoringOtherApps: true)
+        settingsWindow?.makeKeyAndOrderFront(nil)
     }
 
     @objc private func openConfig() {
