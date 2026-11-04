@@ -47,7 +47,7 @@ final class SettingsModel: ObservableObject {
 
     struct SavedScene: Identifiable {
         let id: String
-        let scene: Scene
+        let scene: TilesCore.Scene
         var windowCount: Int { scene.displays.values.reduce(0) { $0 + $1.apps.count } }
     }
 
