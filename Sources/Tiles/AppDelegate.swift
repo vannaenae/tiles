@@ -3,7 +3,7 @@ import SwiftUI
 import ServiceManagement
 import TilesCore
 
-final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWindowDelegate {
     private let configStore = ConfigStore()
     private lazy var manager = TilingManager(configStore: configStore)
     private let hotKeys = HotKeyCenter()
@@ -85,6 +85,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         started = true
         manager.start()
         updateIcon()
+        // First run: show Settings so people see what Tiles can do.
+        if !UserDefaults.standard.bool(forKey: "didShowSettings") {
+            UserDefaults.standard.set(true, forKey: "didShowSettings")
+            openSettings()
+        }
     }
 
     // MARK: - Config & hotkeys
@@ -303,15 +308,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func openSettings() {
         if settingsWindow?.isVisible != true {
             // Fresh model each time so it picks up edits made to the file meanwhile.
-            let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(model: SettingsModel(store: configStore))))
-            window.title = "Tiles Settings"
-            window.styleMask = [.titled, .closable]
+            let model = SettingsModel(store: configStore) { [weak self] in self?.manager.perform($0) }
+            let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(model: model)))
+            window.title = "Tiles"
+            window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+            window.toolbarStyle = .unified
             window.isReleasedWhenClosed = false
+            window.delegate = self
+            window.setContentSize(NSSize(width: 900, height: 640))
             window.center()
+            window.setFrameAutosaveName("TilesSettings")
             settingsWindow = window
         }
+        // A real app while Settings is open: Dock icon and ⌘-Tab.
+        NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow?.makeKeyAndOrderFront(nil)
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        guard (notification.object as? NSWindow) === settingsWindow else { return }
+        NSApp.setActivationPolicy(.accessory)
+    }
+
+    /// Opening Tiles again from Finder, Spotlight or the Dock shows Settings.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        openSettings()
+        return false
     }
 
     @objc private func openConfig() {

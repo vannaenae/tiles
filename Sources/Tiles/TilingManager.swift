@@ -33,8 +33,8 @@ final class TilingManager {
     /// Arrangement from just before the last scene restore, for one-step undo.
     private(set) var undoSnapshot: (orders: [String: [WindowID]], layouts: [String: LayoutKind], parameters: [String: LayoutParameters])?
 
-    private var sceneStore = SceneStore()
-    private let scenesURL: URL = {
+    /// Read from disk on use, so the Settings window and the manager never disagree.
+    static let scenesURL: URL = {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support")
         return base.appendingPathComponent("Tiles/scenes.json")
@@ -58,7 +58,6 @@ final class TilingManager {
 
     func start() {
         guard observer == nil else { return }
-        sceneStore = SceneStore.load(from: scenesURL)
         let observer = WorkspaceObserver(
             handler: { [weak self] event in self?.handle(event) },
             onDisplaysChanged: { [weak self] in self?.displaysChanged() }
@@ -617,17 +616,18 @@ final class TilingManager {
 
     func saveScene() {
         guard !displays.isEmpty else { return }
-        sceneStore.save(captureScene(), for: displays.map(\.id))
-        try? sceneStore.write(to: scenesURL)
+        var store = SceneStore.load(from: Self.scenesURL)
+        store.save(captureScene(), for: displays.map(\.id))
+        try? store.write(to: Self.scenesURL)
     }
 
     var hasSceneForCurrentDisplays: Bool {
-        sceneStore.scene(for: Display.current().map(\.id)) != nil
+        SceneStore.load(from: Self.scenesURL).scene(for: Display.current().map(\.id)) != nil
     }
 
     func restoreScene(silently: Bool) {
         refresh()
-        guard let scene = sceneStore.scene(for: displays.map(\.id)) else {
+        guard let scene = SceneStore.load(from: Self.scenesURL).scene(for: displays.map(\.id)) else {
             if !silently { onMessage?("No scene saved for these displays") }
             return
         }

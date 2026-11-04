@@ -24,7 +24,8 @@ Every window snaps into place the moment it opens. Ultrawide displays get layout
 | Mouse | Drag a window onto another to swap. Drag to another display to move. Resize to change the split |
 | Keyboard | 40+ global shortcuts, all remappable |
 | Automation | `tiles://` URL scheme and a `tiles` CLI for Raycast, Alfred, Shortcuts, skhd |
-| Config | One plain JSON file, hot-reloaded on save |
+| Settings | A full Settings app: layouts with live preview, gaps, outline colour, shortcut recorder, app rules, saved scenes |
+| Config | Also one plain JSON file, hot-reloaded on save |
 | Per-display | Different layout for each monitor, by name or by shape |
 | Rules | Float any app or window title |
 | Privacy | Scenes store app identifiers only, never window titles |
@@ -33,7 +34,7 @@ Every window snaps into place the moment it opens. Ultrawide displays get layout
 
 **Download:** grab `Tiles-x.y.z.zip` from [Releases](https://github.com/vannaenae/tiles/releases), unzip, drag `Tiles.app` to Applications.
 
-Release builds are ad-hoc signed until a Developer ID is set up, so the first launch needs a right-click → **Open** (or `xattr -dr com.apple.quarantine /Applications/Tiles.app`).
+Release builds are signed with a Developer ID and notarized by Apple, so Tiles opens with a normal double-click. Builds from CI or source are ad-hoc signed: right-click → **Open** the first time.
 
 **Build from source** (Xcode 15+ or the Swift 5.9+ toolchain):
 
@@ -210,3 +211,15 @@ Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 ## License
 
 [MIT](LICENSE).
+
+## Releasing (maintainers)
+
+Push a tag such as `v0.2.0`. The Release workflow tests, builds a universal app, and publishes it. It signs and notarizes when these repository secrets exist (Settings → Secrets and variables → Actions):
+
+| Secret | What it is |
+|---|---|
+| `MACOS_CERTIFICATE` | Your **Developer ID Application** certificate exported from Keychain Access as `.p12`, then base64-encoded: `base64 -i cert.p12 \| pbcopy` |
+| `MACOS_CERTIFICATE_PASSWORD` | The password you set when exporting the `.p12` |
+| `APPLE_ID` | Your Apple Developer account email |
+| `APPLE_TEAM_ID` | 10-character Team ID from developer.apple.com → Membership |
+| `APPLE_APP_PASSWORD` | An app-specific password from account.apple.com → Sign-In and Security |

@@ -1,18 +1,29 @@
 import SwiftUI
+import ServiceManagement
 import TilesCore
+
+// MARK: - Model
 
 /// Edits a copy of the config and writes it back shortly after each change.
 final class SettingsModel: ObservableObject {
     @Published var config: Config { didSet { scheduleSave() } }
+    @Published var section: SettingsSection? = .general
     @Published var preset = Preset.laptop
     @Published var windowCount = 4
+    @Published var scenes: [SavedScene] = []
+    @Published var launchAtLogin = SMAppService.mainApp.status == .enabled
+    @Published var trusted = AccessibilityPermission.isTrusted
+
+    let perform: (Command) -> Void
     private let store: ConfigStore
     private var saveWork: DispatchWorkItem?
     static let outlineColors = ["#E8643C", "#3F8F5F", "#3478F6", "#D4A017", "#8E8E93", ""]
 
-    init(store: ConfigStore) {
+    init(store: ConfigStore, perform: @escaping (Command) -> Void) {
         self.store = store
+        self.perform = perform
         self.config = store.config
+        reloadScenes()
     }
 
     private func scheduleSave() {
@@ -24,6 +35,33 @@ final class SettingsModel: ObservableObject {
         }
         saveWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
+    }
+
+    var accent: Color { Color(nsColor: NSColor(hex: config.outlineColor) ?? .controlAccentColor) }
+
+    func setLaunchAtLogin(_ on: Bool) {
+        let service = SMAppService.mainApp
+        try? on ? service.register() : service.unregister()
+        launchAtLogin = service.status == .enabled
+    }
+
+    struct SavedScene: Identifiable {
+        let id: String
+        let scene: Scene
+        var windowCount: Int { scene.displays.values.reduce(0) { $0 + $1.apps.count } }
+    }
+
+    func reloadScenes() {
+        scenes = SceneStore.load(from: TilingManager.scenesURL).scenes
+            .map { SavedScene(id: $0.key, scene: $0.value) }
+            .sorted { $0.scene.savedAt > $1.scene.savedAt }
+    }
+
+    func deleteScene(_ id: String) {
+        var store = SceneStore.load(from: TilingManager.scenesURL)
+        store.scenes[id] = nil
+        try? store.write(to: TilingManager.scenesURL)
+        reloadScenes()
     }
 
     /// Typical usable areas, in points, for the preview.
@@ -41,115 +79,225 @@ final class SettingsModel: ObservableObject {
     }
 }
 
+enum SettingsSection: String, CaseIterable, Identifiable {
+    case general, layouts, spacing, appearance, mouse, scenes, shortcuts, rules, about
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .general: return "General"
+        case .layouts: return "Layouts"
+        case .spacing: return "Gaps & Sizing"
+        case .appearance: return "Appearance"
+        case .mouse: return "Mouse"
+        case .scenes: return "Scenes"
+        case .shortcuts: return "Shortcuts"
+        case .rules: return "App Rules"
+        case .about: return "About"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .general: return "gearshape"
+        case .layouts: return "rectangle.split.3x1"
+        case .spacing: return "square.dashed"
+        case .appearance: return "paintpalette"
+        case .mouse: return "cursorarrow.motionlines"
+        case .scenes: return "display.2"
+        case .shortcuts: return "keyboard"
+        case .rules: return "macwindow.on.rectangle"
+        case .about: return "info.circle"
+        }
+    }
+}
+
+// MARK: - Window
+
 struct SettingsView: View {
     @ObservedObject var model: SettingsModel
 
-    private var area: Rect { model.preset.area }
-    private var kind: LayoutKind {
-        model.config.layoutKind(forDisplayNamed: model.preset.rawValue, aspectRatio: area.width / area.height)
-    }
-
     var body: some View {
-        HStack(alignment: .top, spacing: 0) {
-            VStack(spacing: 14) {
-                Picker("Display", selection: $model.preset) {
-                    ForEach(SettingsModel.Preset.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-
-                preview
-
-                HStack {
-                    Text("\(kind.displayName) on this display").foregroundStyle(.secondary)
-                    Spacer()
-                    Stepper("\(model.windowCount) windows", value: $model.windowCount, in: 1...12)
-                }
-                .font(.callout)
+        NavigationSplitView {
+            List(SettingsSection.allCases, selection: $model.section) { section in
+                Label(section.title, systemImage: section.icon).tag(section)
             }
-            .padding(20)
-            .frame(width: 460)
-
-            Form {
-                Section("Layout") {
-                    layoutPicker("Default", $model.config.defaultLayout)
-                    layoutPicker("Ultrawide", $model.config.ultrawideLayout)
-                    Picker("New windows", selection: $model.config.newWindowPlacement) {
-                        Text("At the end").tag(NewWindowPlacement.end)
-                        Text("As master").tag(NewWindowPlacement.master)
-                        Text("Next to focused").tag(NewWindowPlacement.afterFocused)
-                    }
-                }
-                Section("Appearance") {
-                    LabeledContent("Focus outline") {
-                        HStack(spacing: 8) {
-                            ForEach(SettingsModel.outlineColors, id: \.self) { hex in
-                                swatch(hex)
-                            }
-                        }
-                    }
-                }
-                Section("Spacing") {
-                    LabeledContent("Gaps: \(Int(model.config.layout.innerGap)) pt") {
-                        Slider(value: gaps, in: 0...32, step: 2)
-                    }
-                    LabeledContent("Master: \(Int(model.config.layout.masterRatio * 100))%") {
-                        Slider(value: $model.config.layout.masterRatio, in: 0.2...0.8, step: 0.05)
-                    }
-                    LabeledContent("Width cap: \(widthCapLabel)") {
-                        Slider(value: $model.config.layout.maxTileWidth, in: 0...4000, step: 100)
-                    }
-                    Stepper("Max tiles: \(model.config.layout.maxTiles == 0 ? "Auto" : "\(model.config.layout.maxTiles)")",
-                            value: $model.config.layout.maxTiles, in: 0...24)
-                }
-                Section("Behaviour") {
-                    Toggle("Drag a window onto another to swap", isOn: $model.config.dragToSwap)
-                    Toggle("Resizing with the mouse moves the split", isOn: $model.config.resizeToAdjustRatio)
-                    Toggle("Restore scenes when displays change", isOn: $model.config.autoRestoreScenes)
-                    Toggle("Mouse follows keyboard focus", isOn: $model.config.mouseFollowsFocus)
+            .navigationSplitViewColumnWidth(190)
+        } detail: {
+            Group {
+                switch model.section ?? .general {
+                case .general: GeneralPane(model: model)
+                case .layouts: LayoutsPane(model: model)
+                case .spacing: SpacingPane(model: model)
+                case .appearance: AppearancePane(model: model)
+                case .mouse: MousePane(model: model)
+                case .scenes: ScenesPane(model: model)
+                case .shortcuts: ShortcutsPane(model: model)
+                case .rules: RulesPane(model: model)
+                case .about: AboutPane()
                 }
             }
             .formStyle(.grouped)
-            .frame(width: 400)
+            .navigationTitle((model.section ?? .general).title)
         }
-        .frame(height: 520)
+        .frame(minWidth: 820, minHeight: 580)
+        .tint(model.accent)
     }
+}
 
-    private var preview: some View {
-        let frames = LayoutEngine.frames(count: model.windowCount, in: area, kind: kind, parameters: model.config.layout)
-        return GeometryReader { geo in
-            let scale = min(geo.size.width / area.width, geo.size.height / area.height)
-            ZStack(alignment: .topLeading) {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.secondary.opacity(0.15))
-                    .frame(width: area.width * scale, height: area.height * scale)
-                ForEach(Array(frames.enumerated()), id: \.offset) { index, frame in
-                    RoundedRectangle(cornerRadius: 5)
-                        .fill(Color.accentColor.opacity(index == 0 ? 0.9 : 0.4))
-                        .overlay(RoundedRectangle(cornerRadius: 5).stroke(Color.primary.opacity(0.15)))
-                        .frame(width: frame.width * scale, height: frame.height * scale)
-                        .offset(x: frame.x * scale, y: frame.y * scale)
+// MARK: - Panes
+
+private struct GeneralPane: View {
+    @ObservedObject var model: SettingsModel
+    @State private var confirmReset = false
+
+    var body: some View {
+        Form {
+            Section {
+                HStack(spacing: 14) {
+                    Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 52, height: 52)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Tiles").font(.title2.bold())
+                        Text("Tiling for every display").foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            Section {
+                Toggle("Tile windows automatically", isOn: $model.config.enabled)
+                Toggle("Launch at login", isOn: Binding(get: { model.launchAtLogin }, set: { model.setLaunchAtLogin($0) }))
+                LabeledContent("Accessibility access") {
+                    if model.trusted {
+                        Label("Allowed", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+                    } else {
+                        Button("Grant Access…") { AccessibilityPermission.request() }
+                    }
                 }
             }
-            .animation(.easeInOut(duration: 0.2), value: frames)
+            Section("Windows") {
+                Picker("New windows open", selection: $model.config.newWindowPlacement) {
+                    Text("At the end").tag(NewWindowPlacement.end)
+                    Text("As the main window").tag(NewWindowPlacement.master)
+                    Text("Next to the focused window").tag(NewWindowPlacement.afterFocused)
+                }
+                Toggle("Mouse follows keyboard focus", isOn: $model.config.mouseFollowsFocus)
+            }
+            Section {
+                Button("Open Config File in Editor") { NSWorkspace.shared.open(ConfigStore.fileURL) }
+                Button("Restore All Defaults…", role: .destructive) { confirmReset = true }
+            } footer: {
+                Text("Every setting here is saved to ~/.config/tiles/config.json the moment you change it.")
+            }
         }
-        .aspectRatio(area.width / area.height, contentMode: .fit)
-        .frame(height: 240)
+        .confirmationDialog("Restore all settings to their defaults?", isPresented: $confirmReset) {
+            Button("Restore Defaults", role: .destructive) { model.config = .default }
+        }
+        .onAppear { model.trusted = AccessibilityPermission.isTrusted }
+    }
+}
+
+private struct LayoutsPane: View {
+    @ObservedObject var model: SettingsModel
+
+    var body: some View {
+        Form {
+            Section {
+                PreviewPanel(model: model)
+            }
+            Section("Default layout") {
+                LayoutGrid(selection: $model.config.defaultLayout, model: model)
+            }
+            Section {
+                Picker("Ultrawide layout", selection: $model.config.ultrawideLayout) {
+                    ForEach(LayoutKind.allCases, id: \.self) { Text($0.displayName).tag($0) }
+                }
+            } footer: {
+                Text("Used automatically on displays at least \(String(format: "%.1f", model.config.layout.ultrawideAspectRatio))× wider than tall.")
+            }
+            Section("Connected displays") {
+                ForEach(Display.current(), id: \.id) { display in
+                    Picker(display.name, selection: Binding<LayoutKind?>(
+                        get: { model.config.displays[display.name] },
+                        set: { model.config.displays[display.name] = $0 }
+                    )) {
+                        Text("Automatic").tag(LayoutKind?.none)
+                        Divider()
+                        ForEach(LayoutKind.allCases, id: \.self) { Text($0.displayName).tag(LayoutKind?.some($0)) }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct SpacingPane: View {
+    @ObservedObject var model: SettingsModel
+
+    var body: some View {
+        Form {
+            Section { PreviewPanel(model: model) }
+            Section("Gaps") {
+                slider("Between windows", $model.config.layout.innerGap, 0...40, 2) { "\(Int($0)) pt" }
+                slider("Screen edges", $model.config.layout.outerGap, 0...40, 2) { "\(Int($0)) pt" }
+            }
+            Section("Main window") {
+                slider("Size", $model.config.layout.masterRatio, 0.2...0.8, 0.05) { "\(Int($0 * 100))%" }
+                Stepper("Windows in main area: \(model.config.layout.masterCount)", value: $model.config.layout.masterCount, in: 1...6)
+            }
+            Section {
+                slider("Width cap", $model.config.layout.maxTileWidth, 0...4000, 100) { $0 == 0 ? "Off" : "\(Int($0)) pt" }
+                slider("Lone window on ultrawide", $model.config.layout.ultrawideSingleWindowRatio, 0.3...1, 0.05) { "\(Int($0 * 100))% wide" }
+                Stepper("Tiles per display: \(model.config.layout.maxTiles == 0 ? "Automatic" : "\(model.config.layout.maxTiles)")",
+                        value: $model.config.layout.maxTiles, in: 0...24)
+            } header: {
+                Text("Big and small screens")
+            } footer: {
+                Text("When a display is full, new windows stack on the last tile. Press ⌃⌥N to flip through a stack.")
+            }
+        }
     }
 
-    /// One slider sets both gaps, matching the menu.
-    private var gaps: Binding<Double> {
+    private func slider(_ title: String, _ value: Binding<Double>, _ range: ClosedRange<Double>, _ step: Double,
+                        format: @escaping (Double) -> String) -> some View {
+        LabeledContent {
+            HStack {
+                Slider(value: value, in: range, step: step)
+                Text(format(value.wrappedValue)).monospacedDigit().foregroundStyle(.secondary).frame(width: 90, alignment: .trailing)
+            }
+        } label: {
+            Text(title)
+        }
+    }
+}
+
+private struct AppearancePane: View {
+    @ObservedObject var model: SettingsModel
+
+    var body: some View {
+        Form {
+            Section {
+                LabeledContent("Focus outline") {
+                    HStack(spacing: 10) {
+                        ForEach(SettingsModel.outlineColors, id: \.self) { swatch($0) }
+                        ColorPicker("Custom", selection: customColor, supportsOpacity: false).labelsHidden()
+                    }
+                }
+            } footer: {
+                Text("A border around the focused tiled window, so you always know where your keystrokes go.")
+            }
+            Section { PreviewPanel(model: model) }
+        }
+    }
+
+    private var customColor: Binding<Color> {
         Binding(
-            get: { model.config.layout.innerGap },
-            set: {
-                model.config.layout.innerGap = $0
-                model.config.layout.outerGap = $0
+            get: { model.accent },
+            set: { color in
+                guard let c = NSColor(color).usingColorSpace(.sRGB) else { return }
+                model.config.outlineColor = String(format: "#%02X%02X%02X",
+                    Int(c.redComponent * 255), Int(c.greenComponent * 255), Int(c.blueComponent * 255))
             }
         )
-    }
-
-    private var widthCapLabel: String {
-        model.config.layout.maxTileWidth == 0 ? "Off" : "\(Int(model.config.layout.maxTileWidth)) pt"
     }
 
     private func swatch(_ hex: String) -> some View {
@@ -161,15 +309,297 @@ struct SettingsView: View {
                 .fill(hex.isEmpty ? Color.clear : Color(nsColor: NSColor(hex: hex) ?? .gray))
                 .overlay(Circle().stroke(Color.primary.opacity(selected ? 0.9 : 0.2), lineWidth: selected ? 2.5 : 1))
                 .overlay(hex.isEmpty ? Image(systemName: "nosign").foregroundStyle(.secondary) : nil)
-                .frame(width: 20, height: 20)
+                .frame(width: 22, height: 22)
         }
         .buttonStyle(.plain)
         .help(hex.isEmpty ? "No outline" : hex)
     }
+}
 
-    private func layoutPicker(_ title: String, _ selection: Binding<LayoutKind>) -> some View {
-        Picker(title, selection: selection) {
-            ForEach(LayoutKind.allCases, id: \.self) { Text($0.displayName).tag($0) }
+private struct MousePane: View {
+    @ObservedObject var model: SettingsModel
+
+    var body: some View {
+        Form {
+            Section {
+                Toggle("Drag a window onto another to swap them", isOn: $model.config.dragToSwap)
+                Toggle("Resizing a window moves the split", isOn: $model.config.resizeToAdjustRatio)
+            } footer: {
+                Text("Drag a window to another display to move it there. Other resizes snap back to the grid.")
+            }
         }
+    }
+}
+
+private struct ScenesPane: View {
+    @ObservedObject var model: SettingsModel
+
+    var body: some View {
+        Form {
+            Section {
+                Toggle("Restore scenes when displays change", isOn: $model.config.autoRestoreScenes)
+                HStack {
+                    Button("Save Current Scene") { model.perform(.saveScene); model.reloadScenes() }
+                    Button("Restore Now") { model.perform(.restoreScene) }
+                }
+            } footer: {
+                Text("A scene is the layout and app order for one combination of displays. Tiles saves it as you work and brings it back when you dock. It stores app identifiers only, never window titles.")
+            }
+            Section("Saved scenes") {
+                if model.scenes.isEmpty {
+                    Text("None yet. Arrange some windows and Tiles saves the scene a few seconds later.").foregroundStyle(.secondary)
+                }
+                ForEach(model.scenes) { saved in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("\(saved.scene.displays.count) display\(saved.scene.displays.count == 1 ? "" : "s") · \(saved.windowCount) windows")
+                            Text(saved.scene.displays.values.map(\.layout.displayName).joined(separator: " + "))
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Text(saved.scene.savedAt, style: .relative).font(.caption).foregroundStyle(.secondary)
+                        Button(role: .destructive) { model.deleteScene(saved.id) } label: { Image(systemName: "trash") }
+                            .buttonStyle(.borderless)
+                    }
+                }
+            }
+        }
+        .onAppear { model.reloadScenes() }
+    }
+}
+
+private struct ShortcutsPane: View {
+    @ObservedObject var model: SettingsModel
+
+    var body: some View {
+        Form {
+            Section {
+                ForEach(Command.all, id: \.name) { command in
+                    LabeledContent(title(command)) {
+                        ShortcutRecorder(shortcuts: model.config.shortcuts(for: command)) { model.config.bind($0, to: command) }
+                    }
+                }
+            } footer: {
+                Text("Click a shortcut, then press the new keys. Esc cancels. Every command also works as a tiles:// link.")
+            }
+            Section {
+                Button("Reset All Shortcuts") { model.config.hotkeys = [:] }
+            }
+        }
+    }
+
+    private func title(_ command: Command) -> String {
+        if case .setLayout(let kind) = command { return "Layout: \(kind.displayName)" }
+        let words = command.name.replacingOccurrences(of: "-", with: " ")
+        return words.prefix(1).uppercased() + words.dropFirst()
+    }
+}
+
+private struct RulesPane: View {
+    @ObservedObject var model: SettingsModel
+
+    var body: some View {
+        Form {
+            Section {
+                ForEach(Array(model.config.rules.enumerated()), id: \.offset) { index, rule in
+                    HStack {
+                        TextField("App or bundle ID", text: text(index, \.app))
+                        TextField("Title contains (optional)", text: text(index, \.titleContains))
+                        Toggle("Float", isOn: Binding(
+                            get: { rule.float ?? false },
+                            set: { model.config.rules[index].float = $0 }
+                        ))
+                        Button(role: .destructive) { model.config.rules.remove(at: index) } label: { Image(systemName: "minus.circle") }
+                            .buttonStyle(.borderless)
+                    }
+                }
+            } header: {
+                Text("Floating apps")
+            } footer: {
+                Text("Floating windows are never tiled. The last matching rule wins. ⌃⌥F floats or tiles any single window.")
+            }
+            Section {
+                Menu("Add Running App") {
+                    ForEach(runningApps, id: \.bundleIdentifier) { app in
+                        Button(app.localizedName ?? app.bundleIdentifier ?? "") {
+                            model.config.rules.append(WindowRule(app: app.bundleIdentifier, float: true))
+                        }
+                    }
+                }
+                Button("Add Empty Rule") { model.config.rules.append(WindowRule(app: "", float: true)) }
+            }
+        }
+    }
+
+    private var runningApps: [NSRunningApplication] {
+        WorkspaceObserver.managedApps()
+            .filter { $0.bundleIdentifier != nil }
+            .sorted { ($0.localizedName ?? "") < ($1.localizedName ?? "") }
+    }
+
+    private func text(_ index: Int, _ field: WritableKeyPath<WindowRule, String?>) -> Binding<String> {
+        Binding(
+            get: { model.config.rules.indices.contains(index) ? model.config.rules[index][keyPath: field] ?? "" : "" },
+            set: { model.config.rules[index][keyPath: field] = $0.isEmpty ? nil : $0 }
+        )
+    }
+}
+
+private struct AboutPane: View {
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 96, height: 96)
+            Text("Tiles").font(.largeTitle.bold())
+            Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev")")
+                .foregroundStyle(.secondary)
+            Text("Free and open source under the MIT License.")
+            HStack {
+                Link("GitHub", destination: AppDelegate.repoURL)
+                Text("·").foregroundStyle(.secondary)
+                Link("Report an Issue", destination: AppDelegate.repoURL.appendingPathComponent("issues"))
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+// MARK: - Shared pieces
+
+/// Live preview of the current settings on a chosen display size.
+private struct PreviewPanel: View {
+    @ObservedObject var model: SettingsModel
+
+    var body: some View {
+        let area = model.preset.area
+        let kind = model.config.layoutKind(forDisplayNamed: model.preset.rawValue, aspectRatio: area.width / area.height)
+        VStack(spacing: 10) {
+            Picker("Display", selection: $model.preset) {
+                ForEach(SettingsModel.Preset.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            LayoutPreview(kind: kind, area: area, count: model.windowCount, parameters: model.config.layout, accent: model.accent)
+                .frame(height: 200)
+            HStack {
+                Text("\(kind.displayName) on this display").foregroundStyle(.secondary)
+                Spacer()
+                Stepper("\(model.windowCount) windows", value: $model.windowCount, in: 1...12)
+            }
+            .font(.callout)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+/// Clickable cards, each a small preview of one layout.
+private struct LayoutGrid: View {
+    @Binding var selection: LayoutKind
+    @ObservedObject var model: SettingsModel
+
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 120), spacing: 12)], spacing: 12) {
+            ForEach(LayoutKind.allCases, id: \.self) { kind in
+                Button { selection = kind } label: {
+                    VStack(spacing: 6) {
+                        LayoutPreview(kind: kind, area: Rect(x: 0, y: 0, width: 1600, height: 1000), count: 4,
+                                      parameters: LayoutParameters(innerGap: 24, outerGap: 24, maxTiles: 12), accent: model.accent)
+                            .frame(height: 64)
+                        Text(kind.displayName).font(.caption).lineLimit(1)
+                    }
+                    .padding(8)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(selection == kind ? model.accent.opacity(0.15) : Color.clear))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(selection == kind ? model.accent : Color.secondary.opacity(0.25),
+                                                                       lineWidth: selection == kind ? 2 : 1))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+}
+
+struct LayoutPreview: View {
+    let kind: LayoutKind
+    let area: Rect
+    let count: Int
+    let parameters: LayoutParameters
+    let accent: Color
+
+    var body: some View {
+        let frames = LayoutEngine.frames(count: count, in: area, kind: kind, parameters: parameters)
+        GeometryReader { geo in
+            let scale = min(geo.size.width / area.width, geo.size.height / area.height)
+            ZStack(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.secondary.opacity(0.15))
+                    .frame(width: area.width * scale, height: area.height * scale)
+                ForEach(Array(frames.enumerated()), id: \.offset) { index, frame in
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(accent.opacity(index == 0 ? 0.85 : 0.35))
+                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.primary.opacity(0.15)))
+                        .frame(width: frame.width * scale, height: frame.height * scale)
+                        .offset(x: frame.x * scale, y: frame.y * scale)
+                }
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+            .animation(.easeInOut(duration: 0.2), value: frames)
+        }
+        .aspectRatio(area.width / area.height, contentMode: .fit)
+    }
+}
+
+/// Click, press keys, done. Esc cancels.
+private struct ShortcutRecorder: View {
+    let shortcuts: [Shortcut]
+    let onChange: (Shortcut?) -> Void
+    @State private var recording = false
+    @State private var monitor: Any?
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Button(recording ? "Press keys…" : (shortcuts.isEmpty ? "Record" : shortcuts.map(\.description).joined(separator: "  "))) {
+                recording ? stop() : start()
+            }
+            .frame(minWidth: 120)
+            if !shortcuts.isEmpty {
+                Button { onChange(nil) } label: { Image(systemName: "xmark.circle.fill") }
+                    .buttonStyle(.borderless)
+                    .foregroundStyle(.secondary)
+                    .help("Remove shortcut")
+            }
+        }
+        .onDisappear(perform: stop)
+    }
+
+    private func start() {
+        recording = true
+        monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            if event.keyCode == 53 { // Esc
+                stop()
+            } else if let shortcut = Shortcut(event: event) {
+                onChange(shortcut)
+                stop()
+            }
+            return nil
+        }
+    }
+
+    private func stop() {
+        recording = false
+        if let monitor { NSEvent.removeMonitor(monitor) }
+        monitor = nil
+    }
+}
+
+extension Shortcut {
+    init?(event: NSEvent) {
+        guard let key = KeyCodes.name(for: Int(event.keyCode)) else { return nil }
+        var mods: Modifiers = []
+        let flags = event.modifierFlags
+        if flags.contains(.command) { mods.insert(.command) }
+        if flags.contains(.option) { mods.insert(.option) }
+        if flags.contains(.control) { mods.insert(.control) }
+        if flags.contains(.shift) { mods.insert(.shift) }
+        guard !mods.isEmpty else { return nil }
+        self.init(modifiers: mods, key: key)
     }
 }

@@ -250,3 +250,32 @@ struct PartialLayoutParameters: Decodable {
         )
     }
 }
+
+extension Shortcut {
+    /// Canonical form for the config file, e.g. `ctrl+alt+shift+h`.
+    public var configString: String {
+        var parts: [String] = []
+        if modifiers.contains(.control) { parts.append("ctrl") }
+        if modifiers.contains(.option) { parts.append("alt") }
+        if modifiers.contains(.shift) { parts.append("shift") }
+        if modifiers.contains(.command) { parts.append("cmd") }
+        return (parts + [key]).joined(separator: "+")
+    }
+}
+
+extension Config {
+    public func shortcuts(for command: Command) -> [Shortcut] {
+        resolvedHotkeys().bindings.filter { $0.command == command }.map(\.shortcut)
+    }
+
+    /// Makes `shortcut` the only binding for `command` (nil clears it).
+    /// Whatever else used `shortcut` loses it.
+    public mutating func bind(_ shortcut: Shortcut?, to command: Command) {
+        let merged = Config.defaultHotkeys.merging(hotkeys) { $1 }
+        for (key, value) in merged {
+            guard let existing = Shortcut(key), Command(name: value) == command || existing == shortcut else { continue }
+            hotkeys[key] = Config.defaultHotkeys[key] != nil ? "none" : nil
+        }
+        if let shortcut { hotkeys[shortcut.configString] = command.name }
+    }
+}

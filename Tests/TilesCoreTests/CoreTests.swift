@@ -127,6 +127,22 @@ final class ConfigTests: XCTestCase {
         XCTAssertEqual(errors.count, 1)
     }
 
+    func testBindReplacesShortcuts() {
+        var config = Config.default
+        config.bind(Shortcut("cmd+shift+k"), to: .focus(.left))
+        XCTAssertEqual(config.shortcuts(for: .focus(.left)), [Shortcut("cmd+shift+k")!])
+
+        // Taking another command's shortcut removes it from that command.
+        config.bind(Shortcut("ctrl+alt+f"), to: .retile)
+        XCTAssertEqual(config.shortcuts(for: .retile), [Shortcut("ctrl+alt+f")!])
+        XCTAssertEqual(config.shortcuts(for: .toggleFloat), [])
+
+        config.bind(nil, to: .retile)
+        XCTAssertEqual(config.shortcuts(for: .retile), [])
+        XCTAssertEqual(config.resolvedHotkeys().errors, [])
+        XCTAssertEqual(try Config.decode(config.encoded()), config)
+    }
+
     func testDisplayLayoutSelection() {
         var config = Config.default
         config.displays = ["LG": .columns, "LG UltraFine": .grid]
