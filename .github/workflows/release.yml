@@ -3,6 +3,12 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  # Or start it from the Actions tab: the run creates the tag itself.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release, e.g. 0.1.0"
+        required: true
 
 permissions:
   contents: write
@@ -12,6 +18,7 @@ jobs:
     runs-on: macos-15
     env:
       MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+      VERSION: ${{ inputs.version || github.ref_name }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -44,10 +51,12 @@ jobs:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
-        run: VERSION="${GITHUB_REF_NAME#v}" ./scripts/build-app.sh
+        run: VERSION="${VERSION#v}" ./scripts/build-app.sh
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }}
+          target_commitish: ${{ github.sha }}
           files: dist/*.zip
           generate_release_notes: true
