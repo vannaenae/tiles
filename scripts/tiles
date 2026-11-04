@@ -1,0 +1,22 @@
+#!/bin/sh
+# Drive Tiles from the terminal, Raycast, Alfred, skhd, BetterTouchTool...
+#   tiles focus-left
+#   tiles layout-centered-master
+#   tiles save-scene
+# Run `tiles --help` for every command.
+set -e
+if [ -z "$1" ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+  cat <<'HELP'
+usage: tiles <command>
+
+focus-left|right|up|down     swap-left|right|up|down     promote
+focus-next  focus-previous   move-to-next-display  move-to-previous-display
+layout-dwindle  layout-master-stack  layout-wide-master  layout-centered-master
+layout-columns  layout-rows  layout-grid  layout-monocle  layout-float
+next-layout  previous-layout  grow-master  shrink-master
+increase-master-count  decrease-master-count  increase-gaps  decrease-gaps
+toggle-float  toggle-tiling  retile  save-scene  restore-scene
+HELP
+  exit 0
+fi
+open -g "tiles://$1"
