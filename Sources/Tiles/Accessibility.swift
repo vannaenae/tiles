@@ -13,6 +13,26 @@ func _AXUIElementGetWindow(_ element: AXUIElement, _ id: UnsafeMutablePointer<CG
 enum AccessibilityPermission {
     static var isTrusted: Bool { AXIsProcessTrusted() }
 
+    /// Clears Tiles' Accessibility entry, then asks again. Fixes the switch showing "on"
+    /// for an older build of Tiles while this one is still blocked.
+    static func reset() {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
+        task.arguments = ["reset", "Accessibility", Bundle.main.bundleIdentifier ?? "io.github.vannaenae.tiles"]
+        try? task.run()
+        task.waitUntilExit()
+        request()
+    }
+
+    /// Quits and reopens Tiles. macOS sometimes applies a new permission only after a restart.
+    static func relaunch() {
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/bin/sh")
+        task.arguments = ["-c", "sleep 1; /usr/bin/open \"$0\"", Bundle.main.bundlePath]
+        try? task.run()
+        NSApp.terminate(nil)
+    }
+
     /// Adds Tiles to the Accessibility list and opens that settings pane.
     static func request() {
         let key = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String

@@ -35,12 +35,21 @@ curl -fL --progress-bar "https://github.com/$REPO/releases/latest/download/Tiles
 ditto -x -k "$TMP/Tiles.zip" "$TMP"
 
 echo "==> Installing to $DEST"
+team() { codesign -dv "$1" 2>&1 | sed -n 's/^TeamIdentifier=//p'; }
+OLD_TEAM=""
+[ -d "$DEST/Tiles.app" ] && OLD_TEAM="$(team "$DEST/Tiles.app")"
+NEW_TEAM="$(team "$TMP/Tiles.app")"
 quit_tiles
 mkdir -p "$DEST"
 rm -rf "$DEST/Tiles.app"
 mv "$TMP/Tiles.app" "$DEST/Tiles.app"
 # curl downloads aren't quarantined, but clear it in case, so no "unidentified developer" prompt.
 xattr -dr com.apple.quarantine "$DEST/Tiles.app" 2>/dev/null || true
+# A copy signed differently has its own Accessibility entry; clear the stale one so the switch works.
+if [ -n "$OLD_TEAM" ] && [ "$OLD_TEAM" != "$NEW_TEAM" ]; then
+  tccutil reset Accessibility io.github.vannaenae.tiles >/dev/null 2>&1 || true
+  echo "==> Cleared the old Accessibility entry; allow Tiles once more when asked"
+fi
 
 # The `tiles` command (tiles focus-left, tiles layout-columns, ...), if a bin folder is writable.
 for dir in /opt/homebrew/bin /usr/local/bin; do

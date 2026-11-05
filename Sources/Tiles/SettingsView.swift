@@ -631,8 +631,13 @@ private struct DashboardPane: View {
     private var permissionBanner: some View {
         HStack {
             Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
-            Text("Tiles needs Accessibility access to move windows.")
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Tiles needs Accessibility access to move windows.")
+                Text("Already switched on in Settings? Click Reset, then switch Tiles on again.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
             Spacer()
+            Button("Reset") { AccessibilityPermission.reset() }
             Button("Grant Access…") { AccessibilityPermission.request() }
         }
         .padding(14)

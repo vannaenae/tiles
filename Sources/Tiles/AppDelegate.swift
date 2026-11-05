@@ -78,7 +78,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         permissionTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
             guard AccessibilityPermission.isTrusted else { return }
             timer.invalidate()
-            self?.startTiling()
+            // Restart so macOS applies the new permission everywhere, then tiling starts.
+            AccessibilityPermission.relaunch()
         }
     }
 
@@ -160,6 +161,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
 
         if !AccessibilityPermission.isTrusted {
             menu.addItem(item("Grant Accessibility Access…", #selector(grantAccess)))
+            menu.addItem(item("Already Allowed? Reset Permission…", #selector(resetAccess)))
             menu.addItem(.separator())
         }
 
@@ -247,6 +249,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
 
         menu.addItem(.separator())
         menu.addItem(item("About Tiles", #selector(openRepo)))
+        menu.addItem(item("Restart Tiles", #selector(restart)))
         menu.addItem(item("Quit Tiles", #selector(quit), key: "q"))
     }
 
@@ -279,6 +282,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     // MARK: - Actions
 
     @objc private func grantAccess() { askForPermission() }
+    @objc private func resetAccess() {
+        AccessibilityPermission.reset()
+        askForPermission()
+    }
+    @objc private func restart() { AccessibilityPermission.relaunch() }
     @objc private func toggleTiling() { manager.perform(.toggleTiling); updateIcon() }
     @objc private func retile() { manager.perform(.retile) }
     @objc private func toggleFloat() { manager.perform(.toggleFloat) }
