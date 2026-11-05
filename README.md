@@ -34,6 +34,26 @@ Every window snaps into place the moment it opens. Ultrawide displays get layout
 
 ## Install
 
+**Terminal (easiest):** paste this into Terminal. It downloads the latest Tiles, puts it in Applications and opens it, with no security prompt.
+
+```bash
+curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.sh | bash
+```
+
+Run the same line again to update. To remove Tiles: `curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.sh | bash -s uninstall`
+
+**Homebrew:**
+
+```bash
+brew tap vannaenae/tiles https://github.com/vannaenae/tiles
+```
+
+```bash
+brew install --cask vannaenae/tiles/tiles
+```
+
+Update with `brew upgrade --cask --greedy tiles`.
+
 **Download:** grab `Tiles-x.y.z.zip` from [Releases](https://github.com/vannaenae/tiles/releases), unzip, drag `Tiles.app` to Applications.
 
 First launch only: right-click `Tiles.app` → **Open** → **Open** (releases are signed but not notarized). If macOS still refuses, run `xattr -dr com.apple.quarantine /Applications/Tiles.app`.

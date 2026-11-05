@@ -46,17 +46,29 @@ jobs:
           echo "CODESIGN_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
 
       - name: Package app
-        run: VERSION="${VERSION#v}" ./scripts/build-app.sh
+        run: |
+          VERSION="${VERSION#v}" ./scripts/build-app.sh
+          # Stable names so .../releases/latest/download/<name> always works.
+          cp dist/Tiles-*.zip dist/Tiles.zip
+          cp scripts/install.sh dist/install.sh
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }}
           target_commitish: ${{ github.sha }}
-          files: dist/*.zip
+          files: |
+            dist/*.zip
+            dist/install.sh
           generate_release_notes: true
           body: |
-            ## Install
+            ## Install from Terminal (easiest)
+            ```bash
+            curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.sh | bash
+            ```
+            Or with Homebrew: `brew tap vannaenae/tiles https://github.com/vannaenae/tiles && brew install --cask vannaenae/tiles/tiles`
+
+            ## Install by hand
             1. Download **Tiles-*.zip** below and unzip it.
             2. Drag **Tiles.app** into Applications.
             3. First launch only: right-click Tiles.app → **Open** → **Open**.
