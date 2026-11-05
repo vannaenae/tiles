@@ -98,6 +98,14 @@ final class ConfigTests: XCTestCase {
         XCTAssertEqual(config, Config.default)
     }
 
+    func testThemeAndAppearance() throws {
+        let config = try Config.decode(Data(#"{"theme": "purple", "appearance": "dark"}"#.utf8))
+        XCTAssertEqual(config.theme, .purple)
+        XCTAssertEqual(config.appearance, .dark)
+        XCTAssertEqual(Theme.allCases.count, 5)
+        XCTAssertEqual(Set(Theme.allCases.map(\.hex)).count, 5)
+    }
+
     func testPartialLayoutSection() throws {
         let config = try Config.decode(Data(#"{"layout": {"innerGap": 20}, "defaultLayout": "columns"}"#.utf8))
         XCTAssertEqual(config.layout.innerGap, 20)

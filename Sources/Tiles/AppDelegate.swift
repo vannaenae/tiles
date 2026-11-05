@@ -27,6 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         updateIcon()
 
         lastConfig = configStore.config
+        applyAppearance()
         configStore.onChange = { [weak self] config in self?.configChanged(config) }
         manager.onStateChange = { [weak self] in self?.updateIcon() }
         manager.onMessage = { [weak self] text in self?.flash(text) }
@@ -97,6 +98,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     private func configChanged(_ config: Config) {
         let old = lastConfig
         lastConfig = config
+        applyAppearance()
         registerHotKeys()
         if started { manager.configDidChange(from: old, to: config) }
         if let error = configStore.lastError {
@@ -104,6 +106,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
             NSLog("Tiles config error: \(error)")
         }
         updateIcon()
+    }
+
+    private func applyAppearance() {
+        switch configStore.config.appearance {
+        case .system: NSApp.appearance = nil
+        case .light: NSApp.appearance = NSAppearance(named: .aqua)
+        case .dark: NSApp.appearance = NSAppearance(named: .darkAqua)
+        }
     }
 
     private func registerHotKeys() {

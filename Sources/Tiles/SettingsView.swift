@@ -24,7 +24,6 @@ final class SettingsModel: ObservableObject {
     private let store: ConfigStore
     private var saveWork: DispatchWorkItem?
     private var liveTimer: Timer?
-    static let outlineColors = ["#E8643C", "#3F8F5F", "#3478F6", "#D4A017", "#8E8E93", ""]
 
     init(store: ConfigStore,
          perform: @escaping (Command) -> Void,
@@ -107,7 +106,13 @@ final class SettingsModel: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
     }
 
-    var accent: Color { Color(nsColor: NSColor(hex: config.outlineColor) ?? .controlAccentColor) }
+    var accent: Color { Color(nsColor: NSColor(hex: config.theme.hex) ?? .controlAccentColor) }
+
+    /// Switching theme recolours the focus outline too, unless it's off.
+    func setTheme(_ theme: Theme) {
+        config.theme = theme
+        if !config.outlineColor.isEmpty { config.outlineColor = theme.hex }
+    }
 
     func setLaunchAtLogin(_ on: Bool) {
         let service = SMAppService.mainApp
@@ -352,44 +357,62 @@ private struct AppearancePane: View {
 
     var body: some View {
         Form {
+            Section("Mode") {
+                Picker("Appearance", selection: $model.config.appearance) {
+                    Label("System", systemImage: "circle.lefthalf.filled").tag(AppearanceMode.system)
+                    Label("Light", systemImage: "sun.max").tag(AppearanceMode.light)
+                    Label("Dark", systemImage: "moon").tag(AppearanceMode.dark)
+                }
+                .pickerStyle(.segmented)
+            }
+            Section("Theme") {
+                HStack(spacing: 14) {
+                    ForEach(Theme.allCases, id: \.self) { theme in themeCard(theme) }
+                }
+                .padding(.vertical, 4)
+            }
             Section {
-                LabeledContent("Focus outline") {
-                    HStack(spacing: 10) {
-                        ForEach(SettingsModel.outlineColors, id: \.self) { swatch($0) }
-                        ColorPicker("Custom", selection: customColor, supportsOpacity: false).labelsHidden()
-                    }
+                Toggle("Outline the focused window", isOn: Binding(
+                    get: { !model.config.outlineColor.isEmpty },
+                    set: { model.config.outlineColor = $0 ? model.config.theme.hex : "" }
+                ))
+                if !model.config.outlineColor.isEmpty {
+                    ColorPicker("Outline colour", selection: outlineColor, supportsOpacity: false)
                 }
             } footer: {
-                Text("A border around the focused tiled window, so you always know where your keystrokes go.")
+                Text("A border around the focused tiled window, so you always know where your keystrokes go. It follows the theme unless you pick a colour.")
             }
             Section { PreviewPanel(model: model) }
         }
     }
 
-    private var customColor: Binding<Color> {
+    private func themeCard(_ theme: Theme) -> some View {
+        let color = Color(nsColor: NSColor(hex: theme.hex) ?? .gray)
+        let selected = model.config.theme == theme
+        return Button { model.setTheme(theme) } label: {
+            VStack(spacing: 8) {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(LinearGradient(colors: [color, color.opacity(0.55)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .frame(height: 44)
+                    .overlay(selected ? Image(systemName: "checkmark").font(.headline).foregroundStyle(.white) : nil)
+                Text(theme.displayName).font(.callout)
+            }
+            .padding(8)
+            .background(RoundedRectangle(cornerRadius: 12).fill(selected ? color.opacity(0.15) : Color.clear))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(selected ? color : Color.secondary.opacity(0.25), lineWidth: selected ? 2 : 1))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var outlineColor: Binding<Color> {
         Binding(
-            get: { model.accent },
+            get: { Color(nsColor: NSColor(hex: model.config.outlineColor) ?? .gray) },
             set: { color in
                 guard let c = NSColor(color).usingColorSpace(.sRGB) else { return }
                 model.config.outlineColor = String(format: "#%02X%02X%02X",
                     Int(c.redComponent * 255), Int(c.greenComponent * 255), Int(c.blueComponent * 255))
             }
         )
-    }
-
-    private func swatch(_ hex: String) -> some View {
-        let selected = model.config.outlineColor.uppercased() == hex
-        return Button {
-            model.config.outlineColor = hex
-        } label: {
-            Circle()
-                .fill(hex.isEmpty ? Color.clear : Color(nsColor: NSColor(hex: hex) ?? .gray))
-                .overlay(Circle().stroke(Color.primary.opacity(selected ? 0.9 : 0.2), lineWidth: selected ? 2.5 : 1))
-                .overlay(hex.isEmpty ? Image(systemName: "nosign").foregroundStyle(.secondary) : nil)
-                .frame(width: 22, height: 22)
-        }
-        .buttonStyle(.plain)
-        .help(hex.isEmpty ? "No outline" : hex)
     }
 }
 

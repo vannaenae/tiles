@@ -10,6 +10,28 @@ public enum NewWindowPlacement: String, Codable, CaseIterable {
     case afterFocused = "after-focused"
 }
 
+/// Colour theme for the app and the focus outline.
+public enum Theme: String, Codable, CaseIterable {
+    case orange, blue, green, purple, pink
+
+    public var hex: String {
+        switch self {
+        case .orange: return "#E8643C"
+        case .blue: return "#3478F6"
+        case .green: return "#30A46C"
+        case .purple: return "#8E5CF7"
+        case .pink: return "#E84393"
+        }
+    }
+
+    public var displayName: String { rawValue.prefix(1).uppercased() + rawValue.dropFirst() }
+}
+
+/// Light, dark, or follow macOS.
+public enum AppearanceMode: String, Codable, CaseIterable {
+    case system, light, dark
+}
+
 /// A rule that matches windows by app and, optionally, title.
 public struct WindowRule: Codable, Equatable {
     /// Bundle identifier (`com.apple.Safari`) or app name (`Safari`). Case-insensitive.
@@ -60,6 +82,8 @@ public struct Config: Codable, Equatable {
     public var mouseFollowsFocus: Bool
     /// Border drawn around the focused tiled window, as `#RRGGBB`. Empty turns it off.
     public var outlineColor: String
+    public var theme: Theme
+    public var appearance: AppearanceMode
     public var rules: [WindowRule]
     /// Shortcut → command name. Merged on top of the defaults; map a shortcut
     /// to `"none"` to remove a default binding.
@@ -77,6 +101,8 @@ public struct Config: Codable, Equatable {
         autoRestoreScenes: Bool = true,
         mouseFollowsFocus: Bool = false,
         outlineColor: String = "#E8643C",
+        theme: Theme = .orange,
+        appearance: AppearanceMode = .system,
         rules: [WindowRule] = Config.defaultRules,
         hotkeys: [String: String] = [:]
     ) {
@@ -91,6 +117,8 @@ public struct Config: Codable, Equatable {
         self.autoRestoreScenes = autoRestoreScenes
         self.mouseFollowsFocus = mouseFollowsFocus
         self.outlineColor = outlineColor
+        self.theme = theme
+        self.appearance = appearance
         self.rules = rules
         self.hotkeys = hotkeys
     }
@@ -138,7 +166,7 @@ public struct Config: Codable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case enabled, defaultLayout, ultrawideLayout, displays, layout, newWindowPlacement
-        case dragToSwap, resizeToAdjustRatio, autoRestoreScenes, mouseFollowsFocus, outlineColor, rules, hotkeys
+        case dragToSwap, resizeToAdjustRatio, autoRestoreScenes, mouseFollowsFocus, outlineColor, theme, appearance, rules, hotkeys
     }
 
     /// Every key is optional so a config file only needs the settings it changes.
@@ -156,6 +184,8 @@ public struct Config: Codable, Equatable {
         autoRestoreScenes = try c.decodeIfPresent(Bool.self, forKey: .autoRestoreScenes) ?? d.autoRestoreScenes
         mouseFollowsFocus = try c.decodeIfPresent(Bool.self, forKey: .mouseFollowsFocus) ?? d.mouseFollowsFocus
         outlineColor = try c.decodeIfPresent(String.self, forKey: .outlineColor) ?? d.outlineColor
+        theme = try c.decodeIfPresent(Theme.self, forKey: .theme) ?? d.theme
+        appearance = try c.decodeIfPresent(AppearanceMode.self, forKey: .appearance) ?? d.appearance
         rules = try c.decodeIfPresent([WindowRule].self, forKey: .rules) ?? d.rules
         hotkeys = try c.decodeIfPresent([String: String].self, forKey: .hotkeys) ?? d.hotkeys
     }

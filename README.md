@@ -25,6 +25,7 @@ Every window snaps into place the moment it opens. Ultrawide displays get layout
 | Keyboard | 40+ global shortcuts, all remappable |
 | Automation | `tiles://` URL scheme and a `tiles` CLI for Raycast, Alfred, Shortcuts, skhd |
 | App | A dashboard showing every display and its windows live, plus settings for layouts, gaps, colours, shortcuts, app rules and scenes |
+| Look | Light, Dark or follow macOS, with five colour themes: orange, blue, green, purple, pink |
 | Profiles | Save your settings as named profiles, switch in one click, export and import between Macs |
 | Config | Also one plain JSON file, hot-reloaded on save |
 | Per-display | Different layout for each monitor, by name or by shape |
@@ -134,6 +135,8 @@ A scene is the arrangement for one combination of displays: each display's layou
     "maxTiles": 0
   },
   "outlineColor": "#E8643C",
+  "theme": "orange",
+  "appearance": "system",
   "newWindowPlacement": "end",
   "dragToSwap": true,
   "resizeToAdjustRatio": true,
@@ -161,6 +164,8 @@ A scene is the arrangement for one combination of displays: each display's layou
 | `layout.ultrawideSingleWindowRatio` | Width share for a lone window on an ultrawide. Set `ultrawideAspectRatio` to 0 to always fill |
 | `layout.maxTileWidth` | Widest a tile may get, in points; wider tiles are centred. 0 turns it off |
 | `layout.maxTiles` | Most tiles per display before windows stack. 0 picks from display size |
+| `theme` | `orange`, `blue`, `green`, `purple` or `pink` |
+| `appearance` | `system`, `light` or `dark` |
 | `outlineColor` | Focus outline colour as `#RRGGBB`, `""` for none |
 | `newWindowPlacement` | `end`, `master`, or `after-focused` |
 | `rules` | Match on `app` (bundle ID or name) and/or `titleContains`. Last match wins. Replaces the default list when set |
