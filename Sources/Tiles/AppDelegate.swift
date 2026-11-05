@@ -28,6 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
 
         lastConfig = configStore.config
         applyAppearance()
+        applyIconPlacement()
         configStore.onChange = { [weak self] config in self?.configChanged(config) }
         manager.onStateChange = { [weak self] in self?.updateIcon() }
         manager.onMessage = { [weak self] text in self?.flash(text) }
@@ -99,6 +100,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         let old = lastConfig
         lastConfig = config
         applyAppearance()
+        applyIconPlacement()
         registerHotKeys()
         if started { manager.configDidChange(from: old, to: config) }
         if let error = configStore.lastError {
@@ -343,7 +345,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
 
     func windowWillClose(_ notification: Notification) {
         guard (notification.object as? NSWindow) === settingsWindow else { return }
-        NSApp.setActivationPolicy(.accessory)
+        DispatchQueue.main.async { self.applyIconPlacement() }
+    }
+
+    /// Menu bar icon and/or Dock icon. The Dock icon also shows while the window is open.
+    private func applyIconPlacement() {
+        let placement = configStore.config.iconPlacement
+        statusItem.isVisible = placement != .dock
+        let windowOpen = settingsWindow?.isVisible == true
+        NSApp.setActivationPolicy(placement != .menuBar || windowOpen ? .regular : .accessory)
+    }
+
+    /// Right-clicking the Dock icon shows the same menu as the menu bar icon.
+    func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
+        let menu = NSMenu()
+        menuNeedsUpdate(menu)
+        return menu
     }
 
     /// Opening Tiles again from Finder, Spotlight or the Dock shows Settings.

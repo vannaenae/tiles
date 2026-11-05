@@ -3,7 +3,7 @@
 **A free, open-source auto-tiling window manager for macOS.**
 Every window snaps into place the moment it opens. Ultrawide displays get layouts built for them. Your arrangement comes back on its own when you dock.
 
-- Lives in the menu bar. No Dock icon, no setup wizard.
+- Lives in the menu bar, the Dock, or both: your choice.
 - macOS 13 Ventura or later, Apple silicon and Intel.
 - MIT licensed. No account, no telemetry, nothing leaves your Mac.
 
@@ -137,6 +137,7 @@ A scene is the arrangement for one combination of displays: each display's layou
   "outlineColor": "#E8643C",
   "theme": "orange",
   "appearance": "system",
+  "iconPlacement": "menu-bar",
   "newWindowPlacement": "end",
   "dragToSwap": true,
   "resizeToAdjustRatio": true,
@@ -166,6 +167,7 @@ A scene is the arrangement for one combination of displays: each display's layou
 | `layout.maxTiles` | Most tiles per display before windows stack. 0 picks from display size |
 | `theme` | `orange`, `blue`, `green`, `purple` or `pink` |
 | `appearance` | `system`, `light` or `dark` |
+| `iconPlacement` | `menu-bar`, `dock` or `both` |
 | `outlineColor` | Focus outline colour as `#RRGGBB`, `""` for none |
 | `newWindowPlacement` | `end`, `master`, or `after-focused` |
 | `rules` | Match on `app` (bundle ID or name) and/or `titleContains`. Last match wins. Replaces the default list when set |

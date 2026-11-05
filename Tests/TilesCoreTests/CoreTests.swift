@@ -102,6 +102,8 @@ final class ConfigTests: XCTestCase {
         let config = try Config.decode(Data(#"{"theme": "purple", "appearance": "dark"}"#.utf8))
         XCTAssertEqual(config.theme, .purple)
         XCTAssertEqual(config.appearance, .dark)
+        XCTAssertEqual(Config.default.iconPlacement, .menuBar)
+        XCTAssertEqual(try Config.decode(Data(#"{"iconPlacement": "both"}"#.utf8)).iconPlacement, .both)
         XCTAssertEqual(Theme.allCases.count, 5)
         XCTAssertEqual(Set(Theme.allCases.map(\.hex)).count, 5)
     }

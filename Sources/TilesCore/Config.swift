@@ -27,6 +27,11 @@ public enum Theme: String, Codable, CaseIterable {
     public var displayName: String { rawValue.prefix(1).uppercased() + rawValue.dropFirst() }
 }
 
+/// Where Tiles shows its icon.
+public enum IconPlacement: String, Codable, CaseIterable {
+    case menuBar = "menu-bar", dock, both
+}
+
 /// Light, dark, or follow macOS.
 public enum AppearanceMode: String, Codable, CaseIterable {
     case system, light, dark
@@ -84,6 +89,7 @@ public struct Config: Codable, Equatable {
     public var outlineColor: String
     public var theme: Theme
     public var appearance: AppearanceMode
+    public var iconPlacement: IconPlacement
     public var rules: [WindowRule]
     /// Shortcut → command name. Merged on top of the defaults; map a shortcut
     /// to `"none"` to remove a default binding.
@@ -103,6 +109,7 @@ public struct Config: Codable, Equatable {
         outlineColor: String = "#E8643C",
         theme: Theme = .orange,
         appearance: AppearanceMode = .system,
+        iconPlacement: IconPlacement = .menuBar,
         rules: [WindowRule] = Config.defaultRules,
         hotkeys: [String: String] = [:]
     ) {
@@ -119,6 +126,7 @@ public struct Config: Codable, Equatable {
         self.outlineColor = outlineColor
         self.theme = theme
         self.appearance = appearance
+        self.iconPlacement = iconPlacement
         self.rules = rules
         self.hotkeys = hotkeys
     }
@@ -166,7 +174,7 @@ public struct Config: Codable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case enabled, defaultLayout, ultrawideLayout, displays, layout, newWindowPlacement
-        case dragToSwap, resizeToAdjustRatio, autoRestoreScenes, mouseFollowsFocus, outlineColor, theme, appearance, rules, hotkeys
+        case dragToSwap, resizeToAdjustRatio, autoRestoreScenes, mouseFollowsFocus, outlineColor, theme, appearance, iconPlacement, rules, hotkeys
     }
 
     /// Every key is optional so a config file only needs the settings it changes.
@@ -186,6 +194,7 @@ public struct Config: Codable, Equatable {
         outlineColor = try c.decodeIfPresent(String.self, forKey: .outlineColor) ?? d.outlineColor
         theme = try c.decodeIfPresent(Theme.self, forKey: .theme) ?? d.theme
         appearance = try c.decodeIfPresent(AppearanceMode.self, forKey: .appearance) ?? d.appearance
+        iconPlacement = try c.decodeIfPresent(IconPlacement.self, forKey: .iconPlacement) ?? d.iconPlacement
         rules = try c.decodeIfPresent([WindowRule].self, forKey: .rules) ?? d.rules
         hotkeys = try c.decodeIfPresent([String: String].self, forKey: .hotkeys) ?? d.hotkeys
     }

@@ -256,6 +256,16 @@ private struct GeneralPane: View {
                     }
                 }
             }
+            Section {
+                Picker("Show Tiles in", selection: $model.config.iconPlacement) {
+                    Text("Menu bar").tag(IconPlacement.menuBar)
+                    Text("Dock").tag(IconPlacement.dock)
+                    Text("Both").tag(IconPlacement.both)
+                }
+                .pickerStyle(.segmented)
+            } footer: {
+                Text("You can also open Tiles any time from Spotlight or Finder.")
+            }
             Section("Windows") {
                 Picker("New windows open", selection: $model.config.newWindowPlacement) {
                     Text("At the end").tag(NewWindowPlacement.end)
