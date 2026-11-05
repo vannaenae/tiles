@@ -220,7 +220,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         menu.addItem(options)
 
         menu.addItem(shortcutsMenu())
-        menu.addItem(item("Settings…", #selector(openSettings), key: ","))
+        menu.addItem(item("Open Tiles…", #selector(openSettings), key: ","))
         menu.addItem(item("Edit Config File…", #selector(openConfig)))
         if let error = configStore.lastError {
             let warn = NSMenuItem(title: "⚠︎ Config: \(error)", action: nil, keyEquivalent: "")
@@ -308,7 +308,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     @objc private func openSettings() {
         if settingsWindow?.isVisible != true {
             // Fresh model each time so it picks up edits made to the file meanwhile.
-            let model = SettingsModel(store: configStore) { [weak self] in self?.manager.perform($0) }
+            let model = SettingsModel(
+                store: configStore,
+                perform: { [weak self] in self?.manager.perform($0) },
+                setLayout: { [weak self] kind, display in self?.manager.setLayout(kind, for: display) },
+                status: { [weak self] in self?.manager.status() ?? [] }
+            )
             let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(model: model)))
             window.title = "Tiles"
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]

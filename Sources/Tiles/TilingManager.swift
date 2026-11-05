@@ -553,6 +553,31 @@ final class TilingManager {
         scheduleAutosave()
     }
 
+    /// What the dashboard shows: each display with its tiles, relative to the display's corner.
+    struct DisplayStatus: Identifiable {
+        struct Tile { let frame: Rect; let app: String }
+        let id: String
+        let name: String
+        let size: Rect
+        let layout: LayoutKind
+        let tiles: [Tile]
+    }
+
+    func status() -> [DisplayStatus] {
+        let current = displays.isEmpty ? Display.current() : displays
+        return current.map { display in
+            let a = display.area
+            let tiles = visibleOrder(display.id).compactMap { id -> DisplayStatus.Tile? in
+                guard let f = targetFrames[id] else { return nil }
+                return .init(frame: Rect(x: f.x - a.x, y: f.y - a.y, width: f.width, height: f.height),
+                             app: windows[id]?.appName ?? "")
+            }
+            return DisplayStatus(id: display.id, name: display.name,
+                                 size: Rect(x: 0, y: 0, width: a.width, height: a.height),
+                                 layout: layout(for: display.id), tiles: tiles)
+        }
+    }
+
     func layout(for displayID: String) -> LayoutKind {
         layouts[displayID] ?? config.defaultLayout
     }

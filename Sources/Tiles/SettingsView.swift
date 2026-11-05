@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 import ServiceManagement
 import TilesCore
 
@@ -7,23 +8,91 @@ import TilesCore
 /// Edits a copy of the config and writes it back shortly after each change.
 final class SettingsModel: ObservableObject {
     @Published var config: Config { didSet { scheduleSave() } }
-    @Published var section: SettingsSection? = .general
+    @Published var section: SettingsSection? = .dashboard
     @Published var preset = Preset.laptop
     @Published var windowCount = 4
     @Published var scenes: [SavedScene] = []
     @Published var launchAtLogin = SMAppService.mainApp.status == .enabled
     @Published var trusted = AccessibilityPermission.isTrusted
+    @Published var live: [TilingManager.DisplayStatus] = []
+    @Published var lastSaved: Date?
+    @Published var profiles: [String] = []
 
     let perform: (Command) -> Void
+    let setLayout: (LayoutKind, String) -> Void
+    private let status: () -> [TilingManager.DisplayStatus]
     private let store: ConfigStore
     private var saveWork: DispatchWorkItem?
+    private var liveTimer: Timer?
     static let outlineColors = ["#E8643C", "#3F8F5F", "#3478F6", "#D4A017", "#8E8E93", ""]
 
-    init(store: ConfigStore, perform: @escaping (Command) -> Void) {
+    init(store: ConfigStore,
+         perform: @escaping (Command) -> Void,
+         setLayout: @escaping (LayoutKind, String) -> Void,
+         status: @escaping () -> [TilingManager.DisplayStatus]) {
         self.store = store
         self.perform = perform
+        self.setLayout = setLayout
+        self.status = status
         self.config = store.config
         reloadScenes()
+        reloadProfiles()
+        live = status()
+        // The dashboard follows windows as they open, close and move.
+        liveTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            guard let self else { return }
+            self.live = self.status()
+            self.trusted = AccessibilityPermission.isTrusted
+        }
+    }
+
+    deinit { liveTimer?.invalidate() }
+
+    // MARK: Profiles: named copies of the whole config in ~/.config/tiles/profiles
+
+    static let profilesDirectory = ConfigStore.directory.appendingPathComponent("profiles", isDirectory: true)
+
+    private static func profileURL(_ name: String) -> URL {
+        let safe = name.replacingOccurrences(of: "/", with: "-").trimmingCharacters(in: .whitespaces)
+        return profilesDirectory.appendingPathComponent(safe).appendingPathExtension("json")
+    }
+
+    func reloadProfiles() {
+        let files = (try? FileManager.default.contentsOfDirectory(at: Self.profilesDirectory, includingPropertiesForKeys: nil)) ?? []
+        profiles = files.filter { $0.pathExtension == "json" }.map { $0.deletingPathExtension().lastPathComponent }.sorted()
+    }
+
+    func saveProfile(_ name: String) {
+        guard !name.trimmingCharacters(in: .whitespaces).isEmpty, let data = try? config.encoded() else { return }
+        try? FileManager.default.createDirectory(at: Self.profilesDirectory, withIntermediateDirectories: true)
+        try? data.write(to: Self.profileURL(name), options: .atomic)
+        reloadProfiles()
+    }
+
+    func applyProfile(_ name: String) {
+        guard let data = try? Data(contentsOf: Self.profileURL(name)), let loaded = try? Config.decode(data) else { return }
+        config = loaded
+    }
+
+    func deleteProfile(_ name: String) {
+        try? FileManager.default.removeItem(at: Self.profileURL(name))
+        reloadProfiles()
+    }
+
+    func exportSettings() {
+        let panel = NSSavePanel()
+        panel.nameFieldStringValue = "Tiles Settings.json"
+        panel.allowedContentTypes = [.json]
+        guard panel.runModal() == .OK, let url = panel.url, let data = try? config.encoded() else { return }
+        try? data.write(to: url, options: .atomic)
+    }
+
+    func importSettings() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.json]
+        guard panel.runModal() == .OK, let url = panel.url,
+              let data = try? Data(contentsOf: url), let loaded = try? Config.decode(data) else { return }
+        config = loaded
     }
 
     private func scheduleSave() {
@@ -32,6 +101,7 @@ final class SettingsModel: ObservableObject {
             guard let self, self.config != self.store.config else { return }
             let config = self.config
             self.store.update { $0 = config }
+            self.lastSaved = Date()
         }
         saveWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
@@ -80,11 +150,13 @@ final class SettingsModel: ObservableObject {
 }
 
 enum SettingsSection: String, CaseIterable, Identifiable {
-    case general, layouts, spacing, appearance, mouse, scenes, shortcuts, rules, about
+    case dashboard, general, layouts, spacing, appearance, mouse, scenes, shortcuts, rules, profiles, about
     var id: String { rawValue }
 
     var title: String {
         switch self {
+        case .dashboard: return "Dashboard"
+        case .profiles: return "Profiles"
         case .general: return "General"
         case .layouts: return "Layouts"
         case .spacing: return "Gaps & Sizing"
@@ -99,6 +171,8 @@ enum SettingsSection: String, CaseIterable, Identifiable {
 
     var icon: String {
         switch self {
+        case .dashboard: return "square.grid.2x2"
+        case .profiles: return "tray.full"
         case .general: return "gearshape"
         case .layouts: return "rectangle.split.3x1"
         case .spacing: return "square.dashed"
@@ -125,7 +199,9 @@ struct SettingsView: View {
             .navigationSplitViewColumnWidth(190)
         } detail: {
             Group {
-                switch model.section ?? .general {
+                switch model.section ?? .dashboard {
+                case .dashboard: DashboardPane(model: model)
+                case .profiles: ProfilesPane(model: model)
                 case .general: GeneralPane(model: model)
                 case .layouts: LayoutsPane(model: model)
                 case .spacing: SpacingPane(model: model)
@@ -139,6 +215,7 @@ struct SettingsView: View {
             }
             .formStyle(.grouped)
             .navigationTitle((model.section ?? .general).title)
+            .navigationSubtitle(model.lastSaved == nil ? "" : "All changes saved")
         }
         .frame(minWidth: 820, minHeight: 580)
         .tint(model.accent)
@@ -463,6 +540,160 @@ private struct AboutPane: View {
     }
 }
 
+private struct DashboardPane: View {
+    @ObservedObject var model: SettingsModel
+
+    private var windowCount: Int { model.live.reduce(0) { $0 + $1.tiles.count } }
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                header
+                if !model.trusted { permissionBanner }
+                ForEach(model.live) { display in displayCard(display) }
+                actions
+                tips
+            }
+            .padding(24)
+        }
+    }
+
+    private var header: some View {
+        HStack(spacing: 16) {
+            Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 56, height: 56)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Tiles").font(.title.bold())
+                HStack(spacing: 6) {
+                    Circle().fill(model.config.enabled ? Color.green : Color.secondary).frame(width: 8, height: 8)
+                    Text(model.config.enabled
+                         ? "Tiling \(windowCount) window\(windowCount == 1 ? "" : "s") on \(model.live.count) display\(model.live.count == 1 ? "" : "s")"
+                         : "Tiling is paused")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Spacer()
+            Toggle("Tiling", isOn: $model.config.enabled).toggleStyle(.switch).labelsHidden().controlSize(.large)
+        }
+        .padding(18)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private var permissionBanner: some View {
+        HStack {
+            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange)
+            Text("Tiles needs Accessibility access to move windows.")
+            Spacer()
+            Button("Grant Access…") { AccessibilityPermission.request() }
+        }
+        .padding(14)
+        .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func displayCard(_ display: TilingManager.DisplayStatus) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Image(systemName: "display")
+                Text(display.name).font(.headline)
+                Text("\(display.tiles.count) window\(display.tiles.count == 1 ? "" : "s")").foregroundStyle(.secondary)
+                Spacer()
+                Menu(display.layout.displayName) {
+                    ForEach(LayoutKind.allCases, id: \.self) { kind in
+                        Button(kind.displayName) { model.setLayout(kind, display.id) }
+                    }
+                }
+                .fixedSize()
+            }
+            if display.tiles.isEmpty {
+                Text(display.layout == .float ? "Tiles leaves this display alone." : "No windows on this display.")
+                    .foregroundStyle(.secondary).frame(maxWidth: .infinity, minHeight: 120)
+            } else {
+                TilesCanvas(area: display.size, frames: display.tiles.map(\.frame),
+                            labels: display.tiles.map(\.app), accent: model.accent)
+                    .frame(maxHeight: 220)
+            }
+        }
+        .padding(18)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private var actions: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
+            action("Retile", "arrow.triangle.2.circlepath", .retile)
+            action("Save Scene", "square.and.arrow.down", .saveScene)
+            action("Restore Scene", "clock.arrow.circlepath", .restoreScene)
+            action("Next Layout", "rectangle.split.3x1", .nextLayout)
+        }
+    }
+
+    private func action(_ title: String, _ icon: String, _ command: Command) -> some View {
+        Button { model.perform(command) } label: {
+            Label(title, systemImage: icon).frame(maxWidth: .infinity).padding(.vertical, 6)
+        }
+        .controlSize(.large)
+    }
+
+    private var tips: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Handy shortcuts").font(.headline)
+            Group {
+                Text("⌃⌥ + arrows  focus a window   ·   ⌃⌥⇧ + arrows  swap")
+                Text("⌃⌥Space  next layout   ·   ⌃⌥M  fill the screen   ·   ⌃⌥F  float")
+                Text("Drag a window onto another to swap them.")
+            }
+            .font(.callout).foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
+    }
+}
+
+private struct ProfilesPane: View {
+    @ObservedObject var model: SettingsModel
+    @State private var name = ""
+
+    var body: some View {
+        Form {
+            Section {
+                HStack {
+                    TextField("Profile name, e.g. Desk or Travel", text: $name)
+                    Button("Save Current Settings") {
+                        model.saveProfile(name)
+                        name = ""
+                    }
+                    .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
+                }
+            } header: {
+                Text("Save your settings")
+            } footer: {
+                Text("A profile is a snapshot of every setting: layouts, gaps, colours, shortcuts and rules. Your current settings already save automatically.")
+            }
+            Section("Saved profiles") {
+                if model.profiles.isEmpty {
+                    Text("No profiles yet.").foregroundStyle(.secondary)
+                }
+                ForEach(model.profiles, id: \.self) { profile in
+                    HStack {
+                        Image(systemName: "tray.full")
+                        Text(profile)
+                        Spacer()
+                        Button("Apply") { model.applyProfile(profile) }
+                        Button(role: .destructive) { model.deleteProfile(profile) } label: { Image(systemName: "trash") }
+                            .buttonStyle(.borderless)
+                    }
+                }
+            }
+            Section("Move settings between Macs") {
+                HStack {
+                    Button("Export Settings…") { model.exportSettings() }
+                    Button("Import Settings…") { model.importSettings() }
+                }
+            }
+        }
+        .onAppear { model.reloadProfiles() }
+    }
+}
+
 // MARK: - Shared pieces
 
 /// Live preview of the current settings on a chosen display size.
@@ -525,25 +756,46 @@ struct LayoutPreview: View {
     let accent: Color
 
     var body: some View {
-        let frames = LayoutEngine.frames(count: count, in: area, kind: kind, parameters: parameters)
+        TilesCanvas(area: area, frames: LayoutEngine.frames(count: count, in: area, kind: kind, parameters: parameters),
+                    labels: [], accent: accent)
+    }
+}
+
+/// Draws tiles scaled into the available space, optionally labelled with app names.
+struct TilesCanvas: View {
+    let area: Rect
+    let frames: [Rect]
+    let labels: [String]
+    let accent: Color
+
+    var body: some View {
         GeometryReader { geo in
             let scale = min(geo.size.width / area.width, geo.size.height / area.height)
             ZStack(alignment: .topLeading) {
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: 8)
                     .fill(Color.secondary.opacity(0.15))
                     .frame(width: area.width * scale, height: area.height * scale)
                 ForEach(Array(frames.enumerated()), id: \.offset) { index, frame in
-                    RoundedRectangle(cornerRadius: 4)
+                    RoundedRectangle(cornerRadius: 5)
                         .fill(accent.opacity(index == 0 ? 0.85 : 0.35))
-                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(Color.primary.opacity(0.15)))
+                        .overlay(RoundedRectangle(cornerRadius: 5).stroke(Color.primary.opacity(0.15)))
+                        .overlay(alignment: .topLeading) {
+                            if index < labels.count, !labels[index].isEmpty {
+                                Text(labels[index])
+                                    .font(.caption2.weight(.semibold))
+                                    .foregroundStyle(index == 0 ? Color.white : Color.primary)
+                                    .lineLimit(1)
+                                    .padding(6)
+                            }
+                        }
                         .frame(width: frame.width * scale, height: frame.height * scale)
                         .offset(x: frame.x * scale, y: frame.y * scale)
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height)
-            .animation(.easeInOut(duration: 0.2), value: frames)
+            .animation(.easeInOut(duration: 0.25), value: frames)
         }
-        .aspectRatio(area.width / area.height, contentMode: .fit)
+        .aspectRatio(area.width / max(1, area.height), contentMode: .fit)
     }
 }
 

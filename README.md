@@ -24,7 +24,8 @@ Every window snaps into place the moment it opens. Ultrawide displays get layout
 | Mouse | Drag a window onto another to swap. Drag to another display to move. Resize to change the split |
 | Keyboard | 40+ global shortcuts, all remappable |
 | Automation | `tiles://` URL scheme and a `tiles` CLI for Raycast, Alfred, Shortcuts, skhd |
-| Settings | A full Settings app: layouts with live preview, gaps, outline colour, shortcut recorder, app rules, saved scenes |
+| App | A dashboard showing every display and its windows live, plus settings for layouts, gaps, colours, shortcuts, app rules and scenes |
+| Profiles | Save your settings as named profiles, switch in one click, export and import between Macs |
 | Config | Also one plain JSON file, hot-reloaded on save |
 | Per-display | Different layout for each monitor, by name or by shape |
 | Rules | Float any app or window title |
@@ -34,7 +35,7 @@ Every window snaps into place the moment it opens. Ultrawide displays get layout
 
 **Download:** grab `Tiles-x.y.z.zip` from [Releases](https://github.com/vannaenae/tiles/releases), unzip, drag `Tiles.app` to Applications.
 
-Release builds are signed with a Developer ID and notarized by Apple, so Tiles opens with a normal double-click. Builds from CI or source are ad-hoc signed: right-click → **Open** the first time.
+First launch only: right-click `Tiles.app` → **Open** → **Open** (releases are signed but not notarized). If macOS still refuses, run `xattr -dr com.apple.quarantine /Applications/Tiles.app`.
 
 **Build from source** (Xcode 15+ or the Swift 5.9+ toolchain):
 

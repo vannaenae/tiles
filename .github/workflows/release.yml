@@ -26,8 +26,8 @@ jobs:
       - name: Test
         run: swift test
 
-      # Signs with your Developer ID and notarizes when the secrets below exist.
-      # Without them the release is ad-hoc signed and users must right-click → Open.
+      # Signs with the Developer ID certificate when it exists, so macOS keeps the
+      # Accessibility permission across updates. Not notarized: first launch is right-click → Open.
       - name: Import Developer ID certificate
         if: ${{ env.MACOS_CERTIFICATE != '' }}
         env:
@@ -44,16 +44,8 @@ jobs:
           security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
           IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" | grep "Developer ID Application" | head -1 | sed -E 's/.*"(.*)"/\1/')"
           echo "CODESIGN_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
-          echo "NOTARIZE=1" >> "$GITHUB_ENV"
 
       - name: Package app
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
-          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
         run: VERSION="${VERSION#v}" ./scripts/build-app.sh
 
       - name: Publish release
@@ -63,3 +55,12 @@ jobs:
           target_commitish: ${{ github.sha }}
           files: dist/*.zip
           generate_release_notes: true
+          body: |
+            ## Install
+            1. Download **Tiles-*.zip** below and unzip it.
+            2. Drag **Tiles.app** into Applications.
+            3. First launch only: right-click Tiles.app → **Open** → **Open**.
+               If macOS still refuses, run `xattr -dr com.apple.quarantine /Applications/Tiles.app` in Terminal.
+            4. Allow Tiles in System Settings → Privacy & Security → Accessibility.
+
+            Tiles opens its dashboard on first launch. After that it lives in the menu bar.
