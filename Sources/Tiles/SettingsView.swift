@@ -11,6 +11,22 @@ final class SettingsModel: ObservableObject {
     @Published var section: SettingsSection? = .dashboard
     @Published var preset = Preset.laptop
     @Published var windowCount = 4
+    /// Size for the "Custom" preview, in points.
+    @Published var customWidth: Double = 2560
+    @Published var customHeight: Double = 1440
+
+    var previewArea: Rect {
+        preset == .custom
+            ? Rect(x: 0, y: 0, width: max(400, customWidth), height: max(300, customHeight))
+            : preset.area
+    }
+
+    /// Fills the custom size from this Mac's main display.
+    func useMainScreenSize() {
+        guard let screen = NSScreen.main else { return }
+        customWidth = Double(screen.visibleFrame.width).rounded()
+        customHeight = Double(screen.visibleFrame.height).rounded()
+    }
     @Published var scenes: [SavedScene] = []
     @Published var launchAtLogin = SMAppService.mainApp.status == .enabled
     @Published var trusted = AccessibilityPermission.isTrusted
@@ -141,10 +157,11 @@ final class SettingsModel: ObservableObject {
 
     /// Typical usable areas, in points, for the preview.
     enum Preset: String, CaseIterable {
-        case laptop = "MacBook 14″", studio = "27″", ultrawide = "34″ ultrawide", superUltrawide = "49″"
+        case laptop = "MacBook 14″", studio = "27″", ultrawide = "34″ ultrawide", superUltrawide = "49″", custom = "Custom"
 
         var area: Rect {
             switch self {
+            case .custom: return Rect(x: 0, y: 0, width: 2560, height: 1440)
             case .laptop: return Rect(x: 0, y: 0, width: 1512, height: 945)
             case .studio: return Rect(x: 0, y: 0, width: 2560, height: 1415)
             case .ultrawide: return Rect(x: 0, y: 0, width: 3440, height: 1415)
@@ -734,7 +751,7 @@ private struct PreviewPanel: View {
     @ObservedObject var model: SettingsModel
 
     var body: some View {
-        let area = model.preset.area
+        let area = model.previewArea
         let kind = model.config.layoutKind(forDisplayNamed: model.preset.rawValue, aspectRatio: area.width / area.height)
         VStack(spacing: 10) {
             Picker("Display", selection: $model.preset) {
@@ -742,6 +759,18 @@ private struct PreviewPanel: View {
             }
             .pickerStyle(.segmented)
             .labelsHidden()
+            if model.preset == .custom {
+                HStack(spacing: 8) {
+                    TextField("Width", value: $model.customWidth, format: .number).frame(width: 80)
+                    Text("×").foregroundStyle(.secondary)
+                    TextField("Height", value: $model.customHeight, format: .number).frame(width: 80)
+                    Text("points").foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Use This Mac's Screen") { model.useMainScreenSize() }
+                }
+                .textFieldStyle(.roundedBorder)
+                .font(.callout)
+            }
             LayoutPreview(kind: kind, area: area, count: model.windowCount, parameters: model.config.layout, accent: model.accent)
                 .frame(height: 200)
             HStack {
