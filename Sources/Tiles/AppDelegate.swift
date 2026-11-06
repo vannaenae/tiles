@@ -62,6 +62,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         updateIcon()
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        if started, configStore.config.restoreWindowsOnQuit { manager.restoreOriginalFrames() }
+    }
+
     /// `tiles://<command>` — lets Raycast, Alfred, Shortcuts or a shell script drive Tiles.
     func application(_ application: NSApplication, open urls: [URL]) {
         for url in urls where url.scheme == "tiles" {

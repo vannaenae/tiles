@@ -18,6 +18,8 @@ public enum LayoutKind: String, Codable, CaseIterable {
     case grid
     /// Every window fills the screen; cycle focus to switch.
     case monocle
+    /// Windows in a row wider than the screen, each at its own width; the screen scrolls to the focused one.
+    case scrolling
     /// Tiles leaves this display alone.
     case float
 
@@ -32,6 +34,7 @@ public enum LayoutKind: String, Codable, CaseIterable {
         case .rows: return "Rows"
         case .grid: return "Grid"
         case .monocle: return "Monocle"
+        case .scrolling: return "Scrolling"
         case .float: return "Float (Off)"
         }
     }
@@ -57,6 +60,8 @@ public struct LayoutParameters: Equatable, Codable {
     /// Most tiles per display. Further windows stack on the last tile.
     /// 0 picks a number from the display's size.
     public var maxTiles: Int
+    /// Scrolling layout: width of a new window, as a share of the screen.
+    public var scrollWidth: Double
 
     public init(
         innerGap: Double = 8,
@@ -66,7 +71,8 @@ public struct LayoutParameters: Equatable, Codable {
         ultrawideAspectRatio: Double = 2.0,
         ultrawideSingleWindowRatio: Double = 0.6,
         maxTileWidth: Double = 2600,
-        maxTiles: Int = 0
+        maxTiles: Int = 0,
+        scrollWidth: Double = 0.5
     ) {
         self.innerGap = innerGap
         self.outerGap = outerGap
@@ -76,6 +82,7 @@ public struct LayoutParameters: Equatable, Codable {
         self.ultrawideSingleWindowRatio = ultrawideSingleWindowRatio
         self.maxTileWidth = maxTileWidth
         self.maxTiles = maxTiles
+        self.scrollWidth = scrollWidth
     }
 
     public static let `default` = LayoutParameters()
@@ -94,6 +101,12 @@ public enum LayoutEngine {
         // Ultrawide: a single window is centred rather than stretched.
         if total == 1, kind != .monocle, isUltrawide(usable, p) {
             return [cap(centered(in: usable, widthRatio: p.ultrawideSingleWindowRatio), p.maxTileWidth).integral]
+        }
+
+        // Scrolling never runs out of room. Previews show every window at the default width.
+        if kind == .scrolling {
+            return ScrollingLayout.layout(widths: Array(repeating: p.scrollWidth, count: total), in: area,
+                                          parameters: p, focused: 0, offset: 0).frames
         }
 
         // Screen full: extra windows stack on the last tile instead of shrinking everything.
@@ -120,6 +133,8 @@ public enum LayoutEngine {
             frames = grid(count: count, in: usable, gap: gap)
         case .monocle:
             frames = Array(repeating: usable, count: count)
+        case .scrolling:
+            frames = []
         case .float:
             frames = []
         }

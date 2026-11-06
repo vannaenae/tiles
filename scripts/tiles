@@ -15,8 +15,8 @@ layout-dwindle  layout-master-stack  layout-wide-master  layout-centered-master
 layout-columns  layout-rows  layout-grid  layout-monocle  layout-float
 next-layout  previous-layout  grow-master  shrink-master
 increase-master-count  decrease-master-count  increase-gaps  decrease-gaps
-toggle-float  toggle-tiling  toggle-zoom  retile
-save-scene  restore-scene  undo-restore  layout-thirds
+toggle-float  toggle-tiling  toggle-zoom  cycle-width  center-window  retile
+save-scene  restore-scene  undo-restore  layout-thirds  layout-scrolling
 HELP
   exit 0
 fi

@@ -25,6 +25,8 @@ public enum Command: Equatable {
     case restoreScene
     case undoRestore
     case toggleZoom
+    case cycleWidth
+    case centerWindow
 
     /// Stable string form used in config files and URLs, e.g. `focus-left`, `layout-columns`.
     public var name: String {
@@ -52,6 +54,8 @@ public enum Command: Equatable {
         case .restoreScene: return "restore-scene"
         case .undoRestore: return "undo-restore"
         case .toggleZoom: return "toggle-zoom"
+        case .cycleWidth: return "cycle-width"
+        case .centerWindow: return "center-window"
         }
     }
 
@@ -61,7 +65,7 @@ public enum Command: Equatable {
             .promote, .nextLayout, .previousLayout, .growMaster, .shrinkMaster,
             .increaseMasterCount, .decreaseMasterCount, .toggleFloat, .toggleTiling,
             .retile, .focusNextWindow, .focusPreviousWindow, .moveToNextDisplay,
-            .moveToPreviousDisplay, .increaseGaps, .decreaseGaps, .saveScene, .restoreScene, .undoRestore, .toggleZoom,
+            .moveToPreviousDisplay, .increaseGaps, .decreaseGaps, .saveScene, .restoreScene, .undoRestore, .toggleZoom, .cycleWidth, .centerWindow,
         ]
 
     public static var allNames: [String] { all.map(\.name) }

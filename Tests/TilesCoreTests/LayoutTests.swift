@@ -23,7 +23,7 @@ final class LayoutTests: XCTestCase {
 
     func testFramesStayInsideTheScreen() {
         for kind in LayoutKind.allCases where kind != .float {
-            for n in 1...9 {
+            for n in 1...9 where kind != .scrolling {
                 for frame in LayoutEngine.frames(count: n, in: screen, kind: kind, parameters: roomy) {
                     XCTAssertGreaterThanOrEqual(frame.minX, screen.minX, "\(kind) \(n)")
                     XCTAssertGreaterThanOrEqual(frame.minY, screen.minY, "\(kind) \(n)")
@@ -37,7 +37,7 @@ final class LayoutTests: XCTestCase {
     }
 
     func testTilingLayoutsDoNotOverlap() {
-        for kind in LayoutKind.allCases where kind != .float && kind != .monocle {
+        for kind in LayoutKind.allCases where kind != .float && kind != .monocle && kind != .scrolling {
             for n in 1...9 {
                 let frames = LayoutEngine.frames(count: n, in: screen, kind: kind, parameters: roomy)
                 for i in frames.indices {
@@ -51,7 +51,7 @@ final class LayoutTests: XCTestCase {
 
     func testTilingLayoutsCoverTheScreenWithoutGaps() {
         let area = screen.area
-        for kind in LayoutKind.allCases where kind != .float && kind != .monocle {
+        for kind in LayoutKind.allCases where kind != .float && kind != .monocle && kind != .scrolling {
             for n in 1...9 {
                 let total = LayoutEngine.frames(count: n, in: screen, kind: kind, parameters: noGaps).map(\.area).reduce(0, +)
                 XCTAssertEqual(total, area, accuracy: 1, "\(kind) n=\(n)")
@@ -161,5 +161,37 @@ final class LayoutTests: XCTestCase {
         let ultrawide = LayoutEngine.maxTiles(in: Rect(x: 0, y: 0, width: 5120, height: 1415), .default)
         XCTAssertEqual(laptop, 4)
         XCTAssertGreaterThan(ultrawide, laptop)
+    }
+
+    func testScrollingKeepsWidthsAndParksOffscreenWindows() {
+        let r = ScrollingLayout.layout(widths: [0.5, 0.5, 0.5], in: screen, parameters: noGaps, focused: 0, offset: 0)
+        XCTAssertEqual(r.frames.map(\.width), [720, 720, 720])
+        XCTAssertEqual(r.frames[0].x, 0)
+        XCTAssertEqual(r.frames[1].x, 720)
+        XCTAssertEqual(r.frames[2].x, 1440 - ScrollingLayout.sliver) // waits at the right edge
+        XCTAssertEqual(r.offset, 0)
+    }
+
+    func testScrollingBringsFocusedWindowIntoView() {
+        let r = ScrollingLayout.layout(widths: [0.5, 0.5, 0.5], in: screen, parameters: noGaps, focused: 2, offset: 0)
+        XCTAssertEqual(r.offset, 720)
+        XCTAssertEqual(r.frames[2].maxX, 1440)
+        XCTAssertEqual(r.frames[0].maxX, ScrollingLayout.sliver) // now waits at the left edge
+        // Stays put when the focused window is already visible.
+        XCTAssertEqual(ScrollingLayout.layout(widths: [0.5, 0.5, 0.5], in: screen, parameters: noGaps, focused: 1, offset: 720).offset, 720)
+    }
+
+    func testScrollingHidesInCornerNextToAnotherDisplay() {
+        let r = ScrollingLayout.layout(widths: [0.5, 0.5, 0.5], in: screen, parameters: noGaps, focused: 0, offset: 0, hideRight: true)
+        XCTAssertEqual(r.frames[2].x, screen.maxX - 1)
+        XCTAssertEqual(r.frames[2].y, screen.maxY - 1)
+    }
+
+    func testScrollingCentreAndPresets() {
+        let off = ScrollingLayout.centeredOffset(widths: [0.5, 0.5, 0.5], index: 1, in: screen, parameters: noGaps)
+        XCTAssertEqual(off, 360)
+        XCTAssertEqual(ScrollingLayout.nextPreset(after: 0.5), 2.0 / 3)
+        XCTAssertEqual(ScrollingLayout.nextPreset(after: 1), 1.0 / 3)
+        XCTAssertEqual(LayoutEngine.frames(count: 5, in: screen, kind: .scrolling).count, 5)
     }
 }

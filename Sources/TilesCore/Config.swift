@@ -90,6 +90,8 @@ public struct Config: Codable, Equatable {
     public var theme: Theme
     public var appearance: AppearanceMode
     public var iconPlacement: IconPlacement
+    /// Put every window back where it was when Tiles quits.
+    public var restoreWindowsOnQuit: Bool
     public var rules: [WindowRule]
     /// Shortcut → command name. Merged on top of the defaults; map a shortcut
     /// to `"none"` to remove a default binding.
@@ -110,6 +112,7 @@ public struct Config: Codable, Equatable {
         theme: Theme = .orange,
         appearance: AppearanceMode = .system,
         iconPlacement: IconPlacement = .menuBar,
+        restoreWindowsOnQuit: Bool = true,
         rules: [WindowRule] = Config.defaultRules,
         hotkeys: [String: String] = [:]
     ) {
@@ -127,6 +130,7 @@ public struct Config: Codable, Equatable {
         self.theme = theme
         self.appearance = appearance
         self.iconPlacement = iconPlacement
+        self.restoreWindowsOnQuit = restoreWindowsOnQuit
         self.rules = rules
         self.hotkeys = hotkeys
     }
@@ -165,7 +169,7 @@ public struct Config: Codable, Equatable {
         "ctrl+alt+=": "grow-master", "ctrl+alt+-": "shrink-master",
         "ctrl+alt+,": "increase-master-count", "ctrl+alt+.": "decrease-master-count",
         "ctrl+alt+shift+=": "increase-gaps", "ctrl+alt+shift+-": "decrease-gaps",
-        "ctrl+alt+f": "toggle-float", "ctrl+alt+m": "toggle-zoom", "ctrl+alt+t": "toggle-tiling",
+        "ctrl+alt+f": "toggle-float", "ctrl+alt+m": "toggle-zoom", "ctrl+alt+w": "cycle-width", "ctrl+alt+c": "center-window", "ctrl+alt+t": "toggle-tiling",
         "ctrl+alt+r": "retile",
         "ctrl+alt+n": "focus-next", "ctrl+alt+p": "focus-previous",
         "ctrl+alt+]": "move-to-next-display", "ctrl+alt+[": "move-to-previous-display",
@@ -174,7 +178,7 @@ public struct Config: Codable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case enabled, defaultLayout, ultrawideLayout, displays, layout, newWindowPlacement
-        case dragToSwap, resizeToAdjustRatio, autoRestoreScenes, mouseFollowsFocus, outlineColor, theme, appearance, iconPlacement, rules, hotkeys
+        case dragToSwap, resizeToAdjustRatio, autoRestoreScenes, mouseFollowsFocus, outlineColor, theme, appearance, iconPlacement, restoreWindowsOnQuit, rules, hotkeys
     }
 
     /// Every key is optional so a config file only needs the settings it changes.
@@ -195,6 +199,7 @@ public struct Config: Codable, Equatable {
         theme = try c.decodeIfPresent(Theme.self, forKey: .theme) ?? d.theme
         appearance = try c.decodeIfPresent(AppearanceMode.self, forKey: .appearance) ?? d.appearance
         iconPlacement = try c.decodeIfPresent(IconPlacement.self, forKey: .iconPlacement) ?? d.iconPlacement
+        restoreWindowsOnQuit = try c.decodeIfPresent(Bool.self, forKey: .restoreWindowsOnQuit) ?? d.restoreWindowsOnQuit
         rules = try c.decodeIfPresent([WindowRule].self, forKey: .rules) ?? d.rules
         hotkeys = try c.decodeIfPresent([String: String].self, forKey: .hotkeys) ?? d.hotkeys
     }
@@ -274,6 +279,7 @@ struct PartialLayoutParameters: Decodable {
     var ultrawideSingleWindowRatio: Double?
     var maxTileWidth: Double?
     var maxTiles: Int?
+    var scrollWidth: Double?
 
     var resolved: LayoutParameters {
         let d = LayoutParameters.default
@@ -285,7 +291,8 @@ struct PartialLayoutParameters: Decodable {
             ultrawideAspectRatio: ultrawideAspectRatio ?? d.ultrawideAspectRatio,
             ultrawideSingleWindowRatio: ultrawideSingleWindowRatio ?? d.ultrawideSingleWindowRatio,
             maxTileWidth: maxTileWidth ?? d.maxTileWidth,
-            maxTiles: maxTiles ?? d.maxTiles
+            maxTiles: maxTiles ?? d.maxTiles,
+            scrollWidth: scrollWidth ?? d.scrollWidth
         )
     }
 }

@@ -291,6 +291,7 @@ private struct GeneralPane: View {
                     Text("Next to the focused window").tag(NewWindowPlacement.afterFocused)
                 }
                 Toggle("Mouse follows keyboard focus", isOn: $model.config.mouseFollowsFocus)
+                Toggle("Put windows back where they were when Tiles quits", isOn: $model.config.restoreWindowsOnQuit)
             }
             Section {
                 Button("Open Config File in Editor") { NSWorkspace.shared.open(ConfigStore.fileURL) }
@@ -356,6 +357,7 @@ private struct SpacingPane: View {
             }
             Section {
                 slider("Width cap", $model.config.layout.maxTileWidth, 0...4000, 100) { $0 == 0 ? "Off" : "\(Int($0)) pt" }
+                slider("New window width (Scrolling)", $model.config.layout.scrollWidth, 0.2...1, 0.05) { "\(Int($0 * 100))% of the screen" }
                 slider("Lone window on ultrawide", $model.config.layout.ultrawideSingleWindowRatio, 0.3...1, 0.05) { "\(Int($0 * 100))% wide" }
                 Stepper("Tiles per display: \(model.config.layout.maxTiles == 0 ? "Automatic" : "\(model.config.layout.maxTiles)")",
                         value: $model.config.layout.maxTiles, in: 0...24)

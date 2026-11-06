@@ -48,6 +48,11 @@ final class TilingManager {
     var onFocusFrame: ((Rect?) -> Void)?
     /// Window temporarily filling its display (Focus).
     private var zoomed: WindowID?
+    /// Scrolling layout: each window's width (share of the screen) and each display's scroll position.
+    private var scrollWidths: [WindowID: Double] = [:]
+    private var scrollOffsets: [String: Double] = [:]
+    /// Where each window was when Tiles first saw it, to put it back on quit.
+    private var originalFrames: [WindowID: Rect] = [:]
 
     init(configStore: ConfigStore) {
         self.configStore = configStore
@@ -107,6 +112,8 @@ final class TilingManager {
             scheduleRefresh()
         case .focusChanged:
             updateOutline()
+            // Scrolling follows focus: clicking a sliver or ⌘-Tabbing to a window brings it into view.
+            if layouts.values.contains(.scrolling) { scheduleRefresh() }
         case .frameChanged(let element):
             guard isEnabled, Date() > ignoreMovesUntil, trackedWindow == nil,
                   // Only a mouse drag or resize counts as the user rearranging.
@@ -171,6 +178,7 @@ final class TilingManager {
                       let frame = window.frame?.tilesRect else { continue }
                 found[window.id] = window
                 frames[window.id] = frame
+                if originalFrames[window.id] == nil { originalFrames[window.id] = frame }
                 if !app.isHidden, onScreen.contains(window.id), !window.isMinimized, !window.isFullscreen {
                     nowVisible.insert(window.id)
                 }
@@ -225,12 +233,23 @@ final class TilingManager {
 
     private func apply(currentFrames: [WindowID: Rect]) {
         var targets: [WindowID: Rect] = [:]
+        let focusedID = focusedWindow()?.id
         for display in displays {
             let kind = layouts[display.id] ?? config.defaultLayout
             guard kind != .float else { continue }
             let ids = visibleOrder(display.id)
-            let rects = LayoutEngine.frames(count: ids.count, in: display.area, kind: kind,
-                                            parameters: parameters[display.id] ?? config.layout)
+            let p = parameters[display.id] ?? config.layout
+            let rects: [Rect]
+            if kind == .scrolling {
+                let result = ScrollingLayout.layout(
+                    widths: ids.map { scrollWidths[$0] ?? p.scrollWidth }, in: display.area, parameters: p,
+                    focused: focusedID.flatMap { ids.firstIndex(of: $0) }, offset: scrollOffsets[display.id] ?? 0,
+                    hideLeft: hasNeighbor(display, left: true), hideRight: hasNeighbor(display, left: false))
+                scrollOffsets[display.id] = result.offset
+                rects = result.frames
+            } else {
+                rects = LayoutEngine.frames(count: ids.count, in: display.area, kind: kind, parameters: p)
+            }
             for (id, rect) in zip(ids, rects) { targets[id] = rect }
         }
         if let z = zoomed, targets[z] != nil, let d = displayID(of: z), let display = displays.first(where: { $0.id == d }) {
@@ -265,6 +284,23 @@ final class TilingManager {
             AXUIElementPerformAction(focused.element, kAXRaiseAction as CFString)
         }
         updateOutline()
+    }
+
+    /// Whether another display touches this one's left or right edge.
+    private func hasNeighbor(_ display: Display, left: Bool) -> Bool {
+        let f = display.fullFrame
+        return displays.contains { other in
+            let o = other.fullFrame
+            let touches = left ? abs(o.maxX - f.minX) < 2 : abs(o.minX - f.maxX) < 2
+            return other.id != display.id && touches && o.minY < f.maxY && o.maxY > f.minY
+        }
+    }
+
+    /// Puts every window back where Tiles first found it.
+    func restoreOriginalFrames() {
+        for (id, window) in windows {
+            if let frame = originalFrames[id] { window.setFrame(CGRect(frame)) }
+        }
     }
 
     private func updateOutline() {
@@ -326,6 +362,11 @@ final class TilingManager {
         let masterCount = max(1, p.masterCount)
         let isMaster = index < masterCount
         var ratio: Double?
+        if kind == .scrolling {
+            // A window in the strip simply keeps the width you dragged it to.
+            scrollWidths[id] = min(1, max(0.1, f.width / max(1, area.width)))
+            return
+        }
 
         switch kind {
         case .masterStack:
@@ -465,6 +506,12 @@ final class TilingManager {
             setLayout(all[(index + step) % all.count], for: d)
 
         case .growMaster, .shrinkMaster:
+            if let id = focusedID, let d = displayID(of: id), layouts[d] == .scrolling {
+                let current = scrollWidths[id] ?? (parameters[d] ?? config.layout).scrollWidth
+                scrollWidths[id] = min(1, max(0.1, current + (command == .growMaster ? 0.05 : -0.05)))
+                refresh()
+                return
+            }
             adjustParameters { $0.masterRatio = min(0.9, max(0.1, $0.masterRatio + (command == .growMaster ? 0.05 : -0.05))) }
 
         case .increaseMasterCount, .decreaseMasterCount:
@@ -504,6 +551,37 @@ final class TilingManager {
 
         case .restoreScene:
             restoreScene(silently: false)
+
+        case .cycleWidth:
+            guard let id = focusedID, let d = displayID(of: id), layouts[d] == .scrolling else {
+                onMessage?("Widths work in the Scrolling layout")
+                return
+            }
+            let current = scrollWidths[id] ?? (parameters[d] ?? config.layout).scrollWidth
+            let next = ScrollingLayout.nextPreset(after: current)
+            scrollWidths[id] = next
+            refresh()
+            onMessage?(["⅓", "½", "⅔", "Full"][ScrollingLayout.widthPresets.firstIndex(of: next) ?? 0] + " width")
+
+        case .centerWindow:
+            if let id = focusedID, let d = displayID(of: id), layouts[d] == .scrolling,
+               let display = displays.first(where: { $0.id == d }) {
+                let ids = visibleOrder(d)
+                let p = parameters[d] ?? config.layout
+                if let index = ids.firstIndex(of: id) {
+                    scrollOffsets[d] = ScrollingLayout.centeredOffset(
+                        widths: ids.map { scrollWidths[$0] ?? p.scrollWidth }, index: index, in: display.area, parameters: p)
+                    refresh()
+                }
+            } else if let window = focused, targetFrames[window.id] == nil,
+                      let frame = window.frame?.tilesRect, let display = Display.best(for: frame, in: displays) {
+                // A floating window: keep its size, move it to the middle of its display.
+                let a = display.area
+                window.setFrame(CGRect(x: a.midX - frame.width / 2, y: a.midY - frame.height / 2,
+                                       width: frame.width, height: frame.height))
+            } else {
+                onMessage?("Centre works on floating windows and in Scrolling")
+            }
 
         case .toggleZoom:
             guard let id = focusedID else { return }

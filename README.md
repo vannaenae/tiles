@@ -15,7 +15,7 @@ Every window snaps into place the moment it opens. Ultrawide displays get layout
 |---|---|
 | Price | Free, MIT licensed |
 | macOS | 13 Ventura and later |
-| Layouts | 10: Dwindle, Master & Stack, Wide Master, Centered Master, Columns, Thirds, Rows, Grid, Monocle, Float |
+| Layouts | 11: Dwindle, Master & Stack, Wide Master, Centered Master, Columns, Thirds, Rows, Grid, Monocle, Scrolling, Float |
 | Ultrawide | Detected automatically. Centered Master by default, and a width cap stops any tile stretching across a 49" screen |
 | Full screen | Each display holds as many tiles as fit its size; further windows stack on the last tile |
 | Focus | One shortcut lets a window fill its display; press again to put it back |
@@ -86,6 +86,7 @@ If you rebuild from source, macOS may treat the new build as a different app. Re
 | **Thirds** | Two thirds + one third; the right third stacks from three windows | Main app + sidebar apps |
 | **Rows** | Equal rows | Vertical monitors |
 | **Grid** | Balanced grid | Dashboards, many small windows |
+| **Scrolling** | Windows in a row wider than the screen, each at its own width. Focus one and the row scrolls to it; the rest wait at the edge | Laptops, people who hate squashed windows |
 | **Monocle** | Every window full-screen; cycle with focus keys | Small screens, deep focus |
 | **Float** | Tiles leaves this display alone | Presentations |
 
@@ -104,7 +105,9 @@ All defaults use **⌃⌥ (Control + Option)**, which apps rarely claim.
 | `⌃⌥Space` / `⌃⌥⇧Space` | Next / previous layout |
 | `⌃⌥1` … `⌃⌥9`, `⌃⌥0` | Dwindle, Master & Stack, Centered Master, Columns, Grid, Monocle, Wide Master, Rows, Thirds; Float |
 | `⌃⌥M` | Focus: fill the display with this window, again to put it back |
-| `⌃⌥=` / `⌃⌥-` | Grow / shrink master area |
+| `⌃⌥W` | Scrolling: cycle the window's width through ⅓, ½, ⅔ and full |
+| `⌃⌥C` | Centre the window (Scrolling, or a floating window) |
+| `⌃⌥=` / `⌃⌥-` | Grow / shrink master area (in Scrolling: the window's width by 5%) |
 | `⌃⌥,` / `⌃⌥.` | More / fewer master windows |
 | `⌃⌥⇧=` / `⌃⌥⇧-` | Bigger / smaller gaps |
 | `⌃⌥]` / `⌃⌥[` | Move window to next / previous display |
@@ -152,7 +155,8 @@ A scene is the arrangement for one combination of displays: each display's layou
     "ultrawideAspectRatio": 2.0,
     "ultrawideSingleWindowRatio": 0.6,
     "maxTileWidth": 2600,
-    "maxTiles": 0
+    "maxTiles": 0,
+    "scrollWidth": 0.5
   },
   "outlineColor": "#E8643C",
   "theme": "orange",
@@ -184,6 +188,8 @@ A scene is the arrangement for one combination of displays: each display's layou
 | `layout.masterCount` | Windows in the master area |
 | `layout.ultrawideSingleWindowRatio` | Width share for a lone window on an ultrawide. Set `ultrawideAspectRatio` to 0 to always fill |
 | `layout.maxTileWidth` | Widest a tile may get, in points; wider tiles are centred. 0 turns it off |
+| `layout.scrollWidth` | Scrolling: width of a new window, as a share of the screen |
+| `restoreWindowsOnQuit` | Put windows back where they were when Tiles quits (default on) |
 | `layout.maxTiles` | Most tiles per display before windows stack. 0 picks from display size |
 | `theme` | `orange`, `blue`, `green`, `purple` or `pink` |
 | `appearance` | `system`, `light` or `dark` |
@@ -195,7 +201,7 @@ A scene is the arrangement for one combination of displays: each display's layou
 
 **Shortcut syntax:** modifiers `cmd`, `alt`/`opt`, `ctrl`, `shift`, plus `hyper` (all four) and `meh` (all but cmd), joined with `+` to a key: a letter, digit, `left` `right` `up` `down`, `return`, `space`, `tab`, `f1`–`f20`, or punctuation such as `-` `=` `[` `]` `,` `.` `/`.
 
-**Commands:** `focus-left|right|up|down`, `swap-left|right|up|down`, `promote`, `focus-next`, `focus-previous`, `layout-<name>`, `next-layout`, `previous-layout`, `grow-master`, `shrink-master`, `increase-master-count`, `decrease-master-count`, `increase-gaps`, `decrease-gaps`, `toggle-float`, `toggle-tiling`, `retile`, `move-to-next-display`, `move-to-previous-display`, `save-scene`, `restore-scene`, `undo-restore`, `toggle-zoom`.
+**Commands:** `focus-left|right|up|down`, `swap-left|right|up|down`, `promote`, `focus-next`, `focus-previous`, `layout-<name>`, `next-layout`, `previous-layout`, `grow-master`, `shrink-master`, `increase-master-count`, `decrease-master-count`, `increase-gaps`, `decrease-gaps`, `toggle-float`, `toggle-tiling`, `retile`, `move-to-next-display`, `move-to-previous-display`, `save-scene`, `restore-scene`, `undo-restore`, `toggle-zoom`, `cycle-width`, `center-window`.
 
 ## Automation
 
