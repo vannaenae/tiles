@@ -15,6 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     private var started = false
     private let outline = FocusOutline()
     private var settingsWindow: NSWindow?
+    private var settingsModel: SettingsModel?
 
     static let repoURL = URL(string: "https://github.com/vannaenae/tiles")!
 
@@ -38,11 +39,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         }
         registerHotKeys()
 
-        if AccessibilityPermission.isTrusted {
-            startTiling()
-        } else {
-            askForPermission()
+        // One watcher owns the permission state: it starts tiling the moment access is
+        // granted and keeps the menu bar icon and dashboard banner in step, both ways.
+        permissionTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            self?.checkPermission()
         }
+        checkPermission()
+        if !AccessibilityPermission.isTrusted {
+            // No blocking alert: it hid behind other windows and froze every Tiles window.
+            AccessibilityPermission.request()
+            openSettings()
+        }
+    }
+
+    private var lastTrusted: Bool?
+
+    private func checkPermission() {
+        let trusted = AccessibilityPermission.isTrusted
+        guard trusted != lastTrusted else { return }
+        lastTrusted = trusted
+        if trusted { startTiling() }
+        updateIcon()
     }
 
     /// `tiles://<command>` — lets Raycast, Alfred, Shortcuts or a shell script drive Tiles.
@@ -58,30 +75,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     }
 
     // MARK: - Permission
-
-    private func askForPermission() {
-        NSApp.activate(ignoringOtherApps: true)
-        let alert = NSAlert()
-        alert.messageText = "Tiles needs Accessibility access"
-        alert.informativeText = """
-        Tiles uses Accessibility to read each window's position, size and app, and to move it into place. \
-        Nothing leaves your Mac.
-
-        Turn on Tiles in System Settings → Privacy & Security → Accessibility. Tiles starts automatically once it's allowed.
-        """
-        alert.addButton(withTitle: "Open System Settings")
-        alert.addButton(withTitle: "Later")
-        if alert.runModal() == .alertFirstButtonReturn {
-            AccessibilityPermission.request()
-        }
-        permissionTimer?.invalidate()
-        permissionTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] timer in
-            guard AccessibilityPermission.isTrusted else { return }
-            timer.invalidate()
-            // Restart so macOS applies the new permission everywhere, then tiling starts.
-            AccessibilityPermission.relaunch()
-        }
-    }
 
     private func startTiling() {
         guard !started else { return }
@@ -104,6 +97,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         applyIconPlacement()
         registerHotKeys()
         if started { manager.configDidChange(from: old, to: config) }
+        // Keep an open Settings window current, so it never writes back a stale copy.
+        if let model = settingsModel, model.config != config { model.config = config }
         if let error = configStore.lastError {
             flash("Config error")
             NSLog("Tiles config error: \(error)")
@@ -281,11 +276,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
 
     // MARK: - Actions
 
-    @objc private func grantAccess() { askForPermission() }
-    @objc private func resetAccess() {
-        AccessibilityPermission.reset()
-        askForPermission()
-    }
+    @objc private func grantAccess() { AccessibilityPermission.request() }
+    @objc private func resetAccess() { AccessibilityPermission.reset() }
     @objc private func restart() { AccessibilityPermission.relaunch() }
     @objc private func toggleTiling() { manager.perform(.toggleTiling); updateIcon() }
     @objc private func retile() { manager.perform(.retile) }
@@ -334,6 +326,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
                 setLayout: { [weak self] kind, display in self?.manager.setLayout(kind, for: display) },
                 status: { [weak self] in self?.manager.status() ?? [] }
             )
+            settingsModel = model
             let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(model: model)))
             window.title = "Tiles"
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]

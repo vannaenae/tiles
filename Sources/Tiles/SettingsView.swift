@@ -56,8 +56,9 @@ final class SettingsModel: ObservableObject {
         // The dashboard follows windows as they open, close and move.
         liveTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             guard let self else { return }
-            self.live = self.status()
-            self.trusted = AccessibilityPermission.isTrusted
+            let live = self.status(), trusted = AccessibilityPermission.isTrusted
+            if live != self.live { self.live = live }
+            if trusted != self.trusted { self.trusted = trusted }
         }
     }
 

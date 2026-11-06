@@ -58,6 +58,7 @@ final class TilingManager {
 
     func start() {
         guard observer == nil else { return }
+        isEnabled = config.enabled
         let observer = WorkspaceObserver(
             handler: { [weak self] event in self?.handle(event) },
             onDisplaysChanged: { [weak self] in self?.displaysChanged() }
@@ -83,7 +84,7 @@ final class TilingManager {
     }
 
     func configDidChange(from old: Config, to new: Config) {
-        if old.enabled != new.enabled { isEnabled = new.enabled }
+        if old.enabled != new.enabled { setEnabled(new.enabled) }
         // Re-derive layouts only if the layout settings themselves changed,
         // so editing gaps doesn't undo a layout picked from the menu.
         if old.defaultLayout != new.defaultLayout || old.ultrawideLayout != new.ultrawideLayout || old.displays != new.displays {
@@ -411,7 +412,8 @@ final class TilingManager {
 
     func perform(_ command: Command) {
         if command == .toggleTiling {
-            setEnabled(!isEnabled)
+            // Saved like any other setting, so the menu, dashboard and next launch agree.
+            configStore.update { $0.enabled = !isEnabled }
             return
         }
         guard isEnabled else {
@@ -554,8 +556,8 @@ final class TilingManager {
     }
 
     /// What the dashboard shows: each display with its tiles, relative to the display's corner.
-    struct DisplayStatus: Identifiable {
-        struct Tile { let frame: Rect; let app: String }
+    struct DisplayStatus: Identifiable, Equatable {
+        struct Tile: Equatable { let frame: Rect; let app: String }
         let id: String
         let name: String
         let size: Rect
