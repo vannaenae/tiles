@@ -17,10 +17,14 @@ jobs:
   release:
     runs-on: macos-15
     env:
-      MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+      # Only whether a certificate exists; the secret itself stays inside the import step.
+      HAS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE != '' }}
       VERSION: ${{ inputs.version || github.ref_name }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Check version
+        run: '[[ "$VERSION" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "Version must look like 1.2.3"; exit 1; }'
+      # Third-party actions pinned to exact commits so a moved tag can't change what runs.
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
       - name: Test
@@ -29,8 +33,9 @@ jobs:
       # Signs with the Developer ID certificate when it exists, so macOS keeps the
       # Accessibility permission across updates. Not notarized: first launch is right-click → Open.
       - name: Import Developer ID certificate
-        if: ${{ env.MACOS_CERTIFICATE != '' }}
+        if: ${{ env.HAS_CERTIFICATE == 'true' }}
         env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
         run: |
           KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
@@ -39,7 +44,8 @@ jobs:
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
           security set-keychain-settings -lut 21600 "$KEYCHAIN"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
-          security import "$RUNNER_TEMP/cert.p12" -P "$MACOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security import "$RUNNER_TEMP/cert.p12" -P "$MACOS_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -t cert -f pkcs12 -k "$KEYCHAIN"
+          rm -f "$RUNNER_TEMP/cert.p12"
           security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
           security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
           IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" | grep "Developer ID Application" | head -1 | sed -E 's/.*"(.*)"/\1/')"
@@ -52,8 +58,13 @@ jobs:
           cp dist/Tiles-*.zip dist/Tiles.zip
           cp scripts/install.sh dist/install.sh
 
+      # Signing is done: remove the key before any third-party code runs.
+      - name: Remove signing keychain
+        if: ${{ always() }}
+        run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" 2>/dev/null || true
+
       - name: Publish release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           tag_name: ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }}
           target_commitish: ${{ github.sha }}

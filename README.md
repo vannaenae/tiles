@@ -248,19 +248,9 @@ Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Releasing (maintainers)
 
-Push a tag such as `v0.2.0`. The Release workflow tests, builds a universal app, and publishes it. It signs and notarizes when these repository secrets exist (Settings → Secrets and variables → Actions):
+Push a tag such as `v0.2.0`. The Release workflow tests, builds a universal app, and publishes it. It signs with your Developer ID when these repository secrets exist (Settings → Secrets and variables → Actions):
 
 | Secret | What it is |
 |---|---|
 | `MACOS_CERTIFICATE` | Your **Developer ID Application** certificate exported from Keychain Access as `.p12`, then base64-encoded: `base64 -i cert.p12 \| pbcopy` |
 | `MACOS_CERTIFICATE_PASSWORD` | The password you set when exporting the `.p12` |
-
-For notarization, either an App Store Connect API key (recommended):
-
-| Secret | What it is |
-|---|---|
-| `APPLE_API_KEY` | Full contents of the `AuthKey_XXXX.p8` file from App Store Connect → Users and Access → Integrations → Team Keys |
-| `APPLE_API_KEY_ID` | The key's ID shown next to it |
-| `APPLE_API_ISSUER_ID` | Issuer ID shown above the keys list |
-
-or an Apple ID: `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD` (app-specific password).
