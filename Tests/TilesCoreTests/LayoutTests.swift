@@ -222,4 +222,14 @@ final class LayoutTests: XCTestCase {
         let hidden = ScrollingLayout.layout(widths: [2.0 / 3, 0.5, 0.5], in: screen, parameters: noGaps, focused: 1, offset: 0, hideLeft: true)
         XCTAssertEqual(hidden.frames[0].y, screen.maxY - 1)
     }
+
+    func testScrollingResizeKeepsTheDraggedWidth() {
+        // Mouse-resizing used a different formula and the window shrank a few points after release.
+        let p = LayoutParameters(innerGap: 8, outerGap: 8)
+        for width in [300.0, 708, 1000, 1424] {
+            let share = ScrollingLayout.share(forWidth: width, in: screen, parameters: p)
+            let laidOut = ScrollingLayout.layout(widths: [share], in: screen, parameters: p, focused: 0, offset: 0)
+            XCTAssertEqual(laidOut.frames[0].width, width, accuracy: 1)
+        }
+    }
 }

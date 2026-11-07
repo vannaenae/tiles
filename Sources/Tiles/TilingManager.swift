@@ -356,17 +356,17 @@ final class TilingManager {
         guard let display = displays.first(where: { $0.id == d }),
               var p = parameters[d], let kind = layouts[d] else { return }
         let ids = visibleOrder(d)
-        guard let index = ids.firstIndex(of: id), ids.count > 1 else { return }
         let area = display.area.inset(by: p.outerGap)
         let gap = p.innerGap
+        if kind == .scrolling {
+            // A window in the strip keeps the width you dragged it to.
+            scrollWidths[id] = ScrollingLayout.share(forWidth: f.width, in: display.area, parameters: p)
+            return
+        }
+        guard let index = ids.firstIndex(of: id), ids.count > 1 else { return }
         let masterCount = max(1, p.masterCount)
         let isMaster = index < masterCount
         var ratio: Double?
-        if kind == .scrolling {
-            // A window in the strip simply keeps the width you dragged it to.
-            scrollWidths[id] = min(1, max(0.1, f.width / max(1, area.width)))
-            return
-        }
 
         switch kind {
         case .masterStack:

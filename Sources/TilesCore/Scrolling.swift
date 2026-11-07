@@ -85,6 +85,13 @@ public enum ScrollingLayout {
         shares.map { max(50, ($0.clamped(to: 0.1...1) * (viewWidth + gap) - gap).rounded()) }
     }
 
+    /// The inverse: the share a window `width` points wide stands for. Used when you resize with the mouse.
+    public static func share(forWidth width: Double, in area: Rect, parameters p: LayoutParameters) -> Double {
+        let view = area.inset(by: max(0, p.outerGap))
+        let gap = max(0, p.innerGap)
+        return ((width + gap) / max(1, view.width + gap)).clamped(to: 0.1...1)
+    }
+
     /// The next preset wider than `current`, wrapping back to the narrowest.
     public static func nextPreset(after current: Double) -> Double {
         widthPresets.first { $0 > current + 0.01 } ?? widthPresets[0]

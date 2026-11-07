@@ -38,6 +38,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
             self.outline.show(around: frame, hex: self.configStore.config.outlineColor)
         }
         registerHotKeys()
+        NotificationCenter.default.addObserver(forName: .tilesShortcutRecording, object: nil, queue: .main) { [weak self] note in
+            if note.object as? Bool == true { self?.hotKeys.unregisterAll() } else { self?.registerHotKeys() }
+        }
 
         // One watcher owns the permission state: it starts tiling the moment access is
         // granted and keeps the menu bar icon and dashboard banner in step, both ways.

@@ -895,6 +895,8 @@ private struct ShortcutRecorder: View {
 
     private func start() {
         recording = true
+        // Tiles' own global shortcuts would swallow the keys before this window sees them.
+        NotificationCenter.default.post(name: .tilesShortcutRecording, object: true)
         monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
             if event.keyCode == 53 { // Esc
                 stop()
@@ -907,10 +909,17 @@ private struct ShortcutRecorder: View {
     }
 
     private func stop() {
+        guard recording else { return }
         recording = false
         if let monitor { NSEvent.removeMonitor(monitor) }
         monitor = nil
+        NotificationCenter.default.post(name: .tilesShortcutRecording, object: false)
     }
+}
+
+extension Notification.Name {
+    /// Posted with `true` when the shortcut recorder starts listening and `false` when it stops.
+    static let tilesShortcutRecording = Notification.Name("TilesShortcutRecording")
 }
 
 extension Shortcut {
