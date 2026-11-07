@@ -42,6 +42,7 @@ jobs:
           # The test driver posts real key presses and mouse drags.
           grant kTCCServiceAccessibility "$RUNNER_TEMP/tiles-e2e" 1
           grant kTCCServicePostEvent "$RUNNER_TEMP/tiles-e2e" 1
+          grant kTCCServiceScreenCapture "$RUNNER_TEMP/tiles-e2e" 1
           sudo sqlite3 "$db" "SELECT service, client, auth_value FROM access WHERE client LIKE '%iles%' OR service='kTCCServiceScreenCapture';"
 
       - name: Run scenario

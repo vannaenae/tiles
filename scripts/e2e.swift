@@ -53,16 +53,33 @@ func tiles(_ command: String) {
 }
 
 var failures = 0
+var step = 0
 func check(_ ok: Bool, _ what: String) {
     print(ok ? "PASS" : "FAIL", what)
     if !ok { failures += 1 }
 }
+
+/// Screenshot plus window positions after a step, into out/ (picked up by the workflow).
+func snapshot(_ name: String) {
+    step += 1
+    let p = Process()
+    p.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+    p.arguments = ["-x", "out/e2e-\(step)-\(name).png"]
+    try? p.run()
+    p.waitUntilExit()
+    print("  windows after \(name):")
+    for w in windows() { print("   \(w.owner) #\(w.id) \(Int(w.frame.minX)),\(Int(w.frame.minY)) \(Int(w.frame.width))x\(Int(w.frame.height))") }
+}
+
+/// Empty title-bar space just right of the traffic lights: always grabs the window itself.
+func titleBar(_ w: Win) -> CGPoint { CGPoint(x: w.frame.minX + 90, y: w.frame.minY + 10) }
 
 // 1. Master & Stack: every window gets its own tile.
 tiles("layout-master-stack")
 let start = frames()
 check(start.count == 4, "4 test windows on screen (found \(start.count))")
 check(Set(start.values.map { "\($0)" }).count == start.count, "every window has its own tile")
+snapshot("master-stack")
 
 // 2. Real key presses reach Tiles' global shortcuts.
 press(49) // ⌃⌥Space: next layout
@@ -76,8 +93,10 @@ check(frames() == start, "⌃⌥2 jumps straight to Master & Stack")
 let byX = windows().sorted { ($0.frame.minX, $0.frame.minY) < ($1.frame.minX, $1.frame.minY) }
 if byX.count >= 2 {
     let mover = byX[0], target = byX[byX.count - 1]
-    drag(from: CGPoint(x: mover.frame.midX, y: mover.frame.minY + 12), to: CGPoint(x: target.frame.midX, y: target.frame.midY))
+    print("  dragging \(mover.owner) #\(mover.id) onto \(target.owner) #\(target.id)")
+    drag(from: titleBar(mover), to: CGPoint(x: target.frame.midX, y: target.frame.midY))
     settle(2)
+    snapshot("after-drag-swap")
     let now = frames()
     check(now[mover.id].map { abs($0.minX - target.frame.minX) < 4 && abs($0.minY - target.frame.minY) < 4 } ?? false,
           "dragging a window onto another swaps them")
@@ -90,6 +109,7 @@ if let master = windows().min(by: { $0.frame.minX < $1.frame.minX }) {
     let edge = CGPoint(x: master.frame.maxX - 1, y: master.frame.midY)
     drag(from: edge, to: CGPoint(x: edge.x + 120, y: edge.y))
     settle(2)
+    snapshot("after-edge-drag")
     let grown = frames()[master.id]
     check((grown?.width ?? 0) > master.frame.width + 60, "dragging the main window's edge widens it (\(Int(master.frame.width)) → \(Int(grown?.width ?? 0)))")
     let others = windows().filter { $0.id != master.id }
@@ -103,7 +123,10 @@ press(13) // ⌃⌥W
 settle()
 let wide = frames()
 check(narrow.contains { id, f in (wide[id]?.width ?? 0) > f.width + 50 }, "⌃⌥W widens a window in Scrolling")
+snapshot("scrolling-wider")
 
 tiles("layout-dwindle")
+snapshot("back-to-dwindle")
+check(Set(frames().values.map { "\($0)" }).count == 4, "switching back to Dwindle gives every window a tile again")
 print(failures == 0 ? "ALL PASSED" : "\(failures) FAILED")
 exit(failures == 0 ? 0 : 1)
