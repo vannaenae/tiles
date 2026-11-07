@@ -1,0 +1,52 @@
+== 0-before-tiles
+Finder	x=52 y=87 w=920 h=436
+TextEdit	x=137 y=110 w=661 h=433
+TextEdit	x=108 y=81 w=661 h=433
+TextEdit	x=79 y=52 w=661 h=433
+== 1-dwindle
+Finder	x=8 y=33 w=550 h=668
+TextEdit	x=795 y=371 w=221 h=330
+TextEdit	x=566 y=371 w=221 h=330
+TextEdit	x=566 y=33 w=450 h=330
+== 2-columns
+Finder	x=8 y=33 w=460 h=668
+TextEdit	x=770 y=33 w=246 h=668
+TextEdit	x=516 y=33 w=246 h=668
+TextEdit	x=262 y=33 w=246 h=668
+== 2-centered-master
+Finder	x=239 y=33 w=546 h=668
+TextEdit	x=793 y=371 w=223 h=330
+TextEdit	x=8 y=33 w=223 h=668
+TextEdit	x=793 y=33 w=223 h=330
+== 2-grid
+Finder	x=8 y=33 w=500 h=330
+TextEdit	x=516 y=371 w=500 h=330
+TextEdit	x=8 y=371 w=500 h=330
+TextEdit	x=516 y=33 w=500 h=330
+== 2-scrolling
+Finder	x=8 y=33 w=500 h=668
+TextEdit	x=1010 y=33 w=500 h=668
+TextEdit	x=1010 y=33 w=500 h=668
+TextEdit	x=516 y=33 w=500 h=668
+== 3-scrolling-wider
+Finder	x=8 y=33 w=669 h=668
+TextEdit	x=1010 y=33 w=500 h=668
+TextEdit	x=1010 y=33 w=500 h=668
+TextEdit	x=685 y=33 w=500 h=668
+== 4-scrolling-focus-right
+TextEdit	x=516 y=33 w=500 h=668
+Finder	x=-161 y=33 w=669 h=668
+TextEdit	x=1010 y=33 w=500 h=668
+TextEdit	x=1010 y=33 w=500 h=668
+== 5-dashboard-light
+Tiles	x=62 y=36 w=900 h=640
+TextEdit	x=516 y=33 w=500 h=670
+Finder	x=-161 y=33 w=669 h=670
+TextEdit	x=1010 y=33 w=500 h=670
+TextEdit	x=1010 y=33 w=500 h=670
+== 6-dashboard-dark-purple
+Tiles	x=62 y=36 w=900 h=640
+TextEdit	x=516 y=33 w=500 h=670
+Finder	x=-161 y=33 w=669 h=670
+TextEdit	x=1010 y=33 w=500 h=670
+TextEdit	x=1010 y=33 w=500 h=670
