@@ -211,4 +211,15 @@ final class LayoutTests: XCTestCase {
         let frames = LayoutEngine.frames(count: 4, in: Rect(x: 0, y: 25, width: 1024, height: 692), kind: .dwindle)
         XCTAssertEqual(Set(frames.map { "\($0)" }).count, 4) // four different tiles
     }
+
+    func testScrollingLetsAPartlyVisibleWindowHangOffTheEdge() {
+        // Found on a real Mac: scrolling right parked the half-visible window and left half the screen empty.
+        let r = ScrollingLayout.layout(widths: [2.0 / 3, 0.5, 0.5], in: screen, parameters: noGaps, focused: 1, offset: 0)
+        XCTAssertEqual(r.offset, 240)
+        XCTAssertEqual(r.frames[0].x, -240)    // hangs off the left edge, still filling the screen
+        XCTAssertEqual(r.frames[1].maxX, 1440) // focused, fully visible
+        // With another display on the left it tucks away instead of spilling onto it.
+        let hidden = ScrollingLayout.layout(widths: [2.0 / 3, 0.5, 0.5], in: screen, parameters: noGaps, focused: 1, offset: 0, hideLeft: true)
+        XCTAssertEqual(hidden.frames[0].y, screen.maxY - 1)
+    }
 }

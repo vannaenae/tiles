@@ -51,9 +51,11 @@ public enum ScrollingLayout {
 
         let frames = w.indices.map { i -> Rect in
             let screenX = view.x + x[i] - off
-            if screenX >= view.minX - 1, screenX + w[i] <= view.maxX + 1 {
-                return Rect(x: screenX, y: view.y, width: w[i], height: view.height)
-            }
+            let atStripPosition = Rect(x: screenX, y: view.y, width: w[i], height: view.height)
+            if screenX >= view.minX - 1, screenX + w[i] <= view.maxX + 1 { return atStripPosition }
+            // Partly on screen: let it hang off the edge, unless another display is on that side.
+            let partlyVisible = screenX < view.maxX && screenX + w[i] > view.minX
+            if partlyVisible, !(screenX < view.minX ? hideLeft : hideRight) { return atStripPosition }
             // ponytail: corner-hiding assumes no display sits below this one; arrange displays side by side.
             if screenX < view.minX {
                 return hideLeft
