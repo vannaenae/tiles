@@ -31,7 +31,7 @@ public enum ScrollingLayout {
         guard !widths.isEmpty else { return Result(frames: [], offset: 0) }
         let view = area.inset(by: max(0, p.outerGap))
         let gap = max(0, p.innerGap)
-        let w = widths.map { ($0.clamped(to: 0.1...1) * view.width).rounded() }
+        let w = pixelWidths(widths, view.width, gap)
 
         var x: [Double] = []
         var cursor = 0.0
@@ -71,10 +71,16 @@ public enum ScrollingLayout {
     public static func centeredOffset(widths: [Double], index: Int, in area: Rect, parameters p: LayoutParameters) -> Double {
         let view = area.inset(by: max(0, p.outerGap))
         let gap = max(0, p.innerGap)
-        let w = widths.map { ($0.clamped(to: 0.1...1) * view.width).rounded() }
+        let w = pixelWidths(widths, view.width, gap)
         guard w.indices.contains(index) else { return 0 }
         let start = w[..<index].reduce(0) { $0 + $1 + gap }
         return max(0, start + w[index] / 2 - view.width / 2)
+    }
+
+    /// A share of the screen counts its gap, so two halves (or three thirds) plus the
+    /// gaps between them fill the screen exactly.
+    static func pixelWidths(_ shares: [Double], _ viewWidth: Double, _ gap: Double) -> [Double] {
+        shares.map { max(50, ($0.clamped(to: 0.1...1) * (viewWidth + gap) - gap).rounded()) }
     }
 
     /// The next preset wider than `current`, wrapping back to the narrowest.

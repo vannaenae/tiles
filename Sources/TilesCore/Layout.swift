@@ -144,8 +144,9 @@ public enum LayoutEngine {
 
     public static func maxTiles(in area: Rect, _ p: LayoutParameters) -> Int {
         if p.maxTiles > 0 { return p.maxTiles }
-        // ~600x420pt minimum per tile: 4 on a laptop, 12 on a 27", 24 on a 49".
-        return max(2, Int(area.width / 600)) * max(1, Int(area.height / 420))
+        // ~600x420pt per tile: 4 on a laptop, 12 on a 27", 24 on a 49". Never fewer than 4,
+        // or windows on a small screen pile up unseen on one tile.
+        return max(4, max(2, Int(area.width / 600)) * max(1, Int(area.height / 420)))
     }
 
     static func cap(_ r: Rect, _ maxWidth: Double) -> Rect {

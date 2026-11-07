@@ -863,6 +863,7 @@ struct TilesCanvas: View {
                 }
             }
             .frame(width: geo.size.width, height: geo.size.height)
+            .clipped() // Scrolling windows waiting off screen stay inside the card
             .animation(.easeInOut(duration: 0.25), value: frames)
         }
         .aspectRatio(area.width / max(1, area.height), contentMode: .fit)

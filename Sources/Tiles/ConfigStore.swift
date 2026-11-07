@@ -12,9 +12,8 @@ final class ConfigStore {
     private(set) var lastError: String?
     var onChange: ((Config) -> Void)?
 
-    private var source: DispatchSourceFileSystemObject?
+    private var timer: Timer?
     private var lastModified: Date?
-    private var reloadWork: DispatchWorkItem?
 
     init() {
         ensureFileExists()
@@ -22,7 +21,7 @@ final class ConfigStore {
         watch()
     }
 
-    deinit { source?.cancel() }
+    deinit { timer?.invalidate() }
 
     func ensureFileExists() {
         let fm = FileManager.default
@@ -65,28 +64,14 @@ final class ConfigStore {
         (try? FileManager.default.attributesOfItem(atPath: Self.fileURL.path))?[.modificationDate] as? Date
     }
 
-    /// Watches the directory, because editors save by replacing the file.
+    /// Checks the file's modification date once a second. Catches every kind of save:
+    /// editors that replace the file and editors that write into it.
     private func watch() {
-        let fd = open(Self.directory.path, O_EVTONLY)
-        guard fd >= 0 else { return }
-        let source = DispatchSource.makeFileSystemObjectSource(fileDescriptor: fd, eventMask: [.write, .rename, .delete, .extend], queue: .main)
-        source.setEventHandler { [weak self] in self?.scheduleReload() }
-        source.setCancelHandler { close(fd) }
-        source.resume()
-        self.source = source
-    }
-
-    private func scheduleReload() {
-        reloadWork?.cancel()
-        let work = DispatchWorkItem { [weak self] in
-            guard let self else { return }
-            let modified = self.modificationDate()
-            guard modified != self.lastModified else { return }
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            guard let self, self.modificationDate() != self.lastModified else { return }
             self.load()
             self.onChange?(self.config)
         }
-        reloadWork = work
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: work)
     }
 
     private static func describe(_ error: DecodingError) -> String {

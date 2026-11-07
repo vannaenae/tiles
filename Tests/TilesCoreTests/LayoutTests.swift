@@ -194,4 +194,21 @@ final class LayoutTests: XCTestCase {
         XCTAssertEqual(ScrollingLayout.nextPreset(after: 1), 1.0 / 3)
         XCTAssertEqual(LayoutEngine.frames(count: 5, in: screen, kind: .scrolling).count, 5)
     }
+
+    func testScrollingHalvesFitWithGaps() {
+        // Found on a real Mac: two halves plus the gap overflowed, pushing the second off screen.
+        let p = LayoutParameters(innerGap: 8, outerGap: 8)
+        let r = ScrollingLayout.layout(widths: [0.5, 0.5, 0.5], in: screen, parameters: p, focused: 0, offset: 0)
+        XCTAssertEqual(r.frames[0].minX, 8)
+        XCTAssertEqual(r.frames[1].maxX, screen.maxX - 8)
+        XCTAssertEqual(r.frames[1].minX - r.frames[0].maxX, 8)
+        XCTAssertEqual(ScrollingLayout.layout(widths: [1], in: screen, parameters: p, focused: 0, offset: 0).frames[0].width, 1424)
+    }
+
+    func testSmallScreensStillGetFourTiles() {
+        // Found on a real Mac: a 1024x768 screen allowed only 2 tiles and stacked the rest.
+        XCTAssertEqual(LayoutEngine.maxTiles(in: Rect(x: 0, y: 0, width: 1008, height: 676), .default), 4)
+        let frames = LayoutEngine.frames(count: 4, in: Rect(x: 0, y: 25, width: 1024, height: 692), kind: .dwindle)
+        XCTAssertEqual(Set(frames.map { "\($0)" }).count, 4) // four different tiles
+    }
 }
