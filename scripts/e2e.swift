@@ -1,10 +1,11 @@
 // Drives Tiles like a person would, on a real Mac: real key presses and mouse drags,
 // then checks where the windows ended up. Prints PASS/FAIL per check, exits 1 on any FAIL.
 // Needs Accessibility (to post input events). Used by .github/workflows/e2e.yml.
+import ApplicationServices
 import CoreGraphics
 import Foundation
 
-struct Win { let id: Int; let owner: String; let frame: CGRect }
+struct Win { let id: Int; let owner: String; let pid: pid_t; let frame: CGRect }
 
 func windows() -> [Win] {
     let info = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
@@ -12,8 +13,9 @@ func windows() -> [Win] {
         guard (w[kCGWindowLayer as String] as? Int) == 0,
               let owner = w[kCGWindowOwnerName as String] as? String, ["TextEdit", "Finder"].contains(owner),
               let id = w[kCGWindowNumber as String] as? Int,
+              let pid = w[kCGWindowOwnerPID as String] as? Int,
               let b = w[kCGWindowBounds as String] as? [String: Double] else { return nil }
-        return Win(id: id, owner: owner, frame: CGRect(x: b["X"]!, y: b["Y"]!, width: b["Width"]!, height: b["Height"]!))
+        return Win(id: id, owner: owner, pid: pid_t(pid), frame: CGRect(x: b["X"]!, y: b["Y"]!, width: b["Width"]!, height: b["Height"]!))
     }
 }
 
@@ -73,6 +75,40 @@ func snapshot(_ name: String) {
     for w in windows() { print("   \(w.owner) #\(w.id) \(Int(w.frame.minX)),\(Int(w.frame.minY)) \(Int(w.frame.width))x\(Int(w.frame.height))") }
 }
 
+/// What a title-bar drag does, minus the part the test machine ignores: the mouse button is
+/// down while the window moves under the cursor, then it's released over the drop point.
+/// (GitHub's machines don't move windows for synthetic title-bar drags; Tiles sees the same events.)
+func dragWindow(_ w: Win, to drop: CGPoint, beforeRelease: () -> Void = {}) {
+    let grab = titleBar(w)
+    CGEvent(mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: grab, mouseButton: .left)?.post(tap: .cghidEventTap)
+    usleep(150_000)
+    CGEvent(mouseEventSource: nil, mouseType: .leftMouseDown, mouseCursorPosition: grab, mouseButton: .left)?.post(tap: .cghidEventTap)
+    usleep(150_000)
+    let app = AXUIElementCreateApplication(w.pid)
+    var list: CFTypeRef?
+    AXUIElementCopyAttributeValue(app, kAXWindowsAttribute as CFString, &list)
+    let element = ((list as? [AXUIElement]) ?? []).first { el in
+        var pos: CFTypeRef?
+        AXUIElementCopyAttributeValue(el, kAXPositionAttribute as CFString, &pos)
+        var p = CGPoint.zero
+        if let pos { AXValueGetValue(pos as! AXValue, .cgPoint, &p) }
+        return abs(p.x - w.frame.minX) < 2 && abs(p.y - w.frame.minY) < 2
+    }
+    for step in 1...10 {
+        let t = Double(step) / 10
+        let cursor = CGPoint(x: grab.x + (drop.x - grab.x) * t, y: grab.y + (drop.y - grab.y) * t)
+        CGEvent(mouseEventSource: nil, mouseType: .leftMouseDragged, mouseCursorPosition: cursor, mouseButton: .left)?.post(tap: .cghidEventTap)
+        var origin = CGPoint(x: cursor.x - (grab.x - w.frame.minX), y: cursor.y - (grab.y - w.frame.minY))
+        if let element, let value = AXValueCreate(.cgPoint, &origin) {
+            AXUIElementSetAttributeValue(element, kAXPositionAttribute as CFString, value)
+        }
+        usleep(40_000)
+    }
+    usleep(300_000)
+    beforeRelease()
+    CGEvent(mouseEventSource: nil, mouseType: .leftMouseUp, mouseCursorPosition: drop, mouseButton: .left)?.post(tap: .cghidEventTap)
+}
+
 /// Empty title-bar space just right of the traffic lights: always grabs the window itself.
 func titleBar(_ w: Win) -> CGPoint { CGPoint(x: w.frame.minX + 90, y: w.frame.minY + 10) }
 
@@ -97,7 +133,7 @@ if byX.count >= 2 {
     // A TextEdit window (plain title bar) dropped onto the main window.
     let mover = byX.last { $0.owner == "TextEdit" } ?? byX[byX.count - 1], target = byX[0]
     print("  dragging \(mover.owner) #\(mover.id) from \(titleBar(mover)) onto \(target.owner) #\(target.id)")
-    drag(from: titleBar(mover), to: CGPoint(x: target.frame.midX, y: target.frame.midY)) {
+    dragWindow(mover, to: CGPoint(x: target.frame.midX, y: target.frame.midY)) {
         snapshot("mid-drag")
         check(frames()[mover.id].map { abs($0.minX - mover.frame.minX) > 20 } ?? false, "the window follows the mouse while dragging")
     }
@@ -133,6 +169,17 @@ snapshot("scrolling-wider")
 
 tiles("layout-dwindle")
 snapshot("back-to-dwindle")
+let dwindle = frames()
 check(Set(frames().values.map { "\($0)" }).count == 4, "switching back to Dwindle gives every window a tile again")
+// 6. Opening the dashboard must not change the layout (it used to trigger a scene restore).
+let reopen = Process()
+reopen.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+reopen.arguments = ["/Applications/Tiles.app"]
+try? reopen.run()
+reopen.waitUntilExit()
+settle(4)
+snapshot("dashboard-open")
+check(frames() == dwindle, "opening the dashboard leaves the layout alone")
+
 print(failures == 0 ? "ALL PASSED" : "\(failures) FAILED")
 exit(failures == 0 ? 0 : 1)

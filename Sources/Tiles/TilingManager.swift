@@ -125,6 +125,12 @@ final class TilingManager {
     }
 
     private func displaysChanged() {
+        // macOS also reports a "screen change" when the Dock, menu bar or resolution shifts, or
+        // even when Tiles opens its window. Only a different set of displays means docking.
+        guard Set(Display.current().map(\.id)) != Set(displays.map(\.id)) else {
+            scheduleRefresh()
+            return
+        }
         autosaveWork?.cancel()
         autosaveBlockedUntil = Date().addingTimeInterval(8)
         displayWork?.cancel()
