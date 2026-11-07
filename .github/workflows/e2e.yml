@@ -15,8 +15,15 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
+      - name: Unit tests with Xcode (xcodebuild)
+        run: |
+          xcodebuild -version
+          xcodebuild -list
+          xcodebuild test -scheme Tiles-Package -destination 'platform=macOS' -quiet
+
       - name: Build and install
         run: |
+          swiftc -O scripts/e2e.swift -o "$RUNNER_TEMP/tiles-e2e"
           ./scripts/build-app.sh
           cp -R dist/Tiles.app /Applications/
           defaults write io.github.vannaenae.tiles didShowSettings -bool true
@@ -32,6 +39,9 @@ jobs:
           grant kTCCServiceAccessibility io.github.vannaenae.tiles 0
           grant kTCCServiceAccessibility /Applications/Tiles.app/Contents/MacOS/Tiles 1
           for c in /usr/sbin/screencapture /bin/bash /bin/zsh; do grant kTCCServiceScreenCapture "$c" 1; done
+          # The test driver posts real key presses and mouse drags.
+          grant kTCCServiceAccessibility "$RUNNER_TEMP/tiles-e2e" 1
+          grant kTCCServicePostEvent "$RUNNER_TEMP/tiles-e2e" 1
           sudo sqlite3 "$db" "SELECT service, client, auth_value FROM access WHERE client LIKE '%iles%' OR service='kTCCServiceScreenCapture';"
 
       - name: Run scenario
@@ -52,6 +62,13 @@ jobs:
           open -g "tiles://focus-right"; shot 4-scrolling-focus-right
           open -g "tiles://layout-dwindle"; sleep 1
 
+      - name: Real keyboard and mouse checks
+        run: "$RUNNER_TEMP/tiles-e2e"
+
+      - name: Dashboard screenshots
+        if: ${{ always() }}
+        run: |
+          shot() { sleep 2; screencapture -x "out/$1.png" || echo "screencapture failed for $1"; echo "== $1" >> out/windows.txt; swift scripts/windows.swift >> out/windows.txt; }
           open /Applications/Tiles.app   # opening again shows the dashboard
           sleep 4
           shot 5-dashboard-light
