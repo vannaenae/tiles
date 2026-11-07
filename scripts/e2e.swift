@@ -29,7 +29,7 @@ func press(_ key: CGKeyCode, _ flags: CGEventFlags = [.maskControl, .maskAlterna
     }
 }
 
-func drag(from a: CGPoint, to b: CGPoint) {
+func drag(from a: CGPoint, to b: CGPoint, beforeRelease: () -> Void = {}) {
     CGEvent(mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: a, mouseButton: .left)?.post(tap: .cghidEventTap)
     usleep(150_000)
     CGEvent(mouseEventSource: nil, mouseType: .leftMouseDown, mouseCursorPosition: a, mouseButton: .left)?.post(tap: .cghidEventTap)
@@ -40,6 +40,8 @@ func drag(from a: CGPoint, to b: CGPoint) {
         CGEvent(mouseEventSource: nil, mouseType: .leftMouseDragged, mouseCursorPosition: p, mouseButton: .left)?.post(tap: .cghidEventTap)
         usleep(25_000)
     }
+    usleep(300_000)
+    beforeRelease()
     CGEvent(mouseEventSource: nil, mouseType: .leftMouseUp, mouseCursorPosition: b, mouseButton: .left)?.post(tap: .cghidEventTap)
 }
 
@@ -92,9 +94,13 @@ check(frames() == start, "⌃⌥2 jumps straight to Master & Stack")
 // 3. Drag a window's title bar onto another: they swap.
 let byX = windows().sorted { ($0.frame.minX, $0.frame.minY) < ($1.frame.minX, $1.frame.minY) }
 if byX.count >= 2 {
-    let mover = byX[0], target = byX[byX.count - 1]
-    print("  dragging \(mover.owner) #\(mover.id) onto \(target.owner) #\(target.id)")
-    drag(from: titleBar(mover), to: CGPoint(x: target.frame.midX, y: target.frame.midY))
+    // A TextEdit window (plain title bar) dropped onto the main window.
+    let mover = byX.last { $0.owner == "TextEdit" } ?? byX[byX.count - 1], target = byX[0]
+    print("  dragging \(mover.owner) #\(mover.id) from \(titleBar(mover)) onto \(target.owner) #\(target.id)")
+    drag(from: titleBar(mover), to: CGPoint(x: target.frame.midX, y: target.frame.midY)) {
+        snapshot("mid-drag")
+        check(frames()[mover.id].map { abs($0.minX - mover.frame.minX) > 20 } ?? false, "the window follows the mouse while dragging")
+    }
     settle(2)
     snapshot("after-drag-swap")
     let now = frames()
