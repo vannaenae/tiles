@@ -184,5 +184,82 @@ let afterOpen = frames()
 check(dwindle.allSatisfy { id, f in afterOpen[id].map { abs($0.minX - f.minX) <= 4 && abs($0.minY - f.minY) <= 4 } ?? false },
       "opening the dashboard leaves the layout alone")
 
+press(13, .maskCommand) // ⌘W closes the dashboard so it doesn't cover the windows
+settle()
+
+/// Changes ~/.config/tiles/config.json the way a person editing it would; Tiles picks it up within a second.
+func editConfig(_ change: (inout [String: Any]) -> Void) {
+    let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".config/tiles/config.json")
+    var config = (try? JSONSerialization.jsonObject(with: Data(contentsOf: url))) as? [String: Any] ?? [:]
+    change(&config)
+    try? JSONSerialization.data(withJSONObject: config).write(to: url)
+    settle(2.5)
+}
+
+func badges() -> [CGRect] {
+    let info = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
+    return info.compactMap { w in
+        guard (w[kCGWindowOwnerName as String] as? String) == "Tiles",
+              let b = w[kCGWindowBounds as String] as? [String: Double], b["Width"] == 30, b["Height"] == 22 else { return nil }
+        return CGRect(x: b["X"]!, y: b["Y"]!, width: 30, height: 22)
+    }
+}
+
+/// The stacked window drawn on top: the first of them in front-to-back order.
+func frontOf(_ ids: Set<Int>) -> Int? { windows().first { ids.contains($0.id) }?.id }
+
+// 7. Stacks: with only 2 tiles allowed, 3 windows share the second tile; its badge flips through them.
+editConfig { c in
+    var layout = c["layout"] as? [String: Any] ?? [:]
+    layout["maxTiles"] = 2
+    c["layout"] = layout
+}
+tiles("layout-columns")
+let stacked = Set(Dictionary(grouping: windows(), by: { "\($0.frame)" }).values.first { $0.count > 1 }?.map(\.id) ?? [])
+check(stacked.count == 3, "extra windows stack on the last tile (\(stacked.count) stacked)")
+let shownBadges = badges()
+check(shownBadges.count == 1, "a badge shows on the stacked tile (\(shownBadges.count) badges)")
+snapshot("stack-badge")
+if let badge = shownBadges.first, let before = frontOf(stacked) {
+    let p = CGPoint(x: badge.midX, y: badge.midY)
+    for type in [CGEventType.leftMouseDown, .leftMouseUp] {
+        CGEvent(mouseEventSource: nil, mouseType: type, mouseCursorPosition: p, mouseButton: .left)?.post(tap: .cghidEventTap)
+        usleep(80_000)
+    }
+    settle()
+    check(frontOf(stacked) != before, "clicking the badge brings the next stacked window forward")
+}
+editConfig { c in
+    var layout = c["layout"] as? [String: Any] ?? [:]
+    layout["maxTiles"] = 0
+    c["layout"] = layout
+}
+check(badges().isEmpty, "the badge goes away when the windows no longer stack")
+
+// 8. App rule: new TextEdit windows open in the main tile.
+tiles("layout-master-stack")
+editConfig { c in
+    var rules = c["rules"] as? [[String: Any]] ?? []
+    rules.append(["app": "TextEdit", "master": true])
+    c["rules"] = rules
+}
+let known = Set(frames().keys)
+let doc = FileManager.default.temporaryDirectory.appendingPathComponent("rule-test.txt")
+try? "Opened by a rule test".write(to: doc, atomically: true, encoding: .utf8)
+let openDoc = Process()
+openDoc.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+openDoc.arguments = ["-a", "TextEdit", doc.path]
+try? openDoc.run()
+openDoc.waitUntilExit()
+settle(3)
+snapshot("app-rule")
+let all = windows()
+if let fresh = all.first(where: { !known.contains($0.id) }) {
+    let leftmost = all.map(\.frame.minX).min() ?? 0
+    check(abs(fresh.frame.minX - leftmost) < 2 && fresh.frame.height > 500, "a rule puts the new TextEdit window in the main tile")
+} else {
+    check(false, "a new TextEdit window opened")
+}
+
 print(failures == 0 ? "ALL PASSED" : "\(failures) FAILED")
 exit(failures == 0 ? 0 : 1)
