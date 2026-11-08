@@ -14,6 +14,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     private var messageWork: DispatchWorkItem?
     private var started = false
     private let outline = FocusOutline()
+    private let badges = StackBadges()
+    let updater = Updater()
     private var settingsWindow: NSWindow?
     private var settingsModel: SettingsModel?
 
@@ -33,6 +35,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         configStore.onChange = { [weak self] config in self?.configChanged(config) }
         manager.onStateChange = { [weak self] in self?.updateIcon() }
         manager.onMessage = { [weak self] text in self?.flash(text) }
+        manager.onStacks = { [weak self] stacks in
+            guard let self else { return }
+            self.badges.show(stacks, hex: self.configStore.config.theme.hex)
+        }
+        badges.onClick = { [weak self] ids in self?.manager.cycleStack(ids) }
+        updater.onChange = { [weak self] in self?.settingsModel?.objectWillChange.send() }
+        updater.setAutomatic(configStore.config.checkForUpdates)
         manager.onFocusFrame = { [weak self] frame in
             guard let self else { return }
             self.outline.show(around: frame, hex: self.configStore.config.outlineColor)
@@ -103,6 +112,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         applyAppearance()
         applyIconPlacement()
         registerHotKeys()
+        if old.checkForUpdates != config.checkForUpdates { updater.setAutomatic(config.checkForUpdates) }
         if started { manager.configDidChange(from: old, to: config) }
         // Keep an open Settings window current, so it never writes back a stale copy.
         if let model = settingsModel, model.config != config { model.config = config }
@@ -169,6 +179,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
 
         if manager.undoSnapshot != nil {
             menu.addItem(item("Undo Scene Restore", #selector(undoRestore)))
+            menu.addItem(.separator())
+        }
+
+        if let version = updater.available {
+            menu.addItem(item("Update to Tiles \(version)…", #selector(installUpdate)))
             menu.addItem(.separator())
         }
 
@@ -286,6 +301,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     @objc private func grantAccess() { AccessibilityPermission.request() }
     @objc private func resetAccess() { AccessibilityPermission.reset() }
     @objc private func restart() { AccessibilityPermission.relaunch() }
+    @objc private func installUpdate() { updater.install() }
     @objc private func toggleTiling() { manager.perform(.toggleTiling); updateIcon() }
     @objc private func retile() { manager.perform(.retile) }
     @objc private func toggleFloat() { manager.perform(.toggleFloat) }
@@ -331,7 +347,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
                 store: configStore,
                 perform: { [weak self] in self?.manager.perform($0) },
                 setLayout: { [weak self] kind, display in self?.manager.setLayout(kind, for: display) },
-                status: { [weak self] in self?.manager.status() ?? [] }
+                status: { [weak self] in self?.manager.status() ?? [] },
+                updater: updater
             )
             settingsModel = model
             let window = NSWindow(contentViewController: NSHostingController(rootView: SettingsView(model: model)))

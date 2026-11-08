@@ -36,6 +36,7 @@ final class SettingsModel: ObservableObject {
 
     let perform: (Command) -> Void
     let setLayout: (LayoutKind, String) -> Void
+    let updater: Updater
     private let status: () -> [TilingManager.DisplayStatus]
     private let store: ConfigStore
     private var saveWork: DispatchWorkItem?
@@ -44,8 +45,10 @@ final class SettingsModel: ObservableObject {
     init(store: ConfigStore,
          perform: @escaping (Command) -> Void,
          setLayout: @escaping (LayoutKind, String) -> Void,
-         status: @escaping () -> [TilingManager.DisplayStatus]) {
+         status: @escaping () -> [TilingManager.DisplayStatus],
+         updater: Updater) {
         self.store = store
+        self.updater = updater
         self.perform = perform
         self.setLayout = setLayout
         self.status = status
@@ -292,6 +295,24 @@ private struct GeneralPane: View {
                 }
                 Toggle("Mouse follows keyboard focus", isOn: $model.config.mouseFollowsFocus)
                 Toggle("Put windows back where they were when Tiles quits", isOn: $model.config.restoreWindowsOnQuit)
+                Toggle("Focus follows mouse", isOn: $model.config.focusFollowsMouse)
+                    .help("Hovering over a tiled window focuses it")
+            }
+            Section("Updates") {
+                Toggle("Check for updates automatically", isOn: $model.config.checkForUpdates)
+                HStack {
+                    Text("Version \(model.updater.current)")
+                    if !model.updater.status.isEmpty {
+                        Text("· \(model.updater.status)").foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    if let version = model.updater.available {
+                        Button("Install Tiles \(version)") { model.updater.install() }
+                            .buttonStyle(.borderedProminent)
+                    } else {
+                        Button("Check Now") { model.updater.check() }
+                    }
+                }
             }
             Section {
                 Button("Open Config File in Editor") { NSWorkspace.shared.open(ConfigStore.fileURL) }
@@ -531,34 +552,74 @@ private struct RulesPane: View {
     var body: some View {
         Form {
             Section {
+                if model.config.rules.isEmpty {
+                    Text("No rules yet.").foregroundStyle(.secondary)
+                }
                 ForEach(Array(model.config.rules.enumerated()), id: \.offset) { index, rule in
-                    HStack {
-                        TextField("App or bundle ID", text: text(index, \.app))
-                        TextField("Title contains (optional)", text: text(index, \.titleContains))
-                        Toggle("Float", isOn: Binding(
-                            get: { rule.float ?? false },
-                            set: { model.config.rules[index].float = $0 }
-                        ))
-                        Button(role: .destructive) { model.config.rules.remove(at: index) } label: { Image(systemName: "minus.circle") }
-                            .buttonStyle(.borderless)
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            TextField("App or bundle ID", text: text(index, \.app))
+                            TextField("Title contains (optional)", text: text(index, \.titleContains))
+                            Button(role: .destructive) { model.config.rules.remove(at: index) } label: { Image(systemName: "minus.circle") }
+                                .buttonStyle(.borderless)
+                        }
+                        HStack(spacing: 16) {
+                            Toggle("Float", isOn: Binding(
+                                get: { rule.float ?? false },
+                                set: { model.config.rules[index].float = $0 }
+                            ))
+                            Picker("Open on", selection: Binding<String>(
+                                get: { rule.display ?? "" },
+                                set: { model.config.rules[index].display = $0.isEmpty ? nil : $0 }
+                            )) {
+                                Text("Any display").tag("")
+                                ForEach(displayNames(including: rule.display), id: \.self) { Text($0).tag($0) }
+                            }
+                            .fixedSize()
+                            .disabled(rule.float == true)
+                            Toggle("Main tile", isOn: Binding(
+                                get: { rule.master ?? false },
+                                set: { model.config.rules[index].master = $0 ? true : nil }
+                            ))
+                            .disabled(rule.float == true)
+                        }
+                        .font(.callout)
                     }
+                    .padding(.vertical, 4)
                 }
             } header: {
-                Text("Floating apps")
+                Text("App rules")
             } footer: {
-                Text("Floating windows are never tiled. The last matching rule wins. ⌃⌥F floats or tiles any single window.")
+                Text("Float keeps an app's windows out of the tiles. Otherwise, new windows of that app open on the display you pick, optionally in the main tile. The last matching rule wins. ⌃⌥F floats or tiles any single window.")
             }
             Section {
-                Menu("Add Running App") {
-                    ForEach(runningApps, id: \.bundleIdentifier) { app in
-                        Button(app.localizedName ?? app.bundleIdentifier ?? "") {
-                            model.config.rules.append(WindowRule(app: app.bundleIdentifier, float: true))
+                HStack {
+                    Menu("Float an App") {
+                        ForEach(runningApps, id: \.bundleIdentifier) { app in
+                            Button(app.localizedName ?? app.bundleIdentifier ?? "") {
+                                model.config.rules.append(WindowRule(app: app.bundleIdentifier, float: true))
+                            }
                         }
                     }
+                    Menu("Place an App") {
+                        ForEach(runningApps, id: \.bundleIdentifier) { app in
+                            Button(app.localizedName ?? app.bundleIdentifier ?? "") {
+                                model.config.rules.append(WindowRule(app: app.bundleIdentifier, display: Display.current().first?.name))
+                            }
+                        }
+                    }
+                    Button("Add Empty Rule") { model.config.rules.append(WindowRule(app: "")) }
                 }
-                Button("Add Empty Rule") { model.config.rules.append(WindowRule(app: "", float: true)) }
+                .fixedSize()
             }
         }
+    }
+
+    /// Connected displays, plus a saved name that isn't connected right now.
+    private func displayNames(including saved: String?) -> [String] {
+        var names = Display.current().map(\.name)
+        if let saved, !saved.isEmpty, !names.contains(saved) { names.append(saved) }
+        return names
     }
 
     private var runningApps: [NSRunningApplication] {

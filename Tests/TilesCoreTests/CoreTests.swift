@@ -162,6 +162,36 @@ final class ConfigTests: XCTestCase {
         XCTAssertEqual(config.layoutKind(forDisplayNamed: "Built-in Retina Display", aspectRatio: 1.54), .dwindle)
     }
 
+    func testEmptyRuleMatchesNothing() {
+        // "Add Empty Rule" used to float every window until an app name was typed.
+        var config = Config.default
+        config.rules = [WindowRule(app: "", titleContains: "", float: true)]
+        XCTAssertFalse(config.shouldFloat(bundleID: "com.apple.Safari", appName: "Safari", title: "Docs"))
+    }
+
+    func testPlacementRules() {
+        var config = Config.default
+        config.rules = [
+            WindowRule(app: "Slack", display: "Built-in"),
+            WindowRule(app: "com.apple.dt.Xcode", display: "LG", master: true),
+        ]
+        XCTAssertEqual(config.placement(bundleID: "com.tinyspeck.slackmacgap", appName: "Slack", title: nil).display, "Built-in")
+        let xcode = config.placement(bundleID: "com.apple.dt.Xcode", appName: "Xcode", title: nil)
+        XCTAssertEqual(xcode.display, "LG")
+        XCTAssertTrue(xcode.master)
+        XCTAssertNil(config.placement(bundleID: "x", appName: "Notes", title: nil).display)
+        // Placement rules don't float anything.
+        XCTAssertFalse(config.shouldFloat(bundleID: "com.apple.dt.Xcode", appName: "Xcode", title: nil))
+        XCTAssertEqual(try Config.decode(config.encoded()), config)
+    }
+
+    func testVersionComparison() {
+        XCTAssertTrue(Version.isNewer("0.10.0", than: "0.9.2"))
+        XCTAssertTrue(Version.isNewer("0.4.3", than: "0.4.2"))
+        XCTAssertFalse(Version.isNewer("0.4.2", than: "0.4.2"))
+        XCTAssertFalse(Version.isNewer("0.3.9", than: "0.4.0"))
+    }
+
     func testFloatRules() {
         var config = Config.default
         config.rules = [

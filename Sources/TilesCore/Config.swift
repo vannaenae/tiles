@@ -45,11 +45,18 @@ public struct WindowRule: Codable, Equatable {
     public var titleContains: String?
     /// `true` keeps matching windows floating (never tiled).
     public var float: Bool?
+    /// New windows open on the display whose name contains this text (e.g. `"LG"`, `"Built-in"`).
+    public var display: String?
+    /// `true` puts new windows in the main (master) tile.
+    public var master: Bool?
 
-    public init(app: String? = nil, titleContains: String? = nil, float: Bool? = nil) {
+    public init(app: String? = nil, titleContains: String? = nil, float: Bool? = nil,
+                display: String? = nil, master: Bool? = nil) {
         self.app = app
         self.titleContains = titleContains
         self.float = float
+        self.display = display
+        self.master = master
     }
 
     public func matches(bundleID: String?, appName: String?, title: String?) -> Bool {
@@ -61,7 +68,8 @@ public struct WindowRule: Codable, Equatable {
         if let needle = titleContains?.lowercased(), !needle.isEmpty {
             guard let title = title?.lowercased(), title.contains(needle) else { return false }
         }
-        return app != nil || titleContains != nil
+        // A rule with nothing filled in yet (just added in Settings) matches nothing.
+        return !(app ?? "").isEmpty || !(titleContains ?? "").isEmpty
     }
 }
 
@@ -92,6 +100,10 @@ public struct Config: Codable, Equatable {
     public var iconPlacement: IconPlacement
     /// Put every window back where it was when Tiles quits.
     public var restoreWindowsOnQuit: Bool
+    /// Hovering over a tiled window focuses it.
+    public var focusFollowsMouse: Bool
+    /// Check GitHub for a newer release once a day.
+    public var checkForUpdates: Bool
     public var rules: [WindowRule]
     /// Shortcut → command name. Merged on top of the defaults; map a shortcut
     /// to `"none"` to remove a default binding.
@@ -113,6 +125,8 @@ public struct Config: Codable, Equatable {
         appearance: AppearanceMode = .system,
         iconPlacement: IconPlacement = .menuBar,
         restoreWindowsOnQuit: Bool = true,
+        focusFollowsMouse: Bool = false,
+        checkForUpdates: Bool = true,
         rules: [WindowRule] = Config.defaultRules,
         hotkeys: [String: String] = [:]
     ) {
@@ -131,6 +145,8 @@ public struct Config: Codable, Equatable {
         self.appearance = appearance
         self.iconPlacement = iconPlacement
         self.restoreWindowsOnQuit = restoreWindowsOnQuit
+        self.focusFollowsMouse = focusFollowsMouse
+        self.checkForUpdates = checkForUpdates
         self.rules = rules
         self.hotkeys = hotkeys
     }
@@ -178,7 +194,7 @@ public struct Config: Codable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case enabled, defaultLayout, ultrawideLayout, displays, layout, newWindowPlacement
-        case dragToSwap, resizeToAdjustRatio, autoRestoreScenes, mouseFollowsFocus, outlineColor, theme, appearance, iconPlacement, restoreWindowsOnQuit, rules, hotkeys
+        case dragToSwap, resizeToAdjustRatio, autoRestoreScenes, mouseFollowsFocus, outlineColor, theme, appearance, iconPlacement, restoreWindowsOnQuit, focusFollowsMouse, checkForUpdates, rules, hotkeys
     }
 
     /// Every key is optional so a config file only needs the settings it changes.
@@ -200,6 +216,8 @@ public struct Config: Codable, Equatable {
         appearance = try c.decodeIfPresent(AppearanceMode.self, forKey: .appearance) ?? d.appearance
         iconPlacement = try c.decodeIfPresent(IconPlacement.self, forKey: .iconPlacement) ?? d.iconPlacement
         restoreWindowsOnQuit = try c.decodeIfPresent(Bool.self, forKey: .restoreWindowsOnQuit) ?? d.restoreWindowsOnQuit
+        focusFollowsMouse = try c.decodeIfPresent(Bool.self, forKey: .focusFollowsMouse) ?? d.focusFollowsMouse
+        checkForUpdates = try c.decodeIfPresent(Bool.self, forKey: .checkForUpdates) ?? d.checkForUpdates
         rules = try c.decodeIfPresent([WindowRule].self, forKey: .rules) ?? d.rules
         hotkeys = try c.decodeIfPresent([String: String].self, forKey: .hotkeys) ?? d.hotkeys
     }
@@ -236,6 +254,17 @@ public struct Config: Codable, Equatable {
             if let f = rule.float { result = f }
         }
         return result
+    }
+
+    /// Where a new window should go, from placement rules. The last matching rule wins per field.
+    public func placement(bundleID: String?, appName: String?, title: String?) -> (display: String?, master: Bool) {
+        var display: String?
+        var master = false
+        for rule in rules where rule.matches(bundleID: bundleID, appName: appName, title: title) {
+            if let d = rule.display, !d.isEmpty { display = d }
+            if let m = rule.master { master = m }
+        }
+        return (display, master)
     }
 
     public struct HotkeyBinding: Equatable {
@@ -323,5 +352,12 @@ extension Config {
             hotkeys[key] = Config.defaultHotkeys[key] != nil ? "none" : nil
         }
         if let shortcut { hotkeys[shortcut.configString] = command.name }
+    }
+}
+
+public enum Version {
+    /// `"0.10.0"` is newer than `"0.9.2"`: compares numbers, not text.
+    public static func isNewer(_ candidate: String, than current: String) -> Bool {
+        candidate.compare(current, options: .numeric) == .orderedDescending
     }
 }

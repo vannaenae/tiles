@@ -46,6 +46,10 @@ final class TilingManager {
     var onMessage: ((String) -> Void)?
     /// Frame of the focused tiled window for the outline, or nil to hide it.
     var onFocusFrame: ((Rect?) -> Void)?
+    /// Tiles holding more than one window, for the stack badges.
+    var onStacks: (([(frame: Rect, ids: [WindowID])]) -> Void)?
+    private var mouseMonitor: Any?
+    private var hovered: WindowID?
     /// Window temporarily filling its display (Focus).
     private var zoomed: WindowID?
     /// Scrolling layout: each window's width (share of the screen) and each display's scroll position.
@@ -70,6 +74,8 @@ final class TilingManager {
         )
         self.observer = observer
         observer.start()
+        // Focus follows mouse: global mouse moves, only acted on when the option is on.
+        mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: .mouseMoved) { [weak self] _ in self?.mouseMoved() }
         refresh()
         if config.autoRestoreScenes { restoreScene(silently: true) }
         // Apps keep opening windows for a while after login; don't save half a scene.
@@ -83,6 +89,7 @@ final class TilingManager {
         } else {
             targetFrames = [:]
             onFocusFrame?(nil)
+            onStacks?([])
         }
         onMessage?(enabled ? "Tiling on" : "Tiling off")
         onStateChange?()
@@ -200,11 +207,18 @@ final class TilingManager {
             for id in ids { knownDisplay[id] = displayID }
         }
         var present: [String: [WindowID]] = [:]
+        var newMasters: [WindowID] = []
         for (id, frame) in frames {
             if let d = knownDisplay[id] {
                 present[d, default: []].append(id)
-            } else if nowVisible.contains(id), let d = Display.best(for: frame, in: displays) {
+            } else if nowVisible.contains(id), let window = found[id] {
+                // A new window: a placement rule can send it to a display or the main tile.
+                let rule = config.placement(bundleID: window.bundleID, appName: window.appName,
+                                            title: config.rules.contains { $0.titleContains != nil } ? window.title : nil)
+                let ruled = rule.display.flatMap { name in displays.first { $0.name.localizedCaseInsensitiveContains(name) } }
+                guard let d = ruled ?? Display.best(for: frame, in: displays) else { continue }
                 present[d.id, default: []].append(id)
+                if rule.master { newMasters.append(id) }
             }
         }
 
@@ -225,6 +239,9 @@ final class TilingManager {
             if parameters[display.id] == nil {
                 parameters[display.id] = config.layout
             }
+        }
+        for id in newMasters {
+            for (d, ids) in newOrders where ids.contains(id) { newOrders[d] = TilingOrder.promote(ids, id) }
         }
         let structureChanged = newOrders != orders
         orders = newOrders
@@ -264,6 +281,7 @@ final class TilingManager {
             zoomed = nil
         }
         targetFrames = targets
+        reportStacks()
 
         let byApp = Dictionary(grouping: targets.keys.compactMap { windows[$0] }, by: \.pid)
         for (pid, appWindows) in byApp {
@@ -290,6 +308,41 @@ final class TilingManager {
             AXUIElementPerformAction(focused.element, kAXRaiseAction as CFString)
         }
         updateOutline()
+    }
+
+    /// Tiles that hold several windows: Monocle, or more windows than a display has tiles.
+    /// Scrolling's off-screen windows share an edge frame but aren't a stack, so only
+    /// frames fully on a display count.
+    private func reportStacks() {
+        var stacks: [(frame: Rect, ids: [WindowID])] = []
+        for display in displays {
+            let a = display.area
+            let ids = visibleOrder(display.id).filter { id in
+                guard let f = targetFrames[id] else { return false }
+                return f.minX >= a.minX - 1 && f.maxX <= a.maxX + 1
+            }
+            for (_, group) in Dictionary(grouping: ids, by: { "\(targetFrames[$0]!)" }) where group.count > 1 {
+                stacks.append((targetFrames[group[0]]!, group))
+            }
+        }
+        onStacks?(stacks)
+    }
+
+    /// Badge click: bring the next window in the stack to the front.
+    func cycleStack(_ ids: [WindowID]) {
+        let front = focusedWindow()?.id
+        if let next = TilingOrder.cycle(ids, from: ids.contains(front ?? 0) ? front : ids.last, forward: true) { focus(next) }
+    }
+
+    private func mouseMoved() {
+        guard config.focusFollowsMouse, isEnabled, NSEvent.pressedMouseButtons == 0 else { return }
+        let p = Display.mouseLocation()
+        let under = targetFrames.filter { $0.value.contains(x: p.x, y: p.y) }
+        // Stacked windows share a tile; hovering can't tell which one is meant.
+        guard under.count == 1, let id = under.first?.key else { hovered = nil; return }
+        guard id != hovered else { return }
+        hovered = id
+        if focusedWindow()?.id != id { windows[id]?.focus() }
     }
 
     /// Whether another display touches this one's left or right edge.
