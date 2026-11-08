@@ -180,6 +180,10 @@ final class ConfigTests: XCTestCase {
         XCTAssertEqual(xcode.display, "LG")
         XCTAssertTrue(xcode.master)
         XCTAssertNil(config.placement(bundleID: "x", appName: "Notes", title: nil).display)
+        // A later, more specific rule can switch "main tile" back off.
+        config.rules.append(WindowRule(app: "Xcode", titleContains: "Console", master: false))
+        XCTAssertFalse(config.placement(bundleID: "com.apple.dt.Xcode", appName: "Xcode", title: "Console").master)
+        XCTAssertTrue(config.placement(bundleID: "com.apple.dt.Xcode", appName: "Xcode", title: "Editor").master)
         // Placement rules don't float anything.
         XCTAssertFalse(config.shouldFloat(bundleID: "com.apple.dt.Xcode", appName: "Xcode", title: nil))
         XCTAssertEqual(try Config.decode(config.encoded()), config)

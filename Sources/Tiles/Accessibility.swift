@@ -183,6 +183,20 @@ extension CGRect {
 /// not minimised or hidden). Needs no Screen Recording permission.
 func onScreenWindowIDs() -> Set<WindowID> { Set(onScreenWindowOrder()) }
 
+/// The app window drawn on top at a point (top-left coordinates), whatever app owns it.
+func topWindow(atX x: Double, y: Double) -> WindowID? {
+    guard let info = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
+            as? [[String: Any]] else { return nil }
+    for entry in info where (entry[kCGWindowLayer as String] as? Int) == 0 {
+        guard let b = entry[kCGWindowBounds as String] as? [String: Double],
+              let number = entry[kCGWindowNumber as String] as? Int else { continue }
+        if Rect(x: b["X"] ?? 0, y: b["Y"] ?? 0, width: b["Width"] ?? 0, height: b["Height"] ?? 0).contains(x: x, y: y) {
+            return WindowID(number)
+        }
+    }
+    return nil
+}
+
 /// Same windows, front to back: the first is the one drawn on top.
 func onScreenWindowOrder() -> [WindowID] {
     guard let info = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)

@@ -579,7 +579,8 @@ private struct RulesPane: View {
                             .disabled(rule.float == true)
                             Toggle("Main tile", isOn: Binding(
                                 get: { rule.master ?? false },
-                                set: { model.config.rules[index].master = $0 ? true : nil }
+                                // An explicit false, so a later rule can override an earlier "main tile" one.
+                                set: { model.config.rules[index].master = $0 }
                             ))
                             .disabled(rule.float == true)
                         }

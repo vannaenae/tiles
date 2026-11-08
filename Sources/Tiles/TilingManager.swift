@@ -339,9 +339,9 @@ final class TilingManager {
     private func mouseMoved() {
         guard config.focusFollowsMouse, isEnabled, NSEvent.pressedMouseButtons == 0 else { return }
         let p = Display.mouseLocation()
-        let under = targetFrames.filter { $0.value.contains(x: p.x, y: p.y) }
-        // Stacked windows share a tile; hovering can't tell which one is meant.
-        guard under.count == 1, let id = under.first?.key else { hovered = nil; return }
+        // Only the window actually on top counts, so hovering a floating window
+        // (Calculator, a dialog) never raises the tile behind it.
+        guard let id = topWindow(atX: p.x, y: p.y), targetFrames[id] != nil else { hovered = nil; return }
         guard id != hovered else { return }
         hovered = id
         if focusedWindow()?.id != id { windows[id]?.focus() }
