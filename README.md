@@ -39,7 +39,7 @@ curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.s
 | Settings | Settings window with a live preview for laptop, 27", 34" and 49" displays, plus a focus outline in your colour |
 | Scenes | Saved automatically per set of displays, restored when that set reconnects, one-step undo |
 | Mouse | Drag a window onto another to swap. Drag to another display to move. Resize to change the split |
-| Keyboard | 40+ global shortcuts, all remappable |
+| Keyboard | 50+ global shortcuts, all remappable |
 | Automation | `tiles://` URL scheme and a `tiles` CLI for Raycast, Alfred, Shortcuts, skhd |
 | App | A dashboard showing every display and its windows live, plus settings for layouts, gaps, colours, shortcuts, app rules and scenes |
 | Look | Light, Dark or follow macOS, with five colour themes: orange, blue, green, purple, pink |
@@ -47,7 +47,11 @@ curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.s
 | Config | Also one plain JSON file, hot-reloaded on save |
 | Per-display | Different layout for each monitor, by name or by shape |
 | Rules | Float any app, or send its windows to a chosen display and the main tile |
-| Stacks | A badge counts windows sharing a tile; click it to flip through |
+| Stacks | ⌥-drag a window onto another to stack them. A badge counts windows sharing a tile; click it to flip through |
+| Workspaces | Up to 9 per display: `⌃⌘1`–`⌃⌘9` to switch, `⌃⌥⌘1`–`⌃⌥⌘9` to send a window. No need to turn off SIP |
+| Scroll to pan | In Scrolling, hold `⌃⌥` and swipe or scroll to slide the strip |
+| Animation | Optional: windows slide into place instead of jumping |
+| Raycast | Ready-made script commands in `integrations/raycast` |
 | Updates | Checks GitHub daily and installs updates signed by the Tiles developer, in place |
 | Privacy | Scenes store app identifiers only, never window titles |
 
@@ -135,6 +139,8 @@ All defaults use **⌃⌥ (Control + Option)**, which apps rarely claim.
 | `⌃⌥R` | Retile everything |
 | `⌃⌥S` | Save scene for this display setup |
 | `⌃⌥Z` | Undo the last scene restore |
+| `⌃⌘1` … `⌃⌘5` | Show workspace 1–5 on the active display (6–9 can be bound too) |
+| `⌃⌥⌘1` … `⌃⌥⌘5` | Send the focused window to workspace 1–5 |
 
 Remap anything in the config file (see below). Shortcuts use key positions on a US layout.
 
@@ -142,7 +148,15 @@ Remap anything in the config file (see below). Shortcuts use key positions on a 
 
 - **Drag a window onto another** to swap them.
 - **Drag a window to another display** to move it there.
+- **Hold ⌥ (Option) as you drop** to stack the window with the one underneath. A badge shows the count; click it to flip through. Drag it out to unstack.
+- **Hold ⌃⌥ and scroll** (or swipe sideways) in the Scrolling layout to slide the strip.
 - **Resize a window** with the mouse and the split follows (master ratio in Master & Stack, Wide Master, Centered Master and Dwindle). Other resizes snap back.
+
+## Workspaces
+
+Each display has up to nine workspaces, each with its own set of windows. `⌃⌘2` shows workspace 2 on the display you're using, and `⌃⌥⌘2` sends the focused window there. ⌘-Tab or a Dock click to a window on another workspace switches to it. The menu bar and dashboard show which workspaces hold windows.
+
+Windows on hidden workspaces wait just off the corner of the screen (the approach AeroSpace uses), so switching is instant and needs no change to System Integrity Protection. Turning tiling off or quitting Tiles always brings them back.
 
 ## Scenes
 
@@ -214,13 +228,14 @@ A scene is the arrangement for one combination of displays: each display's layou
 | `appearance` | `system`, `light` or `dark` |
 | `iconPlacement` | `menu-bar`, `dock` or `both` |
 | `outlineColor` | Focus outline colour as `#RRGGBB`, `""` for none |
+| `animateWindows` | Slide windows into place instead of jumping (default off) |
 | `newWindowPlacement` | `end`, `master`, or `after-focused` |
 | `rules` | Match on `app` (bundle ID or name) and/or `titleContains`. Last match wins. Replaces the default list when set |
 | `hotkeys` | Merged over the defaults. Map a shortcut to `"none"` to remove it |
 
 **Shortcut syntax:** modifiers `cmd`, `alt`/`opt`, `ctrl`, `shift`, plus `hyper` (all four) and `meh` (all but cmd), joined with `+` to a key: a letter, digit, `left` `right` `up` `down`, `return`, `space`, `tab`, `f1`–`f20`, or punctuation such as `-` `=` `[` `]` `,` `.` `/`.
 
-**Commands:** `focus-left|right|up|down`, `swap-left|right|up|down`, `promote`, `focus-next`, `focus-previous`, `layout-<name>`, `next-layout`, `previous-layout`, `grow-master`, `shrink-master`, `increase-master-count`, `decrease-master-count`, `increase-gaps`, `decrease-gaps`, `toggle-float`, `toggle-tiling`, `retile`, `move-to-next-display`, `move-to-previous-display`, `save-scene`, `restore-scene`, `undo-restore`, `toggle-zoom`, `cycle-width`, `center-window`.
+**Commands:** `focus-left|right|up|down`, `swap-left|right|up|down`, `promote`, `focus-next`, `focus-previous`, `layout-<name>`, `next-layout`, `previous-layout`, `grow-master`, `shrink-master`, `increase-master-count`, `decrease-master-count`, `increase-gaps`, `decrease-gaps`, `toggle-float`, `toggle-tiling`, `retile`, `move-to-next-display`, `move-to-previous-display`, `save-scene`, `restore-scene`, `undo-restore`, `toggle-zoom`, `cycle-width`, `center-window`, `workspace-1`…`workspace-9`, `move-to-workspace-1`…`move-to-workspace-9`.
 
 ## Automation
 
@@ -239,6 +254,8 @@ sudo cp scripts/tiles /usr/local/bin/tiles
 ```bash
 tiles swap-left
 ```
+
+**Raycast:** add the `integrations/raycast` folder under Settings → Extensions → Script Commands for layouts, scenes, Focus and workspaces as Raycast commands.
 
 ## How it works
 

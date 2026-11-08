@@ -57,6 +57,20 @@ final class TilingManager {
     private var scrollOffsets: [String: Double] = [:]
     /// Where each window was when Tiles first saw it, to put it back on quit.
     private var originalFrames: [WindowID: Rect] = [:]
+    /// Which workspace each display shows, and where each window lives.
+    private var workspaces = Workspaces()
+    /// Windows on a hidden workspace, parked just off screen, with the frame to bring them back to.
+    private var parked: [WindowID: Rect] = [:]
+    private var lastWorkspaceSwitch = Date.distantPast
+    /// Option-drag: window → the window whose tile it shares.
+    private var stackedOn: [WindowID: WindowID] = [:]
+    /// Displays being panned with ⌃⌥ + scroll, so the strip doesn't snap back to the focused window.
+    private var panning = Set<String>()
+    private var panWork: DispatchWorkItem?
+    private var panEndWork: DispatchWorkItem?
+    private var scrollTap: CFMachPort?
+    private var animation: (start: Date, moves: [WindowID: (from: Rect, to: Rect)])?
+    private var animationTimer: Timer?
 
     init(configStore: ConfigStore) {
         self.configStore = configStore
@@ -76,6 +90,7 @@ final class TilingManager {
         observer.start()
         // Focus follows mouse: global mouse moves, only acted on when the option is on.
         mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: .mouseMoved) { [weak self] _ in self?.mouseMoved() }
+        startScrollTap()
         refresh()
         if config.autoRestoreScenes { restoreScene(silently: true) }
         // Apps keep opening windows for a while after login; don't save half a scene.
@@ -87,6 +102,7 @@ final class TilingManager {
         if enabled {
             refresh()
         } else {
+            unparkAll()
             targetFrames = [:]
             onFocusFrame?(nil)
             onStacks?([])
@@ -118,6 +134,7 @@ final class TilingManager {
         case .structureChanged:
             scheduleRefresh()
         case .focusChanged:
+            followFocusToWorkspace()
             updateOutline()
             // Scrolling follows focus: clicking a sliver or ⌘-Tabbing to a window brings it into view.
             if layouts.values.contains(.scrolling) { scheduleRefresh() }
@@ -243,6 +260,10 @@ final class TilingManager {
         for id in newMasters {
             for (d, ids) in newOrders where ids.contains(id) { newOrders[d] = TilingOrder.promote(ids, id) }
         }
+        for (d, ids) in newOrders { for id in ids { workspaces.adopt(id, on: d) } }
+        workspaces.keep(only: Set(found.keys))
+        parked = parked.filter { found[$0.key] != nil }
+        stackedOn = stackedOn.filter { found[$0.key] != nil && found[$0.value] != nil }
         let structureChanged = newOrders != orders
         orders = newOrders
         apply(currentFrames: frames)
@@ -250,8 +271,14 @@ final class TilingManager {
         onStateChange?()
     }
 
+    /// Windows on screen on the workspace this display shows, in tiling order.
     private func visibleOrder(_ displayID: String) -> [WindowID] {
-        (orders[displayID] ?? []).filter { visible.contains($0) }
+        (orders[displayID] ?? []).filter { visible.contains($0) && workspaces.isShown($0, on: displayID) }
+    }
+
+    /// Windows on this display's other workspaces.
+    private func hiddenOrder(_ displayID: String) -> [WindowID] {
+        (orders[displayID] ?? []).filter { visible.contains($0) && !workspaces.isShown($0, on: displayID) }
     }
 
     private func apply(currentFrames: [WindowID: Rect]) {
@@ -260,13 +287,16 @@ final class TilingManager {
         for display in displays {
             let kind = layouts[display.id] ?? config.defaultLayout
             guard kind != .float else { continue }
-            let ids = visibleOrder(display.id)
+            let all = visibleOrder(display.id)
+            // Option-dragged windows share their host's tile instead of taking one.
+            let ids = all.filter { id in stackedOn[id].map { !all.contains($0) } ?? true }
             let p = parameters[display.id] ?? config.layout
             let rects: [Rect]
             if kind == .scrolling {
                 let result = ScrollingLayout.layout(
                     widths: ids.map { scrollWidths[$0] ?? p.scrollWidth }, in: display.area, parameters: p,
-                    focused: focusedID.flatMap { ids.firstIndex(of: $0) }, offset: scrollOffsets[display.id] ?? 0,
+                    focused: panning.contains(display.id) ? nil : focusedID.flatMap { ids.firstIndex(of: $0) },
+                    offset: scrollOffsets[display.id] ?? 0,
                     hideLeft: hasNeighbor(display, left: true), hideRight: hasNeighbor(display, left: false))
                 scrollOffsets[display.id] = result.offset
                 rects = result.frames
@@ -274,6 +304,7 @@ final class TilingManager {
                 rects = LayoutEngine.frames(count: ids.count, in: display.area, kind: kind, parameters: p)
             }
             for (id, rect) in zip(ids, rects) { targets[id] = rect }
+            for id in all where targets[id] == nil { targets[id] = stackedOn[id].flatMap { targets[$0] } }
         }
         if let z = zoomed, targets[z] != nil, let d = displayID(of: z), let display = displays.first(where: { $0.id == d }) {
             targets[z] = display.area.inset(by: (parameters[d] ?? config.layout).outerGap).integral
@@ -283,23 +314,35 @@ final class TilingManager {
         targetFrames = targets
         reportStacks()
 
-        let byApp = Dictionary(grouping: targets.keys.compactMap { windows[$0] }, by: \.pid)
-        for (pid, appWindows) in byApp {
-            let pending = appWindows.filter { window in
-                guard let current = currentFrames[window.id], let target = targets[window.id] else { return true }
-                return !current.isClose(to: target)
+        // Hidden workspaces: park each window in the display's bottom corner, one point on screen.
+        var moves = targets
+        for display in displays {
+            let a = display.area
+            for id in hiddenOrder(display.id) {
+                guard let current = currentFrames[id] else { continue }
+                if parked[id] == nil { parked[id] = current }
+                let x = hasNeighbor(display, left: false) ? a.minX - current.width + 1 : a.maxX - 1
+                moves[id] = Rect(x: x, y: a.maxY - 1, width: current.width, height: current.height)
             }
-            guard !pending.isEmpty else { continue }
+        }
+        // Windows coming back from a hidden workspace are tiled again.
+        for id in parked.keys where targets[id] != nil { parked[id] = nil }
+
+        var pending: [WindowID: (from: Rect, to: Rect)] = [:]
+        for (id, target) in moves {
+            let current = animatedFrame(id) ?? currentFrames[id]
+            if let current, current.isClose(to: target) { continue }
+            pending[id] = (current ?? target, target)
+        }
+        if !pending.isEmpty {
             ignoreMovesUntil = Date().addingTimeInterval(0.5)
-            let move = {
-                for window in pending {
-                    if let target = targets[window.id] { window.setFrame(CGRect(target)) }
-                }
-            }
-            if let app = NSRunningApplication(processIdentifier: pid) {
-                app.withEnhancedUIDisabled(move)
+            // Animate small, tiled rearrangements; jump for big ones and for parking.
+            let animatable = pending.filter { targets[$0.key] != nil && currentFrames[$0.key] != nil }
+            if config.animateWindows, panning.isEmpty, animatable.count == pending.count, pending.count <= 8 {
+                animate(pending)
             } else {
-                move()
+                stopAnimation()
+                setFrames(pending.mapValues(\.to))
             }
         }
 
@@ -326,6 +369,171 @@ final class TilingManager {
             }
         }
         onStacks?(stacks)
+    }
+
+    private func setFrames(_ frames: [WindowID: Rect], positionOnly: Bool = false) {
+        let byApp = Dictionary(grouping: frames.keys.compactMap { windows[$0] }, by: \.pid)
+        for (pid, appWindows) in byApp {
+            let move = {
+                for window in appWindows {
+                    guard let f = frames[window.id] else { continue }
+                    positionOnly ? window.setPositionAndSize(CGRect(f)) : window.setFrame(CGRect(f))
+                }
+            }
+            if let app = NSRunningApplication(processIdentifier: pid) {
+                app.withEnhancedUIDisabled(move)
+            } else {
+                move()
+            }
+        }
+    }
+
+    // MARK: - Animation
+
+    private static let animationDuration = 0.18
+
+    private func animatedFrame(_ id: WindowID) -> Rect? {
+        guard let animation, let move = animation.moves[id] else { return nil }
+        return Self.interpolate(move.from, move.to, progress(of: animation.start))
+    }
+
+    private func progress(of start: Date) -> Double {
+        let t = min(1, Date().timeIntervalSince(start) / Self.animationDuration)
+        return 1 - pow(1 - t, 3) // ease out
+    }
+
+    private static func interpolate(_ a: Rect, _ b: Rect, _ t: Double) -> Rect {
+        Rect(x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t,
+             width: a.width + (b.width - a.width) * t, height: a.height + (b.height - a.height) * t).integral
+    }
+
+    private func animate(_ moves: [WindowID: (from: Rect, to: Rect)]) {
+        stopAnimation()
+        animation = (Date(), moves)
+        ignoreMovesUntil = Date().addingTimeInterval(Self.animationDuration + 0.5)
+        animationTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 60, repeats: true) { [weak self] _ in
+            guard let self, let animation = self.animation else { return }
+            let t = self.progress(of: animation.start)
+            if t >= 1 {
+                self.stopAnimation()
+                // Last step uses the careful size → position → size move.
+                self.setFrames(animation.moves.mapValues(\.to))
+            } else {
+                self.setFrames(animation.moves.mapValues { Self.interpolate($0.from, $0.to, t) }, positionOnly: true)
+            }
+        }
+    }
+
+    private func stopAnimation() {
+        animationTimer?.invalidate()
+        animationTimer = nil
+        animation = nil
+    }
+
+    // MARK: - Workspaces
+
+    func activeWorkspace(on displayID: String) -> Int { workspaces.active(on: displayID) }
+
+    /// Workspaces in use on a display (always including the one showing).
+    func occupiedWorkspaces(on displayID: String) -> [Int] {
+        workspaces.occupied(by: (orders[displayID] ?? []).filter { visible.contains($0) }, on: displayID)
+    }
+
+    func showWorkspace(_ number: Int, on displayID: String?) {
+        guard let d = displayID else { return }
+        guard workspaces.active(on: d) != number else {
+            onMessage?("Workspace \(number)")
+            return
+        }
+        workspaces.show(number, on: d)
+        lastWorkspaceSwitch = Date()
+        refresh()
+        if let first = visibleOrder(d).first { focus(first) }
+        onMessage?("Workspace \(number)")
+    }
+
+    /// ⌘-Tab or a Dock click to a window on a hidden workspace shows that workspace.
+    private func followFocusToWorkspace() {
+        guard isEnabled, Date().timeIntervalSince(lastWorkspaceSwitch) > 0.6,
+              let id = focusedWindow()?.id, let d = displayID(of: id), !workspaces.isShown(id, on: d) else { return }
+        workspaces.show(workspaces.workspace(of: id, on: d), on: d)
+        lastWorkspaceSwitch = Date()
+        scheduleRefresh()
+        onMessage?("Workspace \(workspaces.active(on: d))")
+    }
+
+    /// Puts every parked window back on screen, e.g. when tiling is turned off or Tiles quits.
+    func unparkAll() {
+        stopAnimation()
+        for (id, frame) in parked { windows[id]?.setFrame(CGRect(frame)) }
+        parked = [:]
+        workspaces = Workspaces()
+    }
+
+    // MARK: - Scroll to pan
+
+    /// ⌃⌥ + trackpad or mouse wheel slides the Scrolling strip under the pointer.
+    /// An event tap rather than a monitor, so the app under the pointer doesn't scroll too.
+    private func startScrollTap() {
+        guard scrollTap == nil else { return }
+        let mask = CGEventMask(1 << CGEventType.scrollWheel.rawValue)
+        let callback: CGEventTapCallBack = { _, type, event, info in
+            guard let info else { return Unmanaged.passUnretained(event) }
+            let manager = Unmanaged<TilingManager>.fromOpaque(info).takeUnretainedValue()
+            if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+                if let tap = manager.scrollTap { CGEvent.tapEnable(tap: tap, enable: true) }
+                return Unmanaged.passUnretained(event)
+            }
+            return manager.handleScroll(event) ? nil : Unmanaged.passUnretained(event)
+        }
+        guard let tap = CGEvent.tapCreate(tap: .cgSessionEventTap, place: .headInsertEventTap, options: .defaultTap,
+                                          eventsOfInterest: mask, callback: callback,
+                                          userInfo: Unmanaged.passUnretained(self).toOpaque()) else { return }
+        scrollTap = tap
+        let source = CFMachPortCreateRunLoopSource(nil, tap, 0)
+        CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
+    }
+
+    /// Returns true when the scroll was used to pan, so it isn't passed on.
+    private func handleScroll(_ event: CGEvent) -> Bool {
+        let flags = event.flags
+        guard isEnabled, flags.contains(.maskControl), flags.contains(.maskAlternate),
+              !flags.contains(.maskCommand) else { return false }
+        let p = Display.mouseLocation()
+        guard let display = Display.display(atX: p.x, y: p.y, in: displays), layouts[display.id] == .scrolling else { return false }
+        let precise = event.getIntegerValueField(.scrollWheelEventIsContinuous) != 0
+        let dx = event.getDoubleValueField(.scrollWheelEventPointDeltaAxis2)
+        let dy = event.getDoubleValueField(.scrollWheelEventPointDeltaAxis1)
+        // Sideways swipes pan directly; an ordinary wheel pans with its up/down motion.
+        let delta = (abs(dx) > abs(dy) ? -dx : -dy) * (precise ? 1 : 8)
+        guard delta != 0 else { return true }
+        scrollOffsets[display.id, default: 0] += delta
+        panning.insert(display.id)
+        if panWork == nil {
+            let work = DispatchWorkItem { [weak self] in
+                guard let self else { return }
+                self.panWork = nil
+                self.apply(currentFrames: self.targetFrames)
+            }
+            panWork = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0 / 60, execute: work)
+        }
+        panEndWork?.cancel()
+        let end = DispatchWorkItem { [weak self] in self?.finishPan(display.id) }
+        panEndWork = end
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: end)
+        return true
+    }
+
+    /// When the scrolling stops, focus the window nearest the middle so the strip stays put.
+    private func finishPan(_ displayID: String) {
+        panning.remove(displayID)
+        guard let display = displays.first(where: { $0.id == displayID }) else { return }
+        let mid = display.area.midX
+        let nearest = visibleOrder(displayID).min { a, b in
+            abs((targetFrames[a]?.midX ?? .infinity) - mid) < abs((targetFrames[b]?.midX ?? .infinity) - mid)
+        }
+        if let nearest, focusedWindow()?.id != nearest { focus(nearest) }
     }
 
     /// Badge click: bring forward the window after the one on top of the stack.
@@ -404,7 +612,15 @@ final class TilingManager {
         let mouse = Display.mouseLocation()
         guard let destination = Display.display(atX: mouse.x, y: mouse.y, in: displays) else { return }
         let ids = visibleOrder(destination.id)
-        if let other = ids.first(where: { targetFrames[$0]?.contains(x: mouse.x, y: mouse.y) == true }), other != id {
+        let other = ids.first { $0 != id && targetFrames[$0]?.contains(x: mouse.x, y: mouse.y) == true }
+        if NSEvent.modifierFlags.contains(.option), let other {
+            // Option-drag onto a window: share its tile, as a stack.
+            stack(id, onto: other, from: from, to: destination.id)
+            return
+        }
+        // A plain drag takes a window out of its stack. Dropped on its old tile, it just gets its own.
+        let formerHost = stackedOn.removeValue(forKey: id)
+        if let other, other != formerHost {
             swapWindows(id, other)
         } else if destination.id != from {
             move(id, from: from, to: destination.id)
@@ -467,6 +683,24 @@ final class TilingManager {
 
     // MARK: - Order helpers
 
+    private func stackHost(of id: WindowID) -> WindowID { stackedOn[id] ?? id }
+
+    private func stack(_ id: WindowID, onto other: WindowID, from: String, to: String) {
+        let host = stackHost(of: other)
+        guard host != id else { return }
+        // Windows stacked on the dragged one follow it to the new host.
+        for (w, h) in stackedOn where h == id { stackedOn[w] = host }
+        stackedOn[id] = host
+        if from != to { move(id, from: from, to: to) }
+        // Sit right after the host, so unstacking puts it next door.
+        if var order = orders[to], let at = order.firstIndex(of: host) {
+            order.removeAll { $0 == id }
+            order.insert(id, at: min(at + 1, order.count))
+            orders[to] = order
+        }
+        onMessage?("Stacked · click the badge to flip")
+    }
+
     private func displayID(of id: WindowID) -> String? {
         orders.first { $0.value.contains(id) }?.key
     }
@@ -485,6 +719,7 @@ final class TilingManager {
     private func move(_ id: WindowID, from: String, to: String) {
         orders[from]?.removeAll { $0 == id }
         orders[to, default: []].append(id)
+        workspaces.move(id, to: workspaces.active(on: to))
     }
 
     // MARK: - Focus
@@ -662,6 +897,20 @@ final class TilingManager {
             scheduleAutosave()
             onMessage?("Undone")
 
+        case .workspace(let number):
+            showWorkspace(number, on: activeDisplayID())
+
+        case .moveToWorkspace(let number):
+            guard let id = focusedID, let d = displayID(of: id) else { return }
+            guard workspaces.workspace(of: id, on: d) != number else { return }
+            let neighbour = TilingOrder.cycle(visibleOrder(d), from: id, forward: true)
+            workspaces.move(id, to: number)
+            stackedOn[id] = nil
+            for (w, h) in stackedOn where h == id { stackedOn[w] = nil }
+            refresh()
+            if let neighbour, neighbour != id { focus(neighbour) }
+            onMessage?("Sent to workspace \(number)")
+
         case .toggleTiling:
             break
         }
@@ -702,6 +951,8 @@ final class TilingManager {
         let size: Rect
         let layout: LayoutKind
         let tiles: [Tile]
+        var workspace = 1
+        var workspaces: [Int] = [1]
     }
 
     func status() -> [DisplayStatus] {
@@ -715,7 +966,9 @@ final class TilingManager {
             }
             return DisplayStatus(id: display.id, name: display.name,
                                  size: Rect(x: 0, y: 0, width: a.width, height: a.height),
-                                 layout: layout(for: display.id), tiles: tiles)
+                                 layout: layout(for: display.id), tiles: tiles,
+                                 workspace: workspaces.active(on: display.id),
+                                 workspaces: occupiedWorkspaces(on: display.id))
         }
     }
 

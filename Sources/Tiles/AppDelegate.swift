@@ -75,7 +75,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        if started, configStore.config.restoreWindowsOnQuit { manager.restoreOriginalFrames() }
+        guard started else { return }
+        // Windows on hidden workspaces always come back, whatever the setting.
+        if configStore.config.restoreWindowsOnQuit { manager.restoreOriginalFrames() } else { manager.unparkAll() }
     }
 
     /// `tiles://<command>` — lets Raycast, Alfred, Shortcuts or a shell script drive Tiles.
@@ -206,6 +208,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
             }
             parent.submenu = sub
             menu.addItem(parent)
+
+            // Workspaces 1–5 always, plus any higher one with windows in it.
+            let active = manager.activeWorkspace(on: display.id)
+            let used = manager.occupiedWorkspaces(on: display.id)
+            let spaces = NSMenuItem(title: (displays.count > 1 ? "Workspace — \(display.name)" : "Workspace") + " (\(active))",
+                                    action: nil, keyEquivalent: "")
+            let spaceMenu = NSMenu()
+            for n in Workspaces.numbers where n <= 5 || used.contains(n) {
+                let entry = item("Workspace \(n)" + (used.contains(n) && n != active ? "  •" : ""), #selector(pickWorkspace(_:)))
+                entry.representedObject = [display.id, String(n)]
+                entry.state = n == active ? .on : .off
+                spaceMenu.addItem(entry)
+            }
+            spaces.submenu = spaceMenu
+            menu.addItem(spaces)
         }
 
         let gaps = NSMenuItem(title: "Gaps", action: nil, keyEquivalent: "")
@@ -234,6 +251,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         optionsMenu.addItem(check("Resize with Mouse Adjusts Layout", config.resizeToAdjustRatio, #selector(toggleResizeRatio)))
         optionsMenu.addItem(check("Restore Scenes When Displays Change", config.autoRestoreScenes, #selector(toggleAutoScenes)))
         optionsMenu.addItem(check("Mouse Follows Keyboard Focus", config.mouseFollowsFocus, #selector(toggleMouseFollows)))
+        optionsMenu.addItem(check("Animate Windows", config.animateWindows, #selector(toggleAnimate)))
         let placement = NSMenuItem(title: "New Windows Open", action: nil, keyEquivalent: "")
         let placementMenu = NSMenu()
         let placements: [(String, NewWindowPlacement)] = [("At the End", .end), ("As Master", .master), ("Next to Focused", .afterFocused)]
@@ -315,6 +333,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         manager.setLayout(kind, for: info[0])
     }
 
+    @objc private func pickWorkspace(_ sender: NSMenuItem) {
+        guard let info = sender.representedObject as? [String], info.count == 2, let n = Int(info[1]) else { return }
+        manager.showWorkspace(n, on: info[0])
+    }
+
+    @objc private func toggleAnimate() { configStore.update { $0.animateWindows.toggle() } }
+
     @objc private func pickGap(_ sender: NSMenuItem) {
         guard let size = sender.representedObject as? Double else { return }
         manager.setGaps(size)
@@ -347,6 +372,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
                 store: configStore,
                 perform: { [weak self] in self?.manager.perform($0) },
                 setLayout: { [weak self] kind, display in self?.manager.setLayout(kind, for: display) },
+                showWorkspace: { [weak self] n, display in self?.manager.showWorkspace(n, on: display) },
                 status: { [weak self] in self?.manager.status() ?? [] },
                 updater: updater
             )

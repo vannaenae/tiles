@@ -257,3 +257,33 @@ final class SceneTests: XCTestCase {
         XCTAssertEqual(SceneStore.load(from: url), store)
     }
 }
+
+final class WorkspaceTests: XCTestCase {
+    func testNewWindowsJoinTheShowingWorkspace() {
+        var w = Workspaces()
+        w.adopt(1, on: "A")
+        w.show(2, on: "A")
+        w.adopt(2, on: "A")
+        XCTAssertFalse(w.isShown(1, on: "A"))
+        XCTAssertTrue(w.isShown(2, on: "A"))
+        XCTAssertEqual(w.occupied(by: [1, 2], on: "A"), [1, 2])
+        // Displays switch independently.
+        XCTAssertEqual(w.active(on: "B"), 1)
+    }
+
+    func testMoveAndForget() {
+        var w = Workspaces()
+        w.adopt(7, on: "A")
+        w.move(7, to: 3)
+        XCTAssertEqual(w.workspace(of: 7, on: "A"), 3)
+        w.keep(only: [])
+        XCTAssertEqual(w.workspace(of: 7, on: "A"), 1)
+    }
+
+    func testWorkspaceCommandsRoundTrip() {
+        XCTAssertEqual(Command(name: "workspace-3"), .workspace(3))
+        XCTAssertEqual(Command(name: "move-to-workspace-9"), .moveToWorkspace(9))
+        XCTAssertNil(Command(name: "workspace-10"))
+        XCTAssertEqual(Config.default.shortcuts(for: .workspace(2)).map(\.description), ["⌃⌘2"])
+    }
+}

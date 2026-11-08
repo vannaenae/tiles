@@ -36,6 +36,7 @@ final class SettingsModel: ObservableObject {
 
     let perform: (Command) -> Void
     let setLayout: (LayoutKind, String) -> Void
+    let showWorkspace: (Int, String) -> Void
     let updater: Updater
     private let status: () -> [TilingManager.DisplayStatus]
     private let store: ConfigStore
@@ -45,10 +46,12 @@ final class SettingsModel: ObservableObject {
     init(store: ConfigStore,
          perform: @escaping (Command) -> Void,
          setLayout: @escaping (LayoutKind, String) -> Void,
+         showWorkspace: @escaping (Int, String) -> Void,
          status: @escaping () -> [TilingManager.DisplayStatus],
          updater: Updater) {
         self.store = store
         self.updater = updater
+        self.showWorkspace = showWorkspace
         self.perform = perform
         self.setLayout = setLayout
         self.status = status
@@ -475,8 +478,15 @@ private struct MousePane: View {
             Section {
                 Toggle("Drag a window onto another to swap them", isOn: $model.config.dragToSwap)
                 Toggle("Resizing a window moves the split", isOn: $model.config.resizeToAdjustRatio)
+                Toggle("Animate windows into place", isOn: $model.config.animateWindows)
             } footer: {
-                Text("Drag a window to another display to move it there. Other resizes snap back to the grid.")
+                Text("Drag a window to another display to move it there. Hold ⌥ (Option) while dropping to stack it with the window underneath; drag it out again to unstack. Other resizes snap back to the grid.")
+            }
+            Section {
+                Text("Hold ⌃⌥ and scroll, or swipe sideways on the trackpad, to slide the strip.")
+                    .foregroundStyle(.secondary)
+            } header: {
+                Text("Scrolling layout")
             }
         }
     }
@@ -716,6 +726,16 @@ private struct DashboardPane: View {
                 Text(display.name).font(.headline)
                 Text("\(display.tiles.count) window\(display.tiles.count == 1 ? "" : "s")").foregroundStyle(.secondary)
                 Spacer()
+                if display.workspaces.count > 1 {
+                    Picker("Workspace", selection: Binding(
+                        get: { display.workspace },
+                        set: { model.showWorkspace($0, display.id) }
+                    )) {
+                        ForEach(display.workspaces, id: \.self) { Text("\($0)").tag($0) }
+                    }
+                    .pickerStyle(.segmented).labelsHidden().fixedSize()
+                    .help("Workspaces on this display")
+                }
                 Menu(display.layout.displayName) {
                     ForEach(LayoutKind.allCases, id: \.self) { kind in
                         Button(kind.displayName) { model.setLayout(kind, display.id) }
@@ -758,7 +778,8 @@ private struct DashboardPane: View {
             Group {
                 Text("⌃⌥ + arrows  focus a window   ·   ⌃⌥⇧ + arrows  swap")
                 Text("⌃⌥Space  next layout   ·   ⌃⌥M  fill the screen   ·   ⌃⌥F  float")
-                Text("Drag a window onto another to swap them.")
+                Text("⌃⌘1–5  switch workspace   ·   ⌃⌥⌘1–5  send the window there")
+                Text("Drag a window onto another to swap them; hold ⌥ to stack them instead.")
             }
             .font(.callout).foregroundStyle(.secondary)
         }

@@ -140,6 +140,16 @@ final class Window {
         element.set(kAXSizeAttribute, sizeValue)
     }
 
+    /// One position and one size call: cheap enough for animation frames.
+    func setPositionAndSize(_ rect: CGRect) {
+        var size = rect.size
+        var origin = rect.origin
+        guard let sizeValue = AXValueCreate(.cgSize, &size),
+              let originValue = AXValueCreate(.cgPoint, &origin) else { return }
+        element.set(kAXPositionAttribute, originValue)
+        element.set(kAXSizeAttribute, sizeValue)
+    }
+
     func focus() {
         let app = NSRunningApplication(processIdentifier: pid)
         let appElement = AXUIElementCreateApplication(pid)

@@ -261,5 +261,93 @@ if let fresh = all.first(where: { !known.contains($0.id) }) {
     check(false, "a new TextEdit window opened")
 }
 
+// 9. Workspaces: ⌃⌥⌘2 sends the focused window to workspace 2, ⌃⌘2 / ⌃⌘1 switch.
+let screen = CGDisplayBounds(CGMainDisplayID())
+func parked(_ f: CGRect) -> Bool { f.minX >= screen.maxX - 2 || f.maxX <= screen.minX + 2 }
+tiles("layout-master-stack")
+let beforeSend = frames()
+press(19, [.maskControl, .maskAlternate, .maskCommand]) // ⌃⌥⌘2
+settle(2)
+snapshot("sent-to-workspace-2")
+let afterSend = frames()
+let sent = afterSend.filter { parked($0.value) }.map(\.key)
+check(sent.count == 1, "⌃⌥⌘2 moves one window off to workspace 2 (\(sent.count) parked)")
+check(afterSend.filter { !parked($0.value) }.count == beforeSend.count - 1, "the rest re-tile to fill the gap")
+press(19, [.maskControl, .maskCommand]) // ⌃⌘2
+settle(2)
+snapshot("workspace-2")
+let onTwo = frames()
+check(sent.allSatisfy { !parked(onTwo[$0] ?? .zero) } && onTwo.filter { !parked($0.value) }.count == sent.count,
+      "⌃⌘2 shows workspace 2: only that window is on screen")
+press(18, [.maskControl, .maskCommand]) // ⌃⌘1
+settle(2)
+let onOne = frames()
+check(onOne.filter { !parked($0.value) }.count == beforeSend.count - 1, "⌃⌘1 brings workspace 1 back")
+// Bring the sent window home: show 2 (which focuses it), send it to 1, show 1.
+tiles("workspace-2"); tiles("move-to-workspace-1"); tiles("workspace-1")
+check(frames().filter { parked($0.value) }.isEmpty, "every window is back on workspace 1")
+
+// 10. Option-drag a window onto another: they share a tile, with a badge. A plain drag unstacks.
+tiles("layout-columns")
+func holdOption(_ down: Bool) {
+    let e = CGEvent(keyboardEventSource: nil, virtualKey: 58, keyDown: down)
+    e?.flags = down ? .maskAlternate : []
+    e?.post(tap: .cghidEventTap)
+    usleep(80_000)
+}
+let cols = windows().sorted { $0.frame.minX < $1.frame.minX }
+if let mover = cols.last(where: { $0.owner == "TextEdit" }), let host = cols.first(where: { $0.owner != mover.owner }) {
+    dragWindow(mover, to: CGPoint(x: host.frame.midX, y: host.frame.midY)) { holdOption(true) }
+    settle(1)
+    holdOption(false)
+    settle(1.5)
+    snapshot("option-drag-stack")
+    let f = frames()
+    check(f[mover.id] != nil && f[mover.id] == f[host.id], "⌥-dragging a window onto another stacks them in one tile")
+    check(badges().count == 1, "the stack shows a badge (\(badges().count))")
+    if let now = windows().first(where: { $0.id == mover.id }) {
+        dragWindow(now, to: CGPoint(x: now.frame.midX, y: now.frame.midY + 40))
+        settle(2)
+        snapshot("unstacked")
+        let g = frames()
+        check(g[mover.id] != g[host.id], "a plain drag takes it back out of the stack")
+    }
+}
+
+// 11. Scrolling: ⌃⌥ + scroll slides the strip, and it stays where you left it.
+tiles("layout-scrolling")
+let strip = frames()
+func pan(_ amount: Int32) {
+    let mid = CGPoint(x: screen.midX, y: screen.midY)
+    CGEvent(mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: mid, mouseButton: .left)?.post(tap: .cghidEventTap)
+    usleep(100_000)
+    for _ in 0..<12 {
+        let e = CGEvent(scrollWheelEvent2Source: nil, units: .pixel, wheelCount: 2, wheel1: 0, wheel2: amount, wheel3: 0)
+        e?.flags = [.maskControl, .maskAlternate]
+        e?.post(tap: .cghidEventTap)
+        usleep(30_000)
+    }
+    settle(1.5)
+}
+func moved(_ a: [Int: CGRect], _ b: [Int: CGRect]) -> Bool { a.contains { id, f in abs((b[id]?.minX ?? f.minX) - f.minX) > 100 } }
+pan(-60)
+if !moved(strip, frames()) { pan(60) }
+let panned = frames()
+snapshot("scroll-pan")
+check(moved(strip, panned), "⌃⌥ + scroll slides the Scrolling strip")
+settle(1.5)
+check(!moved(panned, frames()), "the strip stays where the scroll left it")
+
+// 12. Animated moves still land exactly on the grid.
+tiles("layout-columns")
+let columns = frames()
+tiles("layout-grid")
+editConfig { $0["animateWindows"] = true }
+tiles("layout-columns")
+let animated = frames()
+check(columns.allSatisfy { id, f in animated[id].map { abs($0.minX - f.minX) <= 4 && abs($0.width - f.width) <= 4 } ?? false },
+      "with animation on, windows still end up exactly in their tiles")
+editConfig { $0["animateWindows"] = false }
+
 print(failures == 0 ? "ALL PASSED" : "\(failures) FAILED")
 exit(failures == 0 ? 0 : 1)

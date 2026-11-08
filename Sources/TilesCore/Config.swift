@@ -104,6 +104,8 @@ public struct Config: Codable, Equatable {
     public var focusFollowsMouse: Bool
     /// Check GitHub for a newer release once a day.
     public var checkForUpdates: Bool
+    /// Slide windows into place instead of jumping.
+    public var animateWindows: Bool
     public var rules: [WindowRule]
     /// Shortcut → command name. Merged on top of the defaults; map a shortcut
     /// to `"none"` to remove a default binding.
@@ -127,6 +129,7 @@ public struct Config: Codable, Equatable {
         restoreWindowsOnQuit: Bool = true,
         focusFollowsMouse: Bool = false,
         checkForUpdates: Bool = true,
+        animateWindows: Bool = false,
         rules: [WindowRule] = Config.defaultRules,
         hotkeys: [String: String] = [:]
     ) {
@@ -147,6 +150,7 @@ public struct Config: Codable, Equatable {
         self.restoreWindowsOnQuit = restoreWindowsOnQuit
         self.focusFollowsMouse = focusFollowsMouse
         self.checkForUpdates = checkForUpdates
+        self.animateWindows = animateWindows
         self.rules = rules
         self.hotkeys = hotkeys
     }
@@ -164,7 +168,8 @@ public struct Config: Codable, Equatable {
         WindowRule(app: "com.apple.Stickies", float: true),
     ]
 
-    /// Built-in bindings. All use ⌃⌥ (control + option) so they rarely clash with apps.
+    /// Built-in bindings. Most use ⌃⌥ (control + option) so they rarely clash with apps;
+    /// workspaces use ⌃⌘ (show) and ⌃⌥⌘ (send a window).
     public static let defaultHotkeys: [String: String] = [
         "ctrl+alt+h": "focus-left", "ctrl+alt+j": "focus-down",
         "ctrl+alt+k": "focus-up", "ctrl+alt+l": "focus-right",
@@ -190,11 +195,16 @@ public struct Config: Codable, Equatable {
         "ctrl+alt+n": "focus-next", "ctrl+alt+p": "focus-previous",
         "ctrl+alt+]": "move-to-next-display", "ctrl+alt+[": "move-to-previous-display",
         "ctrl+alt+s": "save-scene", "ctrl+alt+z": "undo-restore",
+        "ctrl+cmd+1": "workspace-1", "ctrl+cmd+2": "workspace-2", "ctrl+cmd+3": "workspace-3",
+        "ctrl+cmd+4": "workspace-4", "ctrl+cmd+5": "workspace-5",
+        "ctrl+alt+cmd+1": "move-to-workspace-1", "ctrl+alt+cmd+2": "move-to-workspace-2",
+        "ctrl+alt+cmd+3": "move-to-workspace-3", "ctrl+alt+cmd+4": "move-to-workspace-4",
+        "ctrl+alt+cmd+5": "move-to-workspace-5",
     ]
 
     enum CodingKeys: String, CodingKey {
         case enabled, defaultLayout, ultrawideLayout, displays, layout, newWindowPlacement
-        case dragToSwap, resizeToAdjustRatio, autoRestoreScenes, mouseFollowsFocus, outlineColor, theme, appearance, iconPlacement, restoreWindowsOnQuit, focusFollowsMouse, checkForUpdates, rules, hotkeys
+        case dragToSwap, resizeToAdjustRatio, autoRestoreScenes, mouseFollowsFocus, outlineColor, theme, appearance, iconPlacement, restoreWindowsOnQuit, focusFollowsMouse, checkForUpdates, animateWindows, rules, hotkeys
     }
 
     /// Every key is optional so a config file only needs the settings it changes.
@@ -218,6 +228,7 @@ public struct Config: Codable, Equatable {
         restoreWindowsOnQuit = try c.decodeIfPresent(Bool.self, forKey: .restoreWindowsOnQuit) ?? d.restoreWindowsOnQuit
         focusFollowsMouse = try c.decodeIfPresent(Bool.self, forKey: .focusFollowsMouse) ?? d.focusFollowsMouse
         checkForUpdates = try c.decodeIfPresent(Bool.self, forKey: .checkForUpdates) ?? d.checkForUpdates
+        animateWindows = try c.decodeIfPresent(Bool.self, forKey: .animateWindows) ?? d.animateWindows
         rules = try c.decodeIfPresent([WindowRule].self, forKey: .rules) ?? d.rules
         hotkeys = try c.decodeIfPresent([String: String].self, forKey: .hotkeys) ?? d.hotkeys
     }

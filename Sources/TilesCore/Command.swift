@@ -27,6 +27,10 @@ public enum Command: Equatable {
     case toggleZoom
     case cycleWidth
     case centerWindow
+    /// Show workspace 1–9 on the active display.
+    case workspace(Int)
+    /// Send the focused window to workspace 1–9 on its display.
+    case moveToWorkspace(Int)
 
     /// Stable string form used in config files and URLs, e.g. `focus-left`, `layout-columns`.
     public var name: String {
@@ -56,6 +60,8 @@ public enum Command: Equatable {
         case .toggleZoom: return "toggle-zoom"
         case .cycleWidth: return "cycle-width"
         case .centerWindow: return "center-window"
+        case .workspace(let n): return "workspace-\(n)"
+        case .moveToWorkspace(let n): return "move-to-workspace-\(n)"
         }
     }
 
@@ -66,7 +72,7 @@ public enum Command: Equatable {
             .increaseMasterCount, .decreaseMasterCount, .toggleFloat, .toggleTiling,
             .retile, .focusNextWindow, .focusPreviousWindow, .moveToNextDisplay,
             .moveToPreviousDisplay, .increaseGaps, .decreaseGaps, .saveScene, .restoreScene, .undoRestore, .toggleZoom, .cycleWidth, .centerWindow,
-        ]
+        ] + Workspaces.numbers.map(Command.workspace) + Workspaces.numbers.map(Command.moveToWorkspace)
 
     public static var allNames: [String] { all.map(\.name) }
 
