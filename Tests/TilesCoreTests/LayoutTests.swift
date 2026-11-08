@@ -232,4 +232,13 @@ final class LayoutTests: XCTestCase {
             XCTAssertEqual(laidOut.frames[0].width, width, accuracy: 1)
         }
     }
+
+    func testDwindleNearSquareSplitIgnoresTinyChanges() {
+        // After a column split the rest is roughly square; a 4-point change in height must not flip it.
+        for height in [656.0, 660, 664] {
+            let frames = LayoutEngine.dwindle(count: 3, in: Rect(x: 0, y: 0, width: 1000, height: height), gap: 0, firstRatio: 0.34)
+            XCTAssertEqual(frames[1].width, 660, "height \(height)")
+            XCTAssertLessThan(frames[1].height, height, "height \(height)")
+        }
+    }
 }

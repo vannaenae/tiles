@@ -308,8 +308,10 @@ func holdOption(_ down: Bool) {
     usleep(80_000)
     if !down { releaseModifiers() }
 }
+// Two windows in different single-window tiles (the last tile may already hold an overflow stack).
 let cols = windows().sorted { $0.frame.minX < $1.frame.minX }
-if let mover = cols.last(where: { $0.owner == "TextEdit" }), let host = cols.first(where: { $0.owner != mover.owner }) {
+let alone = cols.filter { w in cols.filter { $0.frame == w.frame }.count == 1 }
+if alone.count >= 2, let host = alone.first, let mover = alone.dropFirst().first(where: { $0.owner == "TextEdit" }) {
     dragWindow(mover, to: CGPoint(x: host.frame.midX, y: host.frame.midY)) { holdOption(true) }
     settle(1)
     holdOption(false)
@@ -325,6 +327,8 @@ if let mover = cols.last(where: { $0.owner == "TextEdit" }), let host = cols.fir
         let g = frames()
         check(g[mover.id] != g[host.id], "a plain drag takes it back out of the stack")
     }
+} else {
+    check(false, "found two windows in separate tiles to stack (\(alone.count))")
 }
 
 // 11. Scrolling: ⌃⌥ + scroll slides the strip, and it stays where you left it.

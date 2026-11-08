@@ -177,13 +177,20 @@ public enum LayoutEngine {
     static func dwindle(count: Int, in area: Rect, gap: Double, firstRatio: Double) -> [Rect] {
         var result: [Rect] = []
         var remaining = area
+        var lastWasColumns = false
         for i in 0..<count {
             if i == count - 1 {
                 result.append(remaining)
                 break
             }
             let ratio = i == 0 ? firstRatio : 0.5
-            if remaining.width >= remaining.height {
+            // Follow the longer side. Near-square regions alternate instead, so a couple of
+            // points of difference (the Dock or menu bar shifting) can't flip the split.
+            // (Found on a real Mac: opening the Tiles window re-split a 330×330 tile.)
+            let nearSquare = i > 0 && abs(remaining.width - remaining.height) <= 0.1 * max(remaining.width, remaining.height)
+            let columns = nearSquare ? !lastWasColumns : remaining.width >= remaining.height
+            lastWasColumns = columns
+            if columns {
                 let (a, b) = remaining.splitColumns(ratio: ratio, gap: gap)
                 result.append(a)
                 remaining = b
