@@ -118,6 +118,9 @@
 "Resize with Mouse Adjusts Layout" = "Größe mit Maus ändern passt Layout an";
 "Restart Tiles" = "Tiles neu starten";
 "Restore Scene" = "Szene wiederherstellen";
+"Retile" = "Neu kacheln";
+"Save Scene" = "Szene sichern";
+"Next Layout" = "Nächstes Layout";
 "Restore Scenes When Displays Change" = "Szenen beim Bildschirmwechsel wiederherstellen";
 "Retile Now" = "Jetzt neu kacheln";
 "Save Scene for This Setup" = "Szene für dieses Setup sichern";

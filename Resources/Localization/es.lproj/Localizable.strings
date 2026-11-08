@@ -118,6 +118,9 @@
 "Resize with Mouse Adjusts Layout" = "Redimensionar con el ratón ajusta el diseño";
 "Restart Tiles" = "Reiniciar Tiles";
 "Restore Scene" = "Restaurar escena";
+"Retile" = "Reorganizar";
+"Save Scene" = "Guardar escena";
+"Next Layout" = "Siguiente diseño";
 "Restore Scenes When Displays Change" = "Restaurar escenas al cambiar de pantallas";
 "Retile Now" = "Reorganizar ahora";
 "Save Scene for This Setup" = "Guardar escena para esta configuración";

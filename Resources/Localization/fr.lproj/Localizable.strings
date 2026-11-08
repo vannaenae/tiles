@@ -118,6 +118,9 @@
 "Resize with Mouse Adjusts Layout" = "Redimensionner à la souris ajuste la disposition";
 "Restart Tiles" = "Redémarrer Tiles";
 "Restore Scene" = "Rétablir la scène";
+"Retile" = "Réorganiser";
+"Save Scene" = "Enregistrer la scène";
+"Next Layout" = "Disposition suivante";
 "Restore Scenes When Displays Change" = "Rétablir les scènes quand les écrans changent";
 "Retile Now" = "Réorganiser maintenant";
 "Save Scene for This Setup" = "Enregistrer la scène pour cette configuration";

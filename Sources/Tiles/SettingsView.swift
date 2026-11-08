@@ -769,7 +769,7 @@ private struct DashboardPane: View {
 
     private func action(_ title: String, _ icon: String, _ command: Command) -> some View {
         Button { model.perform(command) } label: {
-            Label(title, systemImage: icon).frame(maxWidth: .infinity).padding(.vertical, 6)
+            Label(LocalizedStringKey(title), systemImage: icon).frame(maxWidth: .infinity).padding(.vertical, 6)
         }
         .controlSize(.large)
     }
