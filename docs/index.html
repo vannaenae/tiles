@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tiles: free auto-tiling window manager for Mac</title>
+<meta name="description" content="Every window snaps into place the moment it opens. Layouts for every screen, scenes that come back when you dock. Free and open source.">
+<link rel="icon" href="img/icon.png">
+<meta property="og:title" content="Tiles: free auto-tiling window manager for Mac">
+<meta property="og:description" content="Every window snaps into place the moment it opens. Free and open source.">
+<meta property="og:image" content="img/dwindle.png">
+<style>
+:root { --accent:#E8643C; --bg:#faf8f6; --card:#fff; --text:#1d1d1f; --sec:#6e6e73; --line:rgba(0,0,0,.08); --tile2:rgba(232,100,60,.28); --screen:rgba(0,0,0,.05); }
+@media (prefers-color-scheme: dark) { :root { --bg:#141416; --card:#1f1f22; --text:#f5f5f7; --sec:#a1a1a6; --line:rgba(255,255,255,.1); --tile2:rgba(232,100,60,.35); --screen:rgba(255,255,255,.06); } }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+a { color:var(--accent); text-decoration:none; } a:hover { text-decoration:underline; }
+.wrap { max-width:1080px; margin:0 auto; padding:0 20px; }
+nav { display:flex; align-items:center; gap:12px; padding:18px 0; }
+nav img { width:32px; height:32px; } nav b { font-size:18px; } nav .sp { flex:1; } nav a { color:var(--text); margin-left:20px; font-size:15px; }
+.hero { text-align:center; padding:56px 0 32px; }
+.hero img.icon { width:104px; height:104px; filter:drop-shadow(0 12px 24px rgba(0,0,0,.18)); }
+h1 { font-size:clamp(36px,6vw,60px); line-height:1.05; letter-spacing:-.02em; margin:18px 0 14px; }
+.lede { font-size:clamp(18px,2.4vw,21px); color:var(--sec); max-width:640px; margin:0 auto 28px; }
+.install { display:inline-flex; align-items:center; gap:10px; max-width:100%; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 10px 10px 16px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+.install code { font:14px ui-monospace, SFMono-Regular, Menlo, monospace; white-space:nowrap; overflow:auto; }
+button { font:inherit; cursor:pointer; border:0; border-radius:8px; }
+.copy { background:var(--accent); color:#fff; padding:7px 14px; font-size:14px; font-weight:600; }
+.sub { margin-top:14px; font-size:14px; color:var(--sec); }
+.gif { display:block; width:100%; max-width:860px; margin:36px auto 0; border-radius:14px; box-shadow:0 30px 70px rgba(0,0,0,.22); }
+section { padding:72px 0 0; }
+h2 { font-size:clamp(28px,4vw,40px); letter-spacing:-.015em; text-align:center; margin:0 0 10px; }
+.center { text-align:center; color:var(--sec); max-width:620px; margin:0 auto 32px; }
+.demo { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px; }
+.row { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:12px; }
+.seg button { background:var(--screen); color:var(--text); padding:7px 12px; font-size:14px; }
+.seg button.on { background:var(--accent); color:#fff; }
+.screen { position:relative; margin:16px auto 0; background:var(--screen); border-radius:10px; overflow:hidden; transition:aspect-ratio .3s; }
+.tile { position:absolute; border-radius:6px; background:var(--tile2); border:1px solid rgba(0,0,0,.08); transition:all .35s cubic-bezier(.2,.8,.2,1); font-size:12px; font-weight:600; padding:6px 8px; color:var(--text); overflow:hidden; white-space:nowrap; }
+.tile.main { background:var(--accent); color:#fff; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; }
+.card h3 { margin:0 0 6px; font-size:18px; } .card p { margin:0; color:var(--sec); font-size:15px; }
+.card .k { font-size:22px; margin-bottom:8px; }
+.shots { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; }
+.shots img { width:100%; border-radius:12px; border:1px solid var(--line); }
+.shots figcaption { text-align:center; color:var(--sec); font-size:14px; margin-top:6px; }
+table { width:100%; border-collapse:collapse; background:var(--card); border-radius:16px; overflow:hidden; border:1px solid var(--line); font-size:15px; }
+td, th { padding:12px 16px; border-bottom:1px solid var(--line); text-align:left; } tr:last-child td { border-bottom:0; }
+kbd { font:13px ui-monospace, Menlo, monospace; background:var(--screen); border:1px solid var(--line); border-radius:6px; padding:2px 6px; }
+footer { padding:72px 0 48px; text-align:center; color:var(--sec); font-size:14px; }
+@media (max-width:600px) { nav a.hide { display:none; } .install code { font-size:12px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <img src="img/icon.png" alt=""><b>Tiles</b><span class="sp"></span>
+    <a class="hide" href="#try">Try it</a><a class="hide" href="#features">Features</a>
+    <a href="https://github.com/vannaenae/tiles">GitHub</a>
+  </nav>
+
+  <div class="hero">
+    <img class="icon" src="img/icon.png" alt="Tiles icon">
+    <h1>Every window,<br>in its place.</h1>
+    <p class="lede">Tiles is a free, open-source window manager for Mac. Windows snap into tiles the moment they open, every screen gets the right layout, and your desk setup comes back when you dock.</p>
+    <div class="install"><code id="cmd">curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.sh | bash</code><button class="copy" onclick="copyCmd(this)">Copy</button></div>
+    <p class="sub">Paste into Terminal. Or <a href="https://github.com/vannaenae/tiles/releases/latest">download the app</a>. macOS 13 or later · Apple silicon and Intel · Free forever</p>
+    <img class="gif" src="img/demo.gif" alt="Tiles arranging TextEdit and Finder windows through several layouts on a real Mac">
+  </div>
+
+  <section id="try">
+    <h2>Try the layouts</h2>
+    <p class="center">The same layout maths the app uses. Pick a screen, a layout, and add windows.</p>
+    <div class="demo">
+      <div class="row seg" id="screens"></div>
+      <div class="row seg" id="layouts"></div>
+      <div class="row"><button class="copy" onclick="setN(n+1)">+ Window</button><button class="copy" style="background:var(--screen);color:var(--text)" onclick="setN(n-1)">− Window</button></div>
+      <div class="screen" id="screen"></div>
+    </div>
+  </section>
+
+  <section id="features">
+    <h2>Built for the screens you use</h2>
+    <p class="center">From a 13" laptop to a 49" super-ultrawide, with one keyboard shortcut for everything.</p>
+    <div class="grid">
+      <div class="card"><div class="k">▦</div><h3>11 layouts</h3><p>Dwindle, Master &amp; Stack, Centered Master, Columns, Thirds, Grid, Scrolling and more, per display.</p></div>
+      <div class="card"><div class="k">⇆</div><h3>Scrolling</h3><p>Windows keep their width in a row wider than the screen. Focus one and the row slides to it.</p></div>
+      <div class="card"><div class="k">🖥</div><h3>Docking scenes</h3><p>Unplug for the laptop layout, plug in and the desk layout returns. One shortcut undoes it.</p></div>
+      <div class="card"><div class="k">✥</div><h3>Drag to arrange</h3><p>Drop a window on another to swap them. Drag an edge and the split follows.</p></div>
+      <div class="card"><div class="k">⌘</div><h3>Keyboard first</h3><p>40+ shortcuts, all remappable, plus a <code>tiles</code> command and <code>tiles://</code> links for Raycast and Shortcuts.</p></div>
+      <div class="card"><div class="k">◐</div><h3>Yours to style</h3><p>Light or dark, five colour themes, a focus outline, and profiles to switch whole setups.</p></div>
+      <div class="card"><div class="k">📌</div><h3>App rules</h3><p>Send Slack to the laptop and Xcode to the main tile on your monitor. Float anything that shouldn't tile.</p></div>
+      <div class="card"><div class="k">🔒</div><h3>Private</h3><p>Reads window positions and app names, nothing else. No screen recording, no analytics, no account.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>A real Mac app</h2>
+    <p class="center">A dashboard that shows your displays live, and settings for everything. Screenshots from a real Mac.</p>
+    <div class="shots">
+      <figure><img src="img/dashboard-light.png" alt="Tiles dashboard in light mode"><figcaption>Dashboard</figcaption></figure>
+      <figure><img src="img/dashboard-dark.png" alt="Tiles dashboard in dark mode with the purple theme"><figcaption>Dark mode, purple theme</figcaption></figure>
+    </div>
+  </section>
+
+  <section>
+    <h2>Handy shortcuts</h2>
+    <p class="center">All use ⌃⌥ (Control + Option), and every one can be changed.</p>
+    <table>
+      <tr><td><kbd>⌃⌥</kbd> + arrows</td><td>Focus the window in that direction</td></tr>
+      <tr><td><kbd>⌃⌥⇧</kbd> + arrows</td><td>Swap with the window in that direction</td></tr>
+      <tr><td><kbd>⌃⌥Space</kbd></td><td>Next layout</td></tr>
+      <tr><td><kbd>⌃⌥M</kbd></td><td>Let the focused window fill the screen, press again to put it back</td></tr>
+      <tr><td><kbd>⌃⌥W</kbd></td><td>Scrolling: cycle the window's width</td></tr>
+      <tr><td><kbd>⌃⌥F</kbd></td><td>Float or tile the focused window</td></tr>
+    </table>
+  </section>
+
+  <footer>
+    Tiles is free and open source under the MIT License · <a href="https://github.com/vannaenae/tiles">Source on GitHub</a> · <a href="https://github.com/vannaenae/tiles/issues">Report an issue</a>
+  </footer>
+</div>
+<script>
+function copyCmd(b) { navigator.clipboard.writeText(document.getElementById('cmd').textContent).then(() => { b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1500); }); }
+// Same maths as Sources/TilesCore/Layout.swift and Scrolling.swift.
+const cols=(r,n,g)=>{let u=r.w-g*(n-1),o=[],c=r.x;for(let i=0;i<n;i++){let e=r.x+Math.round(u*(i+1)/n)+g*i;o.push({x:c,y:r.y,w:e-c,h:r.h});c=e+g}return o};
+const rows=(r,n,g)=>{let u=r.h-g*(n-1),o=[],c=r.y;for(let i=0;i<n;i++){let e=r.y+Math.round(u*(i+1)/n)+g*i;o.push({x:r.x,y:c,w:r.w,h:e-c});c=e+g}return o};
+const sc=(r,t,g)=>{let u=r.w-g,l=Math.round(u*t);return[{x:r.x,y:r.y,w:l,h:r.h},{x:r.x+l+g,y:r.y,w:u-l,h:r.h}]};
+const sr=(r,t,g)=>{let u=r.h-g,l=Math.round(u*t);return[{x:r.x,y:r.y,w:r.w,h:l},{x:r.x,y:r.y+l+g,w:r.w,h:u-l}]};
+function frames(kind,n,W,H){const g=Math.round(W/180),a={x:g,y:g,w:W-2*g,h:H-2*g},t=.55;
+ if(n==1&&a.w/a.h>=2&&kind!='monocle'){const w=Math.min(Math.round(a.w*.6),2600);return[{x:a.x+(a.w-w)/2,y:a.y,w,h:a.h}]}
+ switch(kind){
+ case'dwindle':{let o=[],rem=a;for(let i=0;i<n;i++){if(i==n-1){o.push(rem);break}let[p,q]=rem.w>=rem.h?sc(rem,i?.5:t,g):sr(rem,i?.5:t,g);o.push(p);rem=q}return o}
+ case'master':{if(n<2)return[a];let[l,r]=sc(a,t,g);return[l,...rows(r,n-1,g)]}
+ case'centered':{if(n<2)return[a];if(n==2)return sc(a,t,g);let mw=Math.round((a.w-2*g)*t),sw=Math.round((a.w-2*g-mw)/2),L={x:a.x,y:a.y,w:sw,h:a.h},M={x:L.x+sw+g,y:a.y,w:mw,h:a.h},R={x:M.x+mw+g,y:a.y,w:a.x+a.w-M.x-mw-g,h:a.h},s=n-1,rr=rows(R,Math.ceil(s/2),g),ll=rows(L,Math.floor(s/2),g),o=[M];for(let i=0;i<s;i++)o.push(i%2?ll[i>>1]:rr[i>>1]);return o}
+ case'columns':return cols(a,n,g);
+ case'thirds':{if(n<2)return[a];if(n==2)return sc(a,2/3,g);let c=cols(a,3,g);return[c[0],c[1],...rows(c[2],n-2,g)]}
+ case'grid':{let s=Math.ceil(Math.sqrt(n)),rc=a.w>=a.h?Math.ceil(n/s):s,o=[],rem=n;rows(a,rc,g).forEach((r,i)=>{let k=Math.ceil(rem/(rc-i));o.push(...cols(r,k,g));rem-=k});return o}
+ case'scrolling':{let w=Math.round(.5*(a.w+g)-g),o=[];for(let i=0;i<n;i++){let x=a.x+i*(w+g);o.push(x+w<=a.x+a.w+1?{x,y:a.y,w,h:a.h}:{x:a.x+a.w-6,y:a.y,w,h:a.h})}return o}
+ case'monocle':return Array(n).fill(a);}}
+const SCREENS=[['MacBook 14″',1512,945],['27″',2560,1415],['34″ ultrawide',3440,1415],['49″',5120,1415]];
+const LAYOUTS=[['dwindle','Dwindle'],['master','Master & Stack'],['centered','Centered Master'],['columns','Columns'],['thirds','Thirds'],['grid','Grid'],['scrolling','Scrolling'],['monocle','Monocle']];
+const APPS=['Xcode','Safari','Slack','Notes','Mail','Music','Figma','Terminal','Calendar','Messages'];
+let screen=0,layout='dwindle',n=4;
+function seg(id,items,cur,fn){document.getElementById(id).innerHTML=items.map((it,i)=>`<button class="${(typeof cur=='number'?i==cur:it[0]==cur)?'on':''}" data-i="${i}">${it[1]??it[0]}</button>`).join('');document.querySelectorAll(`#${id} button`).forEach(b=>b.onclick=()=>fn(+b.dataset.i))}
+function render(){seg('screens',SCREENS.map(s=>[s[0]]),screen,i=>{screen=i;render()});seg('layouts',LAYOUTS,layout,i=>{layout=LAYOUTS[i][0];render()});
+ const[,W,H]=SCREENS[screen],el=document.getElementById('screen'),max=Math.min(el.parentElement.clientWidth-40,980);el.style.width=max+'px';el.style.height=Math.round(max*H/W)+'px';
+ const s=max/W,f=frames(layout,n,W,H);
+ while(el.children.length<APPS.length){const d=document.createElement('div');d.className='tile';el.appendChild(d)}
+ [...el.children].forEach((d,i)=>{if(i>=n){d.style.opacity=0;return}const r=f[i];d.style.opacity=1;d.className='tile'+(i==0?' main':'');d.textContent=APPS[i];Object.assign(d.style,{left:r.x*s+'px',top:r.y*s+'px',width:r.w*s+'px',height:r.h*s+'px'})})}
+function setN(v){n=Math.max(1,Math.min(10,v));render()}
+addEventListener('resize',render);render();
+</script>
+</body>
+</html>

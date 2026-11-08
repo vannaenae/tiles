@@ -39,6 +39,12 @@ team() { codesign -dv "$1" 2>&1 | sed -n 's/^TeamIdentifier=//p'; }
 OLD_TEAM=""
 [ -d "$DEST/Tiles.app" ] && OLD_TEAM="$(team "$DEST/Tiles.app")"
 NEW_TEAM="$(team "$TMP/Tiles.app")"
+# Only install a copy signed by the Tiles developer team.
+EXPECTED_TEAM="GQ638955FB"
+if [ "$NEW_TEAM" != "$EXPECTED_TEAM" ] || ! codesign --verify --deep --strict "$TMP/Tiles.app" 2>/dev/null; then
+  echo "This download isn't signed by the Tiles developer (expected team $EXPECTED_TEAM). Not installing." >&2
+  exit 1
+fi
 quit_tiles
 mkdir -p "$DEST"
 rm -rf "$DEST/Tiles.app"

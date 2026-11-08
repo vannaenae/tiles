@@ -1,11 +1,28 @@
-# Tiles
+<p align="center"><img src="docs/img/icon.png" width="96" alt="Tiles icon"></p>
 
-**A free, open-source auto-tiling window manager for macOS.**
-Every window snaps into place the moment it opens. Ultrawide displays get layouts built for them. Your arrangement comes back on its own when you dock.
+<h1 align="center">Tiles</h1>
+
+<p align="center"><b>A free, open-source auto-tiling window manager for macOS.</b><br>
+Every window snaps into place the moment it opens. Every screen gets the right layout. Your desk setup comes back when you dock.</p>
+
+<p align="center"><a href="https://vannaenae.github.io/tiles/">Website</a> · <a href="https://github.com/vannaenae/tiles/releases/latest">Download</a> · <a href="#keyboard-shortcuts">Shortcuts</a></p>
+
+<p align="center"><img src="docs/img/demo.gif" width="720" alt="Tiles arranging TextEdit and Finder windows through Dwindle, Columns, Grid, Centered Master and Scrolling on a real Mac"></p>
+
+```bash
+curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.sh | bash
+```
 
 - Lives in the menu bar, the Dock, or both: your choice.
 - macOS 13 Ventura or later, Apple silicon and Intel.
-- MIT licensed. No account, no telemetry, nothing leaves your Mac.
+- MIT licensed. No account, no telemetry, nothing leaves your Mac. Updates itself from GitHub releases.
+
+<p align="center">
+  <img src="docs/img/dashboard-light.png" width="420" alt="Tiles dashboard in light mode">
+  <img src="docs/img/dashboard-dark.png" width="420" alt="Tiles dashboard in dark mode, purple theme">
+</p>
+
+<sub>All images are screenshots of Tiles running on a real Mac (GitHub's macOS test machine, 1024×768).</sub>
 
 ---
 
@@ -29,7 +46,9 @@ Every window snaps into place the moment it opens. Ultrawide displays get layout
 | Profiles | Save your settings as named profiles, switch in one click, export and import between Macs |
 | Config | Also one plain JSON file, hot-reloaded on save |
 | Per-display | Different layout for each monitor, by name or by shape |
-| Rules | Float any app or window title |
+| Rules | Float any app, or send its windows to a chosen display and the main tile |
+| Stacks | A badge counts windows sharing a tile; click it to flip through |
+| Updates | Checks GitHub daily and installs updates signed by the Tiles developer, in place |
 | Privacy | Scenes store app identifiers only, never window titles |
 
 ## Install
