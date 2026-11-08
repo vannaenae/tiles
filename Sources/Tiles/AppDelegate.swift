@@ -225,7 +225,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
             menu.addItem(spaces)
         }
 
-        let gaps = NSMenuItem(title: "Gaps", action: nil, keyEquivalent: "")
+        let gaps = NSMenuItem(title: NSLocalizedString("Gaps", comment: "Menu"), action: nil, keyEquivalent: "")
         let gapMenu = NSMenu()
         for (name, size) in [("None", 0.0), ("Small", 4.0), ("Medium", 8.0), ("Large", 16.0), ("Extra Large", 24.0)] {
             let entry = item(name, #selector(pickGap(_:)))
@@ -245,14 +245,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         menu.addItem(restore)
 
         menu.addItem(.separator())
-        let options = NSMenuItem(title: "Options", action: nil, keyEquivalent: "")
+        let options = NSMenuItem(title: NSLocalizedString("Options", comment: "Menu"), action: nil, keyEquivalent: "")
         let optionsMenu = NSMenu()
         optionsMenu.addItem(check("Drag Window onto Another to Swap", config.dragToSwap, #selector(toggleDragToSwap)))
         optionsMenu.addItem(check("Resize with Mouse Adjusts Layout", config.resizeToAdjustRatio, #selector(toggleResizeRatio)))
         optionsMenu.addItem(check("Restore Scenes When Displays Change", config.autoRestoreScenes, #selector(toggleAutoScenes)))
         optionsMenu.addItem(check("Mouse Follows Keyboard Focus", config.mouseFollowsFocus, #selector(toggleMouseFollows)))
         optionsMenu.addItem(check("Animate Windows", config.animateWindows, #selector(toggleAnimate)))
-        let placement = NSMenuItem(title: "New Windows Open", action: nil, keyEquivalent: "")
+        let placement = NSMenuItem(title: NSLocalizedString("New Windows Open", comment: "Menu"), action: nil, keyEquivalent: "")
         let placementMenu = NSMenu()
         let placements: [(String, NewWindowPlacement)] = [("At the End", .end), ("As Master", .master), ("Next to Focused", .afterFocused)]
         for (name, value) in placements {
@@ -289,7 +289,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     }
 
     private func shortcutsMenu() -> NSMenuItem {
-        let parent = NSMenuItem(title: "Keyboard Shortcuts", action: nil, keyEquivalent: "")
+        let parent = NSMenuItem(title: NSLocalizedString("Keyboard Shortcuts", comment: "Menu"), action: nil, keyEquivalent: "")
         let sub = NSMenu()
         let bindings = configStore.config.resolvedHotkeys().bindings
             .sorted { Command.allNames.firstIndex(of: $0.command.name) ?? 0 < Command.allNames.firstIndex(of: $1.command.name) ?? 0 }
@@ -303,7 +303,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     }
 
     private func item(_ title: String, _ action: Selector, key: String = "") -> NSMenuItem {
-        let item = NSMenuItem(title: title, action: action, keyEquivalent: key)
+        let item = NSMenuItem(title: NSLocalizedString(title, comment: "Menu item"), action: action, keyEquivalent: key)
         item.target = self
         return item
     }

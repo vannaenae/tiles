@@ -18,6 +18,9 @@ rm -rf dist
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN_DIR/Tiles" "$APP/Contents/MacOS/Tiles"
 cp scripts/tiles "$APP/Contents/Resources/tiles"
+plutil -lint Resources/Localization/*.lproj/Localizable.strings >/dev/null
+cp -R Resources/Localization/*.lproj "$APP/Contents/Resources/"
+mkdir -p "$APP/Contents/Resources/en.lproj"   # English is the development language
 sed -e "s/__VERSION__/$VERSION/" -e "s/__BUILD__/$BUILD/" Resources/Info.plist > "$APP/Contents/Info.plist"
 
 echo "==> Icon"

@@ -81,6 +81,13 @@ jobs:
           PY
           sleep 3
           shot 6-dashboard-dark-purple
+          # Same dashboard in French, to check the translations load.
+          osascript -e 'quit app "Tiles"' || true
+          sleep 2
+          defaults write io.github.vannaenae.tiles AppleLanguages -array fr
+          open /Applications/Tiles.app; sleep 3; open /Applications/Tiles.app; sleep 4
+          shot 7-dashboard-french
+          defaults delete io.github.vannaenae.tiles AppleLanguages
           cat out/windows.txt
           pgrep -x Tiles >/dev/null && echo "Tiles still running" || echo "Tiles is NOT running"
 

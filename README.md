@@ -52,6 +52,7 @@ curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.s
 | Scroll to pan | In Scrolling, hold `⌃⌥` and swipe or scroll to slide the strip |
 | Animation | Optional: windows slide into place instead of jumping |
 | Raycast | Ready-made script commands in `integrations/raycast` |
+| Languages | English, Spanish, French and German, following your Mac's language |
 | Updates | Checks GitHub daily and installs updates signed by the Tiles developer, in place |
 | Privacy | Scenes store app identifiers only, never window titles |
 

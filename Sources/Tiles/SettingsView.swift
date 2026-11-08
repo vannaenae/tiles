@@ -182,7 +182,9 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     case dashboard, general, layouts, spacing, appearance, mouse, scenes, shortcuts, rules, profiles, about
     var id: String { rawValue }
 
-    var title: String {
+    var title: String { NSLocalizedString(englishTitle, comment: "Sidebar section") }
+
+    private var englishTitle: String {
         switch self {
         case .dashboard: return "Dashboard"
         case .profiles: return "Profiles"
