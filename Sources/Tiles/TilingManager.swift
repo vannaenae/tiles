@@ -328,10 +328,12 @@ final class TilingManager {
         onStacks?(stacks)
     }
 
-    /// Badge click: bring the next window in the stack to the front.
+    /// Badge click: bring forward the window after the one on top of the stack.
+    /// (Found on a real Mac: going by the focused window, which is usually outside the stack,
+    /// picked the window already on top, so clicking did nothing visible.)
     func cycleStack(_ ids: [WindowID]) {
-        let front = focusedWindow()?.id
-        if let next = TilingOrder.cycle(ids, from: ids.contains(front ?? 0) ? front : ids.last, forward: true) { focus(next) }
+        let top = onScreenWindowOrder().first { ids.contains($0) }
+        if let next = TilingOrder.cycle(ids, from: top ?? ids.last, forward: true) { focus(next) }
     }
 
     private func mouseMoved() {

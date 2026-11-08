@@ -181,15 +181,14 @@ extension CGRect {
 
 /// IDs of windows currently visible on screen (i.e. on the active Space and
 /// not minimised or hidden). Needs no Screen Recording permission.
-func onScreenWindowIDs() -> Set<WindowID> {
+func onScreenWindowIDs() -> Set<WindowID> { Set(onScreenWindowOrder()) }
+
+/// Same windows, front to back: the first is the one drawn on top.
+func onScreenWindowOrder() -> [WindowID] {
     guard let info = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
             as? [[String: Any]] else { return [] }
-    var ids = Set<WindowID>()
-    for entry in info {
-        if let layer = entry[kCGWindowLayer as String] as? Int, layer != 0 { continue }
-        if let number = entry[kCGWindowNumber as String] as? Int {
-            ids.insert(WindowID(number))
-        }
+    return info.compactMap { entry in
+        guard (entry[kCGWindowLayer as String] as? Int) == 0, let number = entry[kCGWindowNumber as String] as? Int else { return nil }
+        return WindowID(number)
     }
-    return ids
 }
