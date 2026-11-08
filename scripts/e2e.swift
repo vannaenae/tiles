@@ -29,6 +29,18 @@ func press(_ key: CGKeyCode, _ flags: CGEventFlags = [.maskControl, .maskAlterna
         e?.post(tap: .cghidEventTap)
         usleep(40_000)
     }
+    releaseModifiers()
+}
+
+/// Synthetic key presses leave their modifiers "held" as far as macOS is concerned, which would
+/// turn the next window drag into an ⌥-drag (stack) instead of a swap. Let go of them explicitly.
+func releaseModifiers() {
+    for key: CGKeyCode in [55, 56, 58, 59] { // cmd, shift, option, control
+        let e = CGEvent(keyboardEventSource: nil, virtualKey: key, keyDown: false)
+        e?.flags = []
+        e?.post(tap: .cghidEventTap)
+    }
+    usleep(60_000)
 }
 
 func drag(from a: CGPoint, to b: CGPoint, beforeRelease: () -> Void = {}) {
@@ -294,6 +306,7 @@ func holdOption(_ down: Bool) {
     e?.flags = down ? .maskAlternate : []
     e?.post(tap: .cghidEventTap)
     usleep(80_000)
+    if !down { releaseModifiers() }
 }
 let cols = windows().sorted { $0.frame.minX < $1.frame.minX }
 if let mover = cols.last(where: { $0.owner == "TextEdit" }), let host = cols.first(where: { $0.owner != mover.owner }) {
@@ -327,6 +340,7 @@ func pan(_ amount: Int32) {
         e?.post(tap: .cghidEventTap)
         usleep(30_000)
     }
+    releaseModifiers()
     settle(1.5)
 }
 func moved(_ a: [Int: CGRect], _ b: [Int: CGRect]) -> Bool { a.contains { id, f in abs((b[id]?.minX ?? f.minX) - f.minX) > 100 } }

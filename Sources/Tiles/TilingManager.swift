@@ -62,6 +62,8 @@ final class TilingManager {
     /// Windows on a hidden workspace, parked just off screen, with the frame to bring them back to.
     private var parked: [WindowID: Rect] = [:]
     private var lastWorkspaceSwitch = Date.distantPast
+    /// Focused window at the last focus event: only a newly focused hidden window switches workspace.
+    private var lastFocused: WindowID?
     /// Option-drag: window → the window whose tile it shares.
     private var stackedOn: [WindowID: WindowID] = [:]
     /// Displays being panned with ⌃⌥ + scroll, so the strip doesn't snap back to the focused window.
@@ -453,9 +455,13 @@ final class TilingManager {
     }
 
     /// ⌘-Tab or a Dock click to a window on a hidden workspace shows that workspace.
+    /// (Found on a real Mac: a window sent away keeps focus for a moment, and its own focus
+    /// event used to pull the display over to the workspace it was just sent to.)
     private func followFocusToWorkspace() {
-        guard isEnabled, Date().timeIntervalSince(lastWorkspaceSwitch) > 0.6,
-              let id = focusedWindow()?.id, let d = displayID(of: id), !workspaces.isShown(id, on: d) else { return }
+        let focused = focusedWindow()?.id
+        defer { lastFocused = focused }
+        guard isEnabled, Date().timeIntervalSince(lastWorkspaceSwitch) > 0.6, let id = focused, id != lastFocused,
+              let d = displayID(of: id), !workspaces.isShown(id, on: d) else { return }
         workspaces.show(workspaces.workspace(of: id, on: d), on: d)
         lastWorkspaceSwitch = Date()
         scheduleRefresh()
@@ -905,6 +911,7 @@ final class TilingManager {
             guard workspaces.workspace(of: id, on: d) != number else { return }
             let neighbour = TilingOrder.cycle(visibleOrder(d), from: id, forward: true)
             workspaces.move(id, to: number)
+            lastWorkspaceSwitch = Date()
             stackedOn[id] = nil
             for (w, h) in stackedOn where h == id { stackedOn[w] = nil }
             refresh()
