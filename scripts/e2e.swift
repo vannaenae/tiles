@@ -452,8 +452,10 @@ if let mover = windows().filter({ $0.owner == "TextEdit" }).max(by: { $0.frame.m
     let f = frames()[mover.id] ?? .zero
     check(f.minX < screen.minX + 24 && abs(f.maxX - screen.midX) < 14 && f.height > screen.height * 0.75,
           "Snap mode: dragging a window to the left edge fills the left half (\(Int(f.minX)),\(Int(f.width))x\(Int(f.height)))")
-    press(124) // ⌃⌥→ on the same window
+    // A real keyboard marks arrow keys as function/keypad keys; the shortcut only matches with those.
+    press(124, [.maskControl, .maskAlternate, .maskSecondaryFn, .maskNumericPad]) // ⌃⌥→ on the same window
     settle()
+    snapshot("snapped-right-by-keyboard")
     let g = frames()[mover.id] ?? .zero
     check(abs(g.minX - screen.midX) < 14 && g.maxX > screen.maxX - 24, "Snap mode: ⌃⌥→ moves it to the right half")
 }
