@@ -7,8 +7,8 @@
 # 3D Habits; Terminal with a made-up session), lets Tiles arrange them, saves one PNG per scene.
 # It takes over the screen for about 3 minutes; don't touch the mouse or keyboard meanwhile.
 #
-# Needs: macOS, /Applications/Tiles.app running with Accessibility access, and
-# screen-recording permission for your terminal. Your Tiles config is backed up and put back.
+# Needs: macOS, /Applications/Tiles.app running with Accessibility access, and screen-recording
+# and Accessibility permission for your terminal (it types the Safari addresses). Your Tiles config is backed up and put back.
 #
 # On a CI machine set MARKETING_CI=1: it also hides the Dock and desktop icons and, if
 # displayplacer is installed, switches the display to its sharpest mode (Retina if offered).
@@ -77,13 +77,14 @@ CLAUDE_URL="${MARKETING_CLAUDE_URL:-https://claude.com}"
 GOOGLE_URL="${MARKETING_GOOGLE_URL:-https://www.google.com}"
 APPSTORE_URL="${MARKETING_APPSTORE_URL:-https://apps.apple.com/us/app/3d-habits/id6756032720}"
 
-# Terminal: a generated session for a fictional project, so nothing real is shown.
-mkdir -p "$WORK/weather-app"
-cat > "$WORK/session.command" <<'CMD'
-#!/bin/zsh
+# Terminal: a generated session for a fictional project, so nothing real is shown. It ends at a
+# real, idle zsh prompt inside a folder named weather-app, so the title bar reads like a normal one.
+PROJECT="$WORK/weather-app"
+mkdir -p "$PROJECT" "$WORK/zsh"
+cat > "$WORK/zsh/.zshrc" <<'RC'
+PROMPT='%F{green}~/Projects/weather-app%f %% '
+p() { print -nP "$PROMPT"; print -- "$1"; }
 clear
-printf '\033]0;weather-app\007'
-p() { print -nP "%F{green}~/Projects/weather-app%f %% "; print -- "$1"; }
 p "swift build"
 print "Building for debugging..."
 print "[42/42] Linking WeatherApp"
@@ -102,38 +103,45 @@ print "Your branch is up to date with 'origin/main'."
 print
 print "nothing to commit, working tree clean"
 print
-print -nP "%F{green}~/Projects/weather-app%f %% "
-sleep 100000
+RC
+cat > "$WORK/session.command" <<CMD
+#!/bin/zsh
+cd "$PROJECT"
+SHELL_SESSIONS_DISABLE=1 ZDOTDIR="$WORK/zsh" exec /bin/zsh -i
 CMD
 chmod +x "$WORK/session.command"
 
-# Separate Safari windows (not tabs), one per page.
-cat > "$WORK/safari.applescript" <<OSA
-tell application "Safari"
-  activate
-  make new document with properties {URL:"$GITHUB_URL"}
-  delay 3
-  make new document with properties {URL:"$CLAUDE_URL"}
-  delay 3
-  make new document with properties {URL:"$GOOGLE_URL"}
-end tell
-OSA
+# Separate Safari windows (not tabs) need real key presses: ⌘N, then the address.
+# marketing-keys needs Accessibility; set MARKETING_KEYS to a prebuilt copy (CI does).
+KEYS="${MARKETING_KEYS:-$WORK/marketing-keys}"
+[ -x "$KEYS" ] || swiftc -O "$ROOT/scripts/marketing-keys.swift" -o "$KEYS" 2>/dev/null || KEYS=""
+new_window() { # url
+  if [ -n "$KEYS" ]; then open -a Safari; sleep 1; "$KEYS" new-window "$1"
+  else open -a Safari "$1"; fi   # falls back to a tab
+}
 
 # --- Start Tiles, then open the apps so they tile as they arrive --------------------------
 open /Applications/Tiles.app
 sleep 6
 "$TILES" layout-dwindle
-osascript "$WORK/safari.applescript" || {
-  echo "Safari scripting unavailable; opening the pages directly"
-  open -a Safari "$GITHUB_URL"; sleep 2; open -a Safari "$CLAUDE_URL"; sleep 2; open -a Safari "$GOOGLE_URL"
-}
+open -a Safari "$GITHUB_URL"   # first window gets the biggest tile
+sleep 8
+new_window "$CLAUDE_URL"
+sleep 6
+new_window "$GOOGLE_URL"
 sleep 6
 open "${APPSTORE_URL/https:/macappstore:}"
-sleep 8
+sleep 10
+if [ "${MARKETING_CI:-0}" = "1" ] && [ -n "$KEYS" ]; then
+  # A fresh Mac shows "What's New on the App Store" first; Return clicks Continue.
+  # (Only on CI: on your Mac, Return on a product page could start a download.)
+  open -a "App Store"; sleep 1; "$KEYS" return; sleep 3
+  open "${APPSTORE_URL/https:/macappstore:}"
+  sleep 8
+fi
 open -a Terminal "$WORK/session.command"
 sleep 4
 "$TILES" retile
-osascript -e 'tell application "Safari" to set index of (first window whose name contains "tiles") to 1' >/dev/null 2>&1 || true
 open -a Safari
 shot 01-dwindle 4
 
@@ -165,5 +173,4 @@ PY
 shot 05-dashboard-dark-purple 4
 
 "$TILES" status > "$OUT/status.json" 2>&1 || true
-osascript -e 'quit app "Terminal"' >/dev/null 2>&1 || true
 echo "Screenshots are in $OUT"
