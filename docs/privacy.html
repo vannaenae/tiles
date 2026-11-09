@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tiles privacy policy</title>
+<meta name="description" content="Every window snaps into place the moment it opens. Layouts for every screen, scenes that come back when you dock. Free and open source.">
+<link rel="icon" href="img/icon.png">
+<meta property="og:title" content="Tiles: free auto-tiling window manager for Mac">
+<meta property="og:description" content="Every window snaps into place the moment it opens. Free and open source.">
+<meta property="og:image" content="img/dwindle.png">
+<style>
+:root { --accent:#E8643C; --bg:#faf8f6; --card:#fff; --text:#1d1d1f; --sec:#6e6e73; --line:rgba(0,0,0,.08); --tile2:rgba(232,100,60,.28); --screen:rgba(0,0,0,.05); }
+@media (prefers-color-scheme: dark) { :root { --bg:#141416; --card:#1f1f22; --text:#f5f5f7; --sec:#a1a1a6; --line:rgba(255,255,255,.1); --tile2:rgba(232,100,60,.35); --screen:rgba(255,255,255,.06); } }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+a { color:var(--accent); text-decoration:none; } a:hover { text-decoration:underline; }
+.wrap { max-width:1080px; margin:0 auto; padding:0 20px; }
+nav { display:flex; align-items:center; gap:12px; padding:18px 0; }
+nav img { width:32px; height:32px; } nav b { font-size:18px; } nav .sp { flex:1; } nav a { color:var(--text); margin-left:20px; font-size:15px; }
+.hero { text-align:center; padding:56px 0 32px; }
+.hero img.icon { width:104px; height:104px; filter:drop-shadow(0 12px 24px rgba(0,0,0,.18)); }
+h1 { font-size:clamp(36px,6vw,60px); line-height:1.05; letter-spacing:-.02em; margin:18px 0 14px; }
+.lede { font-size:clamp(18px,2.4vw,21px); color:var(--sec); max-width:640px; margin:0 auto 28px; }
+.install { display:inline-flex; align-items:center; gap:10px; max-width:100%; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 10px 10px 16px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+.install code { font:14px ui-monospace, SFMono-Regular, Menlo, monospace; white-space:nowrap; overflow:auto; }
+button { font:inherit; cursor:pointer; border:0; border-radius:8px; }
+.copy { background:var(--accent); color:#fff; padding:7px 14px; font-size:14px; font-weight:600; }
+.sub { margin-top:14px; font-size:14px; color:var(--sec); }
+.gif { display:block; width:100%; max-width:860px; margin:36px auto 0; border-radius:14px; box-shadow:0 30px 70px rgba(0,0,0,.22); }
+section { padding:72px 0 0; }
+h2 { font-size:clamp(28px,4vw,40px); letter-spacing:-.015em; text-align:center; margin:0 0 10px; }
+.center { text-align:center; color:var(--sec); max-width:620px; margin:0 auto 32px; }
+.demo { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px; }
+.row { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:12px; }
+.seg button { background:var(--screen); color:var(--text); padding:7px 12px; font-size:14px; }
+.seg button.on { background:var(--accent); color:#fff; }
+.screen { position:relative; margin:16px auto 0; background:var(--screen); border-radius:10px; overflow:hidden; transition:aspect-ratio .3s; }
+.tile { position:absolute; border-radius:6px; background:var(--tile2); border:1px solid rgba(0,0,0,.08); transition:all .35s cubic-bezier(.2,.8,.2,1); font-size:12px; font-weight:600; padding:6px 8px; color:var(--text); overflow:hidden; white-space:nowrap; }
+.tile.main { background:var(--accent); color:#fff; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; }
+.card h3 { margin:0 0 6px; font-size:18px; } .card p { margin:0; color:var(--sec); font-size:15px; }
+.card .k { font-size:22px; margin-bottom:8px; }
+.shots { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; }
+.shots img { width:100%; border-radius:12px; border:1px solid var(--line); }
+.shots figcaption { text-align:center; color:var(--sec); font-size:14px; margin-top:6px; }
+table { width:100%; border-collapse:collapse; background:var(--card); border-radius:16px; overflow:hidden; border:1px solid var(--line); font-size:15px; }
+td, th { padding:12px 16px; border-bottom:1px solid var(--line); text-align:left; } tr:last-child td { border-bottom:0; }
+kbd { font:13px ui-monospace, Menlo, monospace; background:var(--screen); border:1px solid var(--line); border-radius:6px; padding:2px 6px; }
+footer { padding:72px 0 48px; text-align:center; color:var(--sec); font-size:14px; }
+.btn { display:inline-block; background:var(--accent); color:#fff; font-weight:600; font-size:18px; padding:14px 28px; border-radius:12px; box-shadow:0 8px 20px rgba(232,100,60,.3); } .btn:hover { text-decoration:none; filter:brightness(1.06); }
+.card ul { margin:0; padding-left:18px; color:var(--sec); font-size:15px; } .card li { margin:4px 0; }
+.why h3 { font-size:20px; }
+.shots figure { margin:0; } .shots figcaption b { color:var(--text); }
+.faq { max-width:760px; margin:0 auto; } details { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 20px; margin-bottom:10px; }
+summary { font-weight:600; cursor:pointer; } details p { margin:10px 0 0; color:var(--sec); }
+.cta { text-align:center; } .cta .icon { width:84px; height:84px; }
+footer a { margin:0 8px; }
+@media (max-width:600px) { nav a.hide { display:none; } .install code { font-size:12px; } }
+</style>
+</head>
+<body>
+<div class="wrap" style="max-width:760px">
+  <nav><a href="./" style="margin:0;display:flex;align-items:center;gap:12px"><img src="img/icon.png" alt=""><b>Tiles</b></a><span class="sp"></span><a href="./">Home</a></nav>
+  <h1 style="font-size:40px">Privacy policy</h1>
+  <p class="sub">Last updated 9 November 2026</p>
+  <p><b>Tiles does not collect, store or share any personal data.</b> There is no account, no analytics and no advertising.</p>
+  <h3>What Tiles reads on your Mac</h3>
+  <p>To arrange windows, Tiles uses the macOS Accessibility permission to read the position, size and title of open windows and the names of the apps that own them, and to move and resize those windows. This happens on your Mac only. Tiles does not record your screen, read the contents of your windows, or log your keystrokes.</p>
+  <h3>What Tiles stores</h3>
+  <p>Your settings are saved in a file on your Mac (<code>~/.config/tiles/config.json</code>). Saved window arrangements store app identifiers and layout choices only, never window titles. Removing Tiles and that folder removes everything.</p>
+  <h3>Network use</h3>
+  <p>Once a day Tiles asks GitHub whether a newer version exists, and downloads it from GitHub if you choose to update. GitHub sees your IP address when this happens, as with any download. You can switch this off in Tiles → General → Updates. Tiles makes no other network requests.</p>
+  <h3>Contact</h3>
+  <p>Questions about this policy: <a href="https://github.com/vannaenae/tiles/issues">open an issue on GitHub</a>.</p>
+  <footer><a href="./">Back to Tiles</a></footer>
+</div>
+</body>
+</html>

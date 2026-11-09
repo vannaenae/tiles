@@ -49,6 +49,14 @@ table { width:100%; border-collapse:collapse; background:var(--card); border-rad
 td, th { padding:12px 16px; border-bottom:1px solid var(--line); text-align:left; } tr:last-child td { border-bottom:0; }
 kbd { font:13px ui-monospace, Menlo, monospace; background:var(--screen); border:1px solid var(--line); border-radius:6px; padding:2px 6px; }
 footer { padding:72px 0 48px; text-align:center; color:var(--sec); font-size:14px; }
+.btn { display:inline-block; background:var(--accent); color:#fff; font-weight:600; font-size:18px; padding:14px 28px; border-radius:12px; box-shadow:0 8px 20px rgba(232,100,60,.3); } .btn:hover { text-decoration:none; filter:brightness(1.06); }
+.card ul { margin:0; padding-left:18px; color:var(--sec); font-size:15px; } .card li { margin:4px 0; }
+.why h3 { font-size:20px; }
+.shots figure { margin:0; } .shots figcaption b { color:var(--text); }
+.faq { max-width:760px; margin:0 auto; } details { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 20px; margin-bottom:10px; }
+summary { font-weight:600; cursor:pointer; } details p { margin:10px 0 0; color:var(--sec); }
+.cta { text-align:center; } .cta .icon { width:84px; height:84px; }
+footer a { margin:0 8px; }
 @media (max-width:600px) { nav a.hide { display:none; } .install code { font-size:12px; } }
 </style>
 </head>
@@ -56,16 +64,18 @@ footer { padding:72px 0 48px; text-align:center; color:var(--sec); font-size:14p
 <div class="wrap">
   <nav>
     <img src="img/icon.png" alt=""><b>Tiles</b><span class="sp"></span>
-    <a class="hide" href="#try">Try it</a><a class="hide" href="#features">Features</a>
+    <a class="hide" href="#why">Why Tiles</a><a class="hide" href="#features">Features</a><a class="hide" href="#faq">FAQ</a>
     <a href="https://github.com/vannaenae/tiles">GitHub</a>
   </nav>
 
   <div class="hero">
     <img class="icon" src="img/icon.png" alt="Tiles icon">
     <h1>Every window,<br>in its place.</h1>
-    <p class="lede">Tiles is a free, open-source window manager for Mac. Windows snap into tiles the moment they open, every screen gets the right layout, and your desk setup comes back when you dock.</p>
+    <p class="lede">Tiles is a free window manager for Mac. Windows arrange themselves the moment they open, every screen gets the right layout, and your desk setup comes back when you plug in.</p>
+    <p><a class="btn" href="https://github.com/vannaenae/tiles/releases/latest/download/Tiles.zip">Download for Mac</a></p>
+    <p class="sub" style="margin-bottom:10px">or install from Terminal:</p>
     <div class="install"><code id="cmd">curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.sh | bash</code><button class="copy" onclick="copyCmd(this)">Copy</button></div>
-    <p class="sub">Paste into Terminal. Or <a href="https://github.com/vannaenae/tiles/releases/latest">download the app</a>. macOS 13 or later · Apple silicon and Intel · Free forever</p>
+    <p class="sub">macOS 13 or later · Apple silicon and Intel · Free and open source</p>
     <img class="gif" src="img/demo.gif" alt="Tiles arranging TextEdit and Finder windows through several layouts on a real Mac">
   </div>
 
@@ -80,50 +90,127 @@ footer { padding:72px 0 48px; text-align:center; color:var(--sec); font-size:14p
     </div>
   </section>
 
-  <section id="features">
-    <h2>Built for the screens you use</h2>
-    <p class="center">From a 13" laptop to a 49" super-ultrawide, with one keyboard shortcut for everything.</p>
-    <div class="grid">
-      <div class="card"><div class="k">▦</div><h3>11 layouts</h3><p>Dwindle, Master &amp; Stack, Centered Master, Columns, Thirds, Grid, Scrolling and more, per display.</p></div>
-      <div class="card"><div class="k">⇆</div><h3>Scrolling</h3><p>Windows keep their width in a row wider than the screen. Focus one, or hold ⌃⌥ and swipe, and the row slides.</p></div>
-      <div class="card"><div class="k">🖥</div><h3>Docking scenes</h3><p>Unplug for the laptop layout, plug in and the desk layout returns. One shortcut undoes it.</p></div>
-      <div class="card"><div class="k">✥</div><h3>Drag to arrange</h3><p>Drop a window on another to swap them, or hold ⌥ to stack them. Drag an edge and the split follows.</p></div>
-      <div class="card"><div class="k">⧉</div><h3>Workspaces</h3><p>Nine per display. <kbd>⌃⌥2</kbd> to switch, <kbd>⌃⌥⇧2</kbd> to send a window. No need to disable SIP.</p></div>
-      <div class="card"><div class="k">⌘</div><h3>Keyboard first</h3><p>50+ shortcuts, all remappable, plus a <code>tiles</code> command, <code>tiles://</code> links and ready-made Raycast commands.</p></div>
-      <div class="card"><div class="k">◐</div><h3>Yours to style</h3><p>Light or dark, five colour themes, a focus outline, and profiles to switch whole setups.</p></div>
-      <div class="card"><div class="k">📌</div><h3>App rules</h3><p>Send Slack to the laptop and Xcode to the main tile on your monitor. Float anything that shouldn't tile.</p></div>
-      <div class="card"><div class="k">⤢</div><h3>Snap mode</h3><p>Rather place windows yourself? They stay put, and dragging one to a screen edge snaps it to half or a quarter.</p></div>
-      <div class="card"><div class="k">⌕</div><h3>Window finder</h3><p><kbd>⌃⌥G</kbd>, type a few letters, Return. You're in that window, wherever it was.</p></div>
-      <div class="card"><div class="k">🔒</div><h3>Private</h3><p>Reads window positions and app names, nothing else. No screen recording, no analytics, no account.</p></div>
+  <section id="why">
+    <h2>Why people pick Tiles</h2>
+    <p class="center">A tidy desktop without thinking about it, on any screen you plug in.</p>
+    <div class="grid why">
+      <div class="card"><h3>Zero effort</h3><p>Open an app and it lands in the right place. Close one and the rest fill the gap. No dragging, no resizing.</p></div>
+      <div class="card"><h3>Easy to learn</h3><p>A welcome tour on first launch, every shortcut is <kbd>⌃⌥</kbd> plus one key, and <kbd>⌃⌥/</kbd> shows them all on screen.</p></div>
+      <div class="card"><h3>Your way</h3><p>Automatic tiling, or Snap mode where windows stay put until you drag one to an edge. Switch any time.</p></div>
+      <div class="card"><h3>Private by design</h3><p>No account, no analytics, no screen recording. Tiles reads window positions and app names, and nothing leaves your Mac.</p></div>
     </div>
   </section>
 
-  <section>
-    <h2>A real Mac app</h2>
-    <p class="center">A dashboard that shows your displays live, and settings for everything. Screenshots from a real Mac.</p>
+  <section id="modes">
+    <h2>Two ways to work</h2>
+    <p class="center">Pick one in Settings. Change your mind whenever you like.</p>
     <div class="shots">
+      <figure><img src="img/dwindle.png" alt="Four windows tiled automatically on a Mac"><figcaption><b>Automatic.</b> Every window is fitted into the layout as it opens.</figcaption></figure>
+      <figure><img src="img/snap.png" alt="A window being dragged to the left edge, with a tinted preview of the left half"><figcaption><b>Snap.</b> Drag a window to an edge or corner for half, a quarter or the full screen.</figcaption></figure>
+    </div>
+  </section>
+
+  <section id="features">
+    <h2>Everything in Tiles</h2>
+    <p class="center">From a 13" laptop to a 49" super-ultrawide.</p>
+    <div class="grid">
+      <div class="card"><h3>Layouts</h3><ul>
+        <li>11 layouts: Dwindle, Master &amp; Stack, Center Stage, Columns, Thirds, Rows, Grid, Monocle, Scrolling and more</li>
+        <li>A different layout for each display</li>
+        <li>Ultrawide screens detected automatically, with a width cap so nothing stretches</li>
+        <li>Scrolling: windows keep their width in a row you slide along</li></ul></div>
+      <div class="card"><h3>Desktops</h3><ul>
+        <li>Up to nine workspaces per display</li>
+        <li>Name them and give each its own layout</li>
+        <li><kbd>⌃⌥2</kbd> to switch, <kbd>⌃⌥⇧2</kbd> to send a window</li>
+        <li>No need to change any macOS security settings</li></ul></div>
+      <div class="card"><h3>Mouse</h3><ul>
+        <li>Drag one window onto another to swap them</li>
+        <li>Hold ⌥ while dropping to stack them in one tile</li>
+        <li>Drag the edge between windows and both resize</li>
+        <li>Snap mode: edges and corners snap, with a preview</li></ul></div>
+      <div class="card"><h3>Keyboard</h3><ul>
+        <li>50+ shortcuts, every one remappable</li>
+        <li>Window finder: <kbd>⌃⌥G</kbd>, type a few letters, Return</li>
+        <li>On-screen cheat sheet with <kbd>⌃⌥/</kbd></li>
+        <li>Focus: one window fills the screen, then goes back</li></ul></div>
+      <div class="card"><h3>Docking</h3><ul>
+        <li>Your arrangement is saved for each set of displays</li>
+        <li>Plug your monitor back in and it returns</li>
+        <li>One shortcut undoes a restore</li>
+        <li>Windows from an unplugged screen never go missing</li></ul></div>
+      <div class="card"><h3>App rules</h3><ul>
+        <li>Send an app's windows to a chosen display</li>
+        <li>Open an app in the main tile every time</li>
+        <li>Keep apps like Calculator floating</li></ul></div>
+      <div class="card"><h3>Look and feel</h3><ul>
+        <li>Light, Dark or follow macOS</li>
+        <li>Five colour themes</li>
+        <li>Optional focus outline and window animation</li>
+        <li>English, Spanish, French and German</li></ul></div>
+      <div class="card"><h3>Settings that travel</h3><ul>
+        <li>A live dashboard of every display</li>
+        <li>Named profiles, switched in one click</li>
+        <li>Export and import between Macs</li>
+        <li>Built-in updates, signed by the developer</li></ul></div>
+      <div class="card"><h3>Automation</h3><ul>
+        <li><code>tiles://</code> links for Shortcuts and Alfred</li>
+        <li>A <code>tiles</code> command for Terminal</li>
+        <li>Ready-made Raycast commands</li>
+        <li><code>tiles status</code> for scripts and AI agents</li></ul></div>
+    </div>
+  </section>
+
+  <section id="look">
+    <h2>See it</h2>
+    <p class="center">Screenshots from Tiles running on a real Mac.</p>
+    <div class="shots">
+      <figure><img src="img/tour.png" alt="The Welcome to Tiles tour window"><figcaption>A short tour on first launch</figcaption></figure>
+      <figure><img src="img/finder.png" alt="The window finder listing TextEdit windows after typing tex"><figcaption>Find any window by typing</figcaption></figure>
+      <figure><img src="img/shortcuts.png" alt="The shortcut cheat sheet"><figcaption>Every shortcut, one key away</figcaption></figure>
       <figure><img src="img/dashboard-light.png" alt="Tiles dashboard in light mode"><figcaption>Dashboard</figcaption></figure>
       <figure><img src="img/dashboard-dark.png" alt="Tiles dashboard in dark mode with the purple theme"><figcaption>Dark mode, purple theme</figcaption></figure>
+      <figure><img src="img/scrolling.png" alt="The Scrolling layout"><figcaption>Scrolling layout</figcaption></figure>
     </div>
   </section>
 
-  <section>
+  <section id="shortcuts">
     <h2>Handy shortcuts</h2>
-    <p class="center">All use ⌃⌥ (Control + Option) plus one key, and every one can be changed. <kbd>⌃⌥/</kbd> shows them on screen.</p>
+    <p class="center">Hold <kbd>⌃</kbd> Control and <kbd>⌥</kbd> Option, then press one key. Every one can be changed.</p>
     <table>
-      <tr><td><kbd>⌃⌥</kbd> + arrows</td><td>Focus the window in that direction</td></tr>
-      <tr><td><kbd>⌃⌥⇧</kbd> + arrows</td><td>Swap with the window in that direction</td></tr>
-      <tr><td><kbd>⌃⌥Space</kbd></td><td>Next layout</td></tr>
-      <tr><td><kbd>⌃⌥M</kbd></td><td>Let the focused window fill the screen, press again to put it back</td></tr>
-      <tr><td><kbd>⌃⌥W</kbd></td><td>Scrolling: cycle the window's width</td></tr>
-      <tr><td><kbd>⌃⌥F</kbd></td><td>Float or tile the focused window</td></tr>
-      <tr><td><kbd>⌃⌥1</kbd>–<kbd>9</kbd></td><td>Switch workspace; add <kbd>⇧</kbd> to send the window there</td></tr>
-      <tr><td><kbd>⌃⌥/</kbd></td><td>Show every everyday shortcut</td></tr>
+      <tr><td>arrow</td><td>Jump to the window on that side</td></tr>
+      <tr><td><kbd>⇧</kbd> + arrow</td><td>Move the window itself</td></tr>
+      <tr><td><kbd>Space</kbd></td><td>Next layout</td></tr>
+      <tr><td><kbd>M</kbd></td><td>Fill the screen with this window; press again to put it back</td></tr>
+      <tr><td><kbd>F</kbd></td><td>Float or tile this window</td></tr>
+      <tr><td><kbd>1</kbd>–<kbd>9</kbd></td><td>Go to that desktop; add <kbd>⇧</kbd> to send the window there</td></tr>
+      <tr><td><kbd>G</kbd></td><td>Find a window by name</td></tr>
+      <tr><td><kbd>/</kbd></td><td>Show the shortcut list on screen</td></tr>
     </table>
   </section>
 
+  <section id="faq">
+    <h2>Questions</h2>
+    <div class="faq">
+      <details><summary>Is it really free?</summary><p>Yes. Tiles is free and open source under the MIT License. There is no paid tier.</p></details>
+      <details><summary>Why does it need Accessibility access?</summary><p>macOS only lets an app move other apps' windows with that permission. Tiles uses it to read window positions and app names and to move windows. It does not record your screen or read what's inside your windows.</p></details>
+      <details><summary>Does Tiles collect any data?</summary><p>No. There is no account and no analytics. The only network request is a daily check with GitHub for a new version, which you can switch off. See the <a href="privacy.html">privacy policy</a>.</p></details>
+      <details><summary>I don't want everything tiled automatically.</summary><p>Choose Snap mode in Settings. Windows stay where you put them, and dragging one to a screen edge snaps it. You can also float a single window or a whole app.</p></details>
+      <details><summary>Which Macs does it run on?</summary><p>macOS 13 Ventura or later, on Apple silicon and Intel.</p></details>
+      <details><summary>How do I remove it?</summary><p>Quit Tiles and drag it from Applications to the Bin. Your windows go back to normal straight away.</p></details>
+    </div>
+  </section>
+
+  <section class="cta">
+    <img class="icon" src="img/icon.png" alt="">
+    <h2>Get Tiles</h2>
+    <p class="center">Free for macOS 13 or later.</p>
+    <p><a class="btn" href="https://github.com/vannaenae/tiles/releases/latest/download/Tiles.zip">Download for Mac</a></p>
+  </section>
+
   <footer>
-    Tiles is free and open source under the MIT License · <a href="https://github.com/vannaenae/tiles">Source on GitHub</a> · <a href="https://github.com/vannaenae/tiles/issues">Report an issue</a>
+    <p><a href="privacy.html">Privacy</a><a href="https://github.com/vannaenae/tiles/issues">Support</a><a href="https://github.com/vannaenae/tiles">Source on GitHub</a></p>
+    Tiles is free and open source under the MIT License.
   </footer>
 </div>
 <script>
