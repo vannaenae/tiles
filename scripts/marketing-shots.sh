@@ -84,7 +84,7 @@ mkdir -p "$PROJECT" "$WORK/zsh"
 cat > "$WORK/zsh/.zshrc" <<'RC'
 PROMPT='%F{green}~/Projects/weather-app%f %% '
 p() { print -nP "$PROMPT"; print -- "$1"; }
-clear
+clear; printf '\033[3J'   # also clear the scrollback, so "Last login" never shows
 p "swift build"
 print "Building for debugging..."
 print "[42/42] Linking WeatherApp"
@@ -121,26 +121,28 @@ new_window() { # url
 }
 
 # --- Start Tiles, then open the apps so they tile as they arrive --------------------------
+# Order matters in Dwindle: earlier windows get bigger tiles, and the App Store can't shrink much.
 open /Applications/Tiles.app
 sleep 6
 "$TILES" layout-dwindle
-open -a Safari "$GITHUB_URL"   # first window gets the biggest tile
+open -a Safari "$GITHUB_URL"
 sleep 8
+open "${APPSTORE_URL/https:/macappstore:}"
+sleep 10
+# A fresh Mac shows welcome sheets ("What's New", notifications) over the page; click past them.
+[ -n "$KEYS" ] && "$KEYS" dismiss "App Store"
 new_window "$CLAUDE_URL"
 sleep 6
 new_window "$GOOGLE_URL"
 sleep 6
-open "${APPSTORE_URL/https:/macappstore:}"
-sleep 10
-if [ "${MARKETING_CI:-0}" = "1" ] && [ -n "$KEYS" ]; then
-  # A fresh Mac shows "What's New on the App Store" first; Return clicks Continue.
-  # (Only on CI: on your Mac, Return on a product page could start a download.)
-  open -a "App Store"; sleep 1; "$KEYS" return; sleep 3
-  open "${APPSTORE_URL/https:/macappstore:}"
-  sleep 8
+# Terminal. On CI, start it in the project folder with the made-up session as its shell setup, so
+# the title bar reads "weather-app — -zsh". Elsewhere, run the session as a .command file.
+if [ "${MARKETING_CI:-0}" = "1" ] && ! pgrep -xq Terminal \
+   && open --env ZDOTDIR="$WORK/zsh" --env SHELL_SESSIONS_DISABLE=1 -a Terminal "$PROJECT" 2>/dev/null; then :
+else
+  open -a Terminal "$WORK/session.command"
 fi
-open -a Terminal "$WORK/session.command"
-sleep 4
+sleep 5
 "$TILES" retile
 open -a Safari
 shot 01-dwindle 4

@@ -25,6 +25,8 @@ jobs:
           ./scripts/build-app.sh
           cp -R dist/Tiles.app /Applications/
           defaults write io.github.vannaenae.tiles didShowSettings -bool true
+          # zsh as the login shell, like a normal Mac (the runner account defaults to bash).
+          sudo dscl . -create "/Users/$USER" UserShell /bin/zsh
 
       - name: Pre-approve Accessibility and screen capture (test machine only)
         run: |
@@ -37,7 +39,7 @@ jobs:
           grant kTCCServiceAccessibility io.github.vannaenae.tiles 0
           grant kTCCServiceAccessibility /Applications/Tiles.app/Contents/MacOS/Tiles 1
           for c in /usr/sbin/screencapture /bin/bash /bin/zsh; do grant kTCCServiceScreenCapture "$c" 1; done
-          # marketing-keys types the Safari addresses and clicks past the App Store welcome sheet.
+          # marketing-keys types the Safari addresses and clicks past the App Store welcome sheets.
           grant kTCCServiceAccessibility "$RUNNER_TEMP/marketing-keys" 1
           grant kTCCServicePostEvent "$RUNNER_TEMP/marketing-keys" 1
 
