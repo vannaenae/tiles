@@ -57,6 +57,7 @@ footer { padding:72px 0 48px; text-align:center; color:var(--sec); font-size:14p
 summary { font-weight:600; cursor:pointer; } details p { margin:10px 0 0; color:var(--sec); }
 .cta { text-align:center; } .cta .icon { width:84px; height:84px; }
 footer a { margin:0 8px; }
+.wide { margin:0 0 16px; } .wide img { width:100%; border-radius:14px; border:1px solid var(--line); box-shadow:0 24px 60px rgba(0,0,0,.16); } .wide figcaption { text-align:center; color:var(--sec); font-size:14px; margin-top:8px; }
 @media (max-width:600px) { nav a.hide { display:none; } .install code { font-size:12px; } }
 </style>
 </head>
@@ -164,13 +165,14 @@ footer a { margin:0 8px; }
   <section id="look">
     <h2>See it</h2>
     <p class="center">Screenshots from Tiles running on a real Mac.</p>
+    <figure class="wide"><img src="img/real-apps.jpg" alt="The App Store, Safari on GitHub, Claude and Google, and Terminal, tiled side by side in the Dwindle layout"><figcaption>The App Store, three Safari windows and Terminal, tiled in Dwindle</figcaption></figure>
     <div class="shots">
       <figure><img src="img/tour.png" alt="The Welcome to Tiles tour window"><figcaption>A short tour on first launch</figcaption></figure>
       <figure><img src="img/finder.png" alt="The window finder listing TextEdit windows after typing tex"><figcaption>Find any window by typing</figcaption></figure>
       <figure><img src="img/shortcuts.png" alt="The shortcut cheat sheet"><figcaption>Every shortcut, one key away</figcaption></figure>
-      <figure><img src="img/dashboard-light.png" alt="Tiles dashboard in light mode"><figcaption>Dashboard</figcaption></figure>
-      <figure><img src="img/dashboard-dark.png" alt="Tiles dashboard in dark mode with the purple theme"><figcaption>Dark mode, purple theme</figcaption></figure>
-      <figure><img src="img/scrolling.png" alt="The Scrolling layout"><figcaption>Scrolling layout</figcaption></figure>
+      <figure><img src="img/dashboard-light.jpg" alt="Tiles dashboard in light mode"><figcaption>Dashboard</figcaption></figure>
+      <figure><img src="img/dashboard-dark.jpg" alt="Tiles dashboard in dark mode with the purple theme"><figcaption>Dark mode, purple theme</figcaption></figure>
+      <figure><img src="img/scrolling.jpg" alt="The Scrolling layout with Claude and Google side by side in Safari"><figcaption>Scrolling layout</figcaption></figure>
     </div>
   </section>
 
@@ -209,13 +211,8 @@ footer a { margin:0 8px; }
   </section>
 
   <footer>
-<<<<<<< HEAD
-    <p><a href="privacy.html">Privacy</a><a href="https://github.com/vannaenae/tiles/issues">Support</a><a href="https://github.com/vannaenae/tiles">Source on GitHub</a></p>
-    Tiles is free and open source under the MIT License.
-=======
-    <strong>Tiles v0.7.0</strong> · A SOULSPCE Collective product<br>
+    <strong>Tiles <span data-version>v0.9.0</span></strong> · A SOULSPCE Collective product<br>
     Free and open source under the MIT License · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="support.html">Support</a> · <a href="https://github.com/vannaenae/tiles">Source on GitHub</a>
->>>>>>> origin/claude/soulspace-legal
   </footer>
 </div>
 <script>
@@ -249,5 +246,6 @@ function render(){seg('screens',SCREENS.map(s=>[s[0]]),screen,i=>{screen=i;rende
 function setN(v){n=Math.max(1,Math.min(10,v));render()}
 addEventListener('resize',render);render();
 </script>
+<script src="version.js" defer></script>
 </body>
 </html>

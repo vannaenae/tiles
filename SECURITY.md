@@ -27,7 +27,7 @@ We fix security problems in the **latest release** only. Please update before yo
 
 | Version | Supported |
 |---|---|
-| Latest release (currently 0.7.0) | Yes |
+| Latest release | Yes |
 | Anything older | No |
 
 ## What's in scope

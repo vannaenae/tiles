@@ -2,7 +2,7 @@
 
 <h1 align="center">Tiles</h1>
 
-<p align="center"><sub>Version 0.7.0 · A SOULSPCE Collective product</sub></p>
+<p align="center"><a href="https://github.com/vannaenae/tiles/releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/vannaenae/tiles?label=version"></a><br><sub>A SOULSPCE Collective product</sub></p>
 
 <p align="center"><b>A free, open-source auto-tiling window manager for macOS.</b><br>
 Every window snaps into place the moment it opens. Every screen gets the right layout. Your desk setup comes back when you dock.</p>
@@ -20,8 +20,8 @@ curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.s
 - MIT licensed. No account, no telemetry, nothing leaves your Mac. Updates itself from GitHub releases.
 
 <p align="center">
-  <img src="docs/img/dashboard-light.png" width="420" alt="Tiles dashboard in light mode">
-  <img src="docs/img/dashboard-dark.png" width="420" alt="Tiles dashboard in dark mode, purple theme">
+  <img src="docs/img/dashboard-light.jpg" width="420" alt="Tiles dashboard in light mode">
+  <img src="docs/img/dashboard-dark.jpg" width="420" alt="Tiles dashboard in dark mode, purple theme">
 </p>
 
 <sub>All images are screenshots of Tiles running on a real Mac (GitHub's macOS test machine, 1024×768).</sub>
