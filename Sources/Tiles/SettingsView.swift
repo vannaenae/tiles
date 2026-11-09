@@ -650,15 +650,25 @@ private struct RulesPane: View {
 }
 
 private struct AboutPane: View {
+    /// The Tiles website, where the privacy policy and terms live.
+    static let site = URL(string: "https://vannaenae.github.io/tiles/")!
+
     var body: some View {
         VStack(spacing: 12) {
             Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 96, height: 96)
             Text("Tiles").font(.largeTitle.bold())
             Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev")")
                 .foregroundStyle(.secondary)
+            Text("A SOULSPACE Collective product")
+                .font(.callout.weight(.medium))
+                .foregroundStyle(.secondary)
             Text("Free and open source under the MIT License.")
             HStack {
                 Link("GitHub", destination: AppDelegate.repoURL)
+                Text("·").foregroundStyle(.secondary)
+                Link("Privacy", destination: Self.site.appendingPathComponent("privacy.html"))
+                Text("·").foregroundStyle(.secondary)
+                Link("Terms", destination: Self.site.appendingPathComponent("terms.html"))
                 Text("·").foregroundStyle(.secondary)
                 Link("Report an Issue", destination: AppDelegate.repoURL.appendingPathComponent("issues"))
             }
