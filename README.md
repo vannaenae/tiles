@@ -256,6 +256,8 @@ sudo cp scripts/tiles /usr/local/bin/tiles
 tiles swap-left
 ```
 
+**Is it working?** `tiles status` prints what Tiles is doing as JSON: whether it has permission, whether tiling is on, each display's layout, workspace and window count, and a plain-language `problem` if something's wrong.
+
 **Raycast:** add the `integrations/raycast` folder under Settings → Extensions → Script Commands for layouts, scenes, Focus and workspaces as Raycast commands.
 
 ## How it works
@@ -274,6 +276,8 @@ scripts/          build-app.sh (universal .app + zip), tiles (CLI).
 4. Moves the user makes with the mouse are told apart from Tiles' own moves; a drag swaps, a resize changes the ratio.
 
 Known limits: windows in native full-screen are left alone, Tiles tiles the current Space only, and Stage Manager should be off.
+
+Every state machine in the app (permission, updater, drags, panning, workspaces, docking…) is mapped in [STATE_MACHINES.md](STATE_MACHINES.md). Notes for AI agents and new contributors are in [AGENTS.md](AGENTS.md).
 
 ## Contributing
 

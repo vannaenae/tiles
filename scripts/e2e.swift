@@ -138,6 +138,19 @@ if shell("pgrep -x Tiles").isEmpty {
     print("STOP Tiles isn't running. Open /Applications/Tiles.app, allow it in System Settings → Privacy & Security → Accessibility, then run this again.")
     exit(2)
 }
+// The app's own account of itself (see `tiles status`): the clearest reason when something's off.
+let statusFile = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/Tiles/status.json")
+var appStatus: [String: Any] = [:]
+for _ in 0..<10 where appStatus.isEmpty {
+    appStatus = (try? JSONSerialization.jsonObject(with: Data(contentsOf: statusFile))) as? [String: Any] ?? [:]
+    if appStatus.isEmpty { settle(0.5) }
+}
+if let problem = appStatus["problem"] as? String {
+    print("STOP \(problem)")
+    exit(2)
+}
+check(appStatus["phase"] as? String == "running", "tiles status reports Tiles running (\(appStatus["phase"] ?? "no status file"))")
+check((appStatus["displays"] as? [[String: Any]])?.isEmpty == false, "tiles status lists the displays")
 if windows().count != 4 {
     print("STOP The test needs exactly 3 TextEdit windows and 1 Finder window open (found \(windows().count)). Run scripts/test-on-my-mac.sh, which sets that up for you.")
     exit(2)

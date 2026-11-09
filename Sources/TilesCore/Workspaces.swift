@@ -8,6 +8,8 @@ public struct Workspaces: Equatable {
     public private(set) var active: [String: Int] = [:]
     /// Window → its workspace. Missing means "whatever its display shows".
     public private(set) var assigned: [UInt32: Int] = [:]
+    /// Window → the display its workspace number belongs to.
+    private var home: [UInt32: String] = [:]
 
     public init() {}
 
@@ -21,9 +23,13 @@ public struct Workspaces: Equatable {
         workspace(of: window, on: display) == active(on: display)
     }
 
-    /// New windows join the workspace their display is showing.
+    /// New windows join the workspace their display is showing. So does a window that
+    /// arrives from another display (dragged over, or its monitor unplugged): workspace 2 of
+    /// the LG means nothing on the laptop, and it must not land there hidden.
     public mutating func adopt(_ window: UInt32, on display: String) {
-        if assigned[window] == nil { assigned[window] = active(on: display) }
+        guard assigned[window] == nil || home[window] != display else { return }
+        assigned[window] = active(on: display)
+        home[window] = display
     }
 
     public mutating func show(_ number: Int, on display: String) {
@@ -37,6 +43,7 @@ public struct Workspaces: Equatable {
     /// Drops windows that closed.
     public mutating func keep(only windows: Set<UInt32>) {
         assigned = assigned.filter { windows.contains($0.key) }
+        home = home.filter { windows.contains($0.key) }
     }
 
     /// Workspaces holding at least one of `windows`, plus the one showing, in order.

@@ -280,10 +280,104 @@ final class WorkspaceTests: XCTestCase {
         XCTAssertEqual(w.workspace(of: 7, on: "A"), 1)
     }
 
+    func testWindowFromAnUnpluggedDisplayStaysVisible() {
+        // A window on the LG's workspace 2; the laptop shows workspace 1. Unplug the LG:
+        // the window lands on the laptop and must be on the workspace the laptop shows.
+        var w = Workspaces()
+        w.show(2, on: "LG")
+        w.adopt(9, on: "LG")
+        XCTAssertEqual(w.workspace(of: 9, on: "LG"), 2)
+        w.adopt(9, on: "laptop")
+        XCTAssertTrue(w.isShown(9, on: "laptop"))
+        // Staying on the same display keeps an explicit choice.
+        w.move(9, to: 3)
+        w.adopt(9, on: "laptop")
+        XCTAssertEqual(w.workspace(of: 9, on: "laptop"), 3)
+    }
+
     func testWorkspaceCommandsRoundTrip() {
         XCTAssertEqual(Command(name: "workspace-3"), .workspace(3))
         XCTAssertEqual(Command(name: "move-to-workspace-9"), .moveToWorkspace(9))
         XCTAssertNil(Command(name: "workspace-10"))
         XCTAssertEqual(Config.default.shortcuts(for: .workspace(2)).map(\.description), ["⌃⌘2"])
+    }
+}
+
+final class LifecycleTests: XCTestCase {
+    func testAppPhaseTransitions() {
+        // Every (phase, trusted) pair: where it goes and what the app must do.
+        let table: [(AppPhase, Bool, AppPhase, AppPhase.Effect)] = [
+            (.launching, false, .needsPermission, .none),
+            (.launching, true, .running, .start),
+            (.needsPermission, false, .needsPermission, .none),
+            (.needsPermission, true, .running, .start),
+            (.running, true, .running, .none),
+            (.running, false, .permissionLost, .pause),
+            (.permissionLost, false, .permissionLost, .none),
+            (.permissionLost, true, .running, .resume), // switched back on: resumes, never starts twice
+        ]
+        XCTAssertEqual(table.count, AppPhase.allCases.count * 2)
+        for (from, trusted, to, effect) in table {
+            let result = from.next(trusted: trusted)
+            XCTAssertEqual(result.phase, to, "\(from) trusted=\(trusted)")
+            XCTAssertEqual(result.effect, effect, "\(from) trusted=\(trusted)")
+        }
+        XCTAssertFalse(AppPhase.needsPermission.hasStarted)
+        XCTAssertTrue(AppPhase.permissionLost.hasStarted)
+    }
+
+    func testUpdatePhaseNeverInterruptsADownload() {
+        XCTAssertFalse(UpdatePhase.checking.canCheck)
+        XCTAssertFalse(UpdatePhase.downloading(version: "1.0").canCheck)
+        XCTAssertFalse(UpdatePhase.installing(version: "1.0").canCheck)
+        XCTAssertTrue(UpdatePhase.failed(version: "1.0").canCheck)
+        // Install is offered when available, and again after a failure; never mid-download.
+        XCTAssertEqual(UpdatePhase.available(version: "1.0").installable, "1.0")
+        XCTAssertEqual(UpdatePhase.failed(version: "1.0").installable, "1.0")
+        XCTAssertNil(UpdatePhase.downloading(version: "1.0").installable)
+        XCTAssertNil(UpdatePhase.upToDate.installable)
+    }
+
+    func testUpdateCheckResult() {
+        XCTAssertEqual(UpdatePhase.checked(latest: "0.10.0", current: "0.9.2"), .available(version: "0.10.0"))
+        XCTAssertEqual(UpdatePhase.checked(latest: "0.6.0", current: "0.6.0"), .upToDate)
+        XCTAssertEqual(UpdatePhase.checked(latest: nil, current: "0.6.0"), .offline)
+    }
+
+    func testStatusSnapshotExplainsProblemsAndRoundTrips() throws {
+        func snapshot(_ phase: AppPhase, enabled: Bool = true, error: String? = nil) -> StatusSnapshot {
+            StatusSnapshot(version: "0.7.0", pid: 42, phase: phase, tilingEnabled: enabled, update: .upToDate,
+                           configError: error, displays: [.init(name: "LG", layout: .dwindle, workspace: 2, workspaces: [1, 2], windows: 3)])
+        }
+        XCTAssertNil(snapshot(.running).problem)
+        XCTAssertTrue(snapshot(.needsPermission).problem?.contains("Accessibility") == true)
+        XCTAssertTrue(snapshot(.permissionLost).problem?.contains("Accessibility") == true)
+        XCTAssertTrue(snapshot(.running, enabled: false).problem?.contains("⌃⌥T") == true)
+        XCTAssertTrue(snapshot(.running, error: "Invalid JSON").problem?.contains("Invalid JSON") == true)
+
+        let original = snapshot(.running)
+        let decoded = try JSONDecoder().decode(StatusSnapshot.self, from: original.encoded())
+        XCTAssertEqual(decoded, original)
+        let text = String(decoding: try original.encoded(), as: UTF8.self)
+        XCTAssertTrue(text.contains("\"phase\" : \"running\""))
+    }
+}
+
+final class FloatOverrideTests: XCTestCase {
+    func testOverrideBeatsTheRules() {
+        XCTAssertTrue(FloatOverride.floats(.float, ruleSaysFloat: false))
+        XCTAssertFalse(FloatOverride.floats(.tile, ruleSaysFloat: true))
+        XCTAssertTrue(FloatOverride.floats(nil, ruleSaysFloat: true))
+        XCTAssertFalse(FloatOverride.floats(nil, ruleSaysFloat: false))
+    }
+
+    func testToggleAlwaysFlipsTheOutcome() {
+        for tiled in [true, false] {
+            for rule in [true, false] {
+                let next = FloatOverride.toggled(isTiled: tiled, ruleSaysFloat: rule)
+                XCTAssertEqual(FloatOverride.floats(next, ruleSaysFloat: rule), tiled, "tiled=\(tiled) rule=\(rule)")
+            }
+        }
+        XCTAssertNil(FloatOverride.toggled(isTiled: false, ruleSaysFloat: false)) // back to following the rules
     }
 }

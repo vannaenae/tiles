@@ -7,8 +7,12 @@ final class Updater {
     static let teamID = "GQ638955FB"
     private static let repo = "vannaenae/tiles"
 
-    private(set) var available: String?
-    private(set) var status = ""
+    /// The one source of truth; see UpdatePhase for the rules.
+    private(set) var phase: UpdatePhase = .idle {
+        didSet { if phase != oldValue { onChange?() } }
+    }
+    var available: String? { phase.installable }
+    var status: String { phase.message }
     var onChange: (() -> Void)?
     private var timer: Timer?
 
@@ -24,32 +28,26 @@ final class Updater {
     }
 
     func check() {
-        status = "Checking…"
-        onChange?()
+        // Never interrupt a check or a download that's already running.
+        guard phase.canCheck else { return }
+        phase = .checking
         let url = URL(string: "https://api.github.com/repos/\(Self.repo)/releases/latest")!
         URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
             let json = data.flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }
             let latest = (json?["tag_name"] as? String).map { $0.hasPrefix("v") ? String($0.dropFirst()) : $0 }
             DispatchQueue.main.async {
-                guard let self else { return }
-                if let latest, Version.isNewer(latest, than: self.current) {
-                    self.available = latest
-                    self.status = "Tiles \(latest) is available"
-                } else {
-                    self.available = nil
-                    self.status = latest == nil ? "Couldn't reach GitHub" : "Tiles is up to date"
-                }
-                self.onChange?()
+                guard let self, self.phase == .checking else { return }
+                self.phase = .checked(latest: latest, current: self.current)
             }
         }.resume()
     }
 
     /// Downloads the release, checks its signature, then swaps the app and reopens it.
     func install() {
-        guard let version = available,
+        // Only from "available" or "failed": a second click while downloading does nothing.
+        guard let version = phase.installable,
               let url = URL(string: "https://github.com/\(Self.repo)/releases/download/v\(version)/Tiles.zip") else { return }
-        status = "Downloading Tiles \(version)…"
-        onChange?()
+        phase = .downloading(version: version)
         URLSession.shared.downloadTask(with: url) { [weak self] file, _, _ in
             let fm = FileManager.default
             let dir = fm.temporaryDirectory.appendingPathComponent("tiles-update-\(UUID().uuidString)")
@@ -65,10 +63,10 @@ final class Updater {
             DispatchQueue.main.async {
                 guard let self else { return }
                 guard ok else {
-                    self.status = "The update couldn't be downloaded or verified"
-                    self.onChange?()
+                    self.phase = .failed(version: version)
                     return
                 }
+                self.phase = .installing(version: version)
                 // Swap the app once this copy has quit, then reopen it.
                 let swap = Process()
                 swap.executableURL = URL(fileURLWithPath: "/bin/sh")

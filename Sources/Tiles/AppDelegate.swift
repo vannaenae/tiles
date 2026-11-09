@@ -12,7 +12,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     private var hotkeyErrors: [String] = []
     private var permissionTimer: Timer?
     private var messageWork: DispatchWorkItem?
-    private var started = false
+    /// Permission and lifecycle, one value. Transitions live in TilesCore (AppPhase.next).
+    private var phase = AppPhase.launching
+    /// True while the shortcut recorder is listening, so a config reload can't re-arm global shortcuts under it.
+    private var hotkeysPaused = false
+    private var statusWork: DispatchWorkItem?
+    private var lastStatus: Data?
     private let outline = FocusOutline()
     private let badges = StackBadges()
     let updater = Updater()
@@ -33,14 +38,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         applyAppearance()
         applyIconPlacement()
         configStore.onChange = { [weak self] config in self?.configChanged(config) }
-        manager.onStateChange = { [weak self] in self?.updateIcon() }
+        manager.onStateChange = { [weak self] in self?.updateIcon(); self?.scheduleStatusWrite() }
         manager.onMessage = { [weak self] text in self?.flash(text) }
         manager.onStacks = { [weak self] stacks in
             guard let self else { return }
             self.badges.show(stacks, hex: self.configStore.config.theme.hex)
         }
         badges.onClick = { [weak self] ids in self?.manager.cycleStack(ids) }
-        updater.onChange = { [weak self] in self?.settingsModel?.objectWillChange.send() }
+        updater.onChange = { [weak self] in
+            self?.settingsModel?.objectWillChange.send()
+            self?.scheduleStatusWrite()
+        }
         updater.setAutomatic(configStore.config.checkForUpdates)
         manager.onFocusFrame = { [weak self] frame in
             guard let self else { return }
@@ -48,7 +56,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         }
         registerHotKeys()
         NotificationCenter.default.addObserver(forName: .tilesShortcutRecording, object: nil, queue: .main) { [weak self] note in
-            if note.object as? Bool == true { self?.hotKeys.unregisterAll() } else { self?.registerHotKeys() }
+            self?.hotkeysPaused = note.object as? Bool == true
+            self?.registerHotKeys()
         }
 
         // One watcher owns the permission state: it starts tiling the moment access is
@@ -64,18 +73,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         }
     }
 
-    private var lastTrusted: Bool?
-
     private func checkPermission() {
-        let trusted = AccessibilityPermission.isTrusted
-        guard trusted != lastTrusted else { return }
-        lastTrusted = trusted
-        if trusted { startTiling() }
+        let (next, effect) = phase.next(trusted: AccessibilityPermission.isTrusted)
+        guard next != phase || effect != .none else { return }
+        phase = next
+        switch effect {
+        case .none: break
+        case .start: startTiling()
+        case .resume: manager.refresh()
+        case .pause:
+            outline.show(around: nil, hex: "")
+            badges.show([], hex: "")
+        }
         updateIcon()
+        scheduleStatusWrite()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        guard started else { return }
+        try? FileManager.default.removeItem(at: Self.statusURL)
+        guard phase.hasStarted else { return }
         // Windows on hidden workspaces always come back, whatever the setting.
         if configStore.config.restoreWindowsOnQuit { manager.restoreOriginalFrames() } else { manager.unparkAll() }
     }
@@ -95,8 +111,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     // MARK: - Permission
 
     private func startTiling() {
-        guard !started else { return }
-        started = true
         manager.start()
         updateIcon()
         // First run: show Settings so people see what Tiles can do.
@@ -115,7 +129,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         applyIconPlacement()
         registerHotKeys()
         if old.checkForUpdates != config.checkForUpdates { updater.setAutomatic(config.checkForUpdates) }
-        if started { manager.configDidChange(from: old, to: config) }
+        if phase.hasStarted { manager.configDidChange(from: old, to: config) }
         // Keep an open Settings window current, so it never writes back a stale copy.
         if let model = settingsModel, model.config != config { model.config = config }
         if let error = configStore.lastError {
@@ -123,6 +137,36 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
             NSLog("Tiles config error: \(error)")
         }
         updateIcon()
+        scheduleStatusWrite()
+    }
+
+    // MARK: - Status file (`tiles status`)
+
+    static let statusURL: URL = TilingManager.scenesURL.deletingLastPathComponent().appendingPathComponent("status.json")
+
+    /// Coalesces bursts of changes into one small write, and skips writes that change nothing.
+    private func scheduleStatusWrite() {
+        guard statusWork == nil else { return }
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            self.statusWork = nil
+            let snapshot = StatusSnapshot(
+                version: self.updater.current,
+                pid: ProcessInfo.processInfo.processIdentifier,
+                phase: self.phase,
+                tilingEnabled: self.manager.isEnabled,
+                update: self.updater.phase,
+                configError: self.configStore.lastError,
+                displays: self.manager.status().map {
+                    .init(name: $0.name, layout: $0.layout, workspace: $0.workspace, workspaces: $0.workspaces, windows: $0.tiles.count)
+                })
+            guard let data = try? snapshot.encoded(), data != self.lastStatus else { return }
+            self.lastStatus = data
+            try? FileManager.default.createDirectory(at: Self.statusURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try? data.write(to: Self.statusURL, options: .atomic)
+        }
+        statusWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: work)
     }
 
     private func applyAppearance() {
@@ -135,6 +179,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
 
     private func registerHotKeys() {
         hotKeys.unregisterAll()
+        guard !hotkeysPaused else { return }
         let (bindings, errors) = configStore.config.resolvedHotkeys()
         hotkeyErrors = errors
         for binding in bindings {
@@ -149,7 +194,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
 
     private func updateIcon() {
         let symbol: String
-        if !AccessibilityPermission.isTrusted {
+        if phase != .running {
             symbol = "exclamationmark.triangle"
         } else if manager.isEnabled {
             symbol = "rectangle.split.2x2"
@@ -173,7 +218,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         menu.removeAllItems()
         let config = configStore.config
 
-        if !AccessibilityPermission.isTrusted {
+        if phase != .running {
             menu.addItem(item("Grant Accessibility Access…", #selector(grantAccess)))
             menu.addItem(item("Already Allowed? Reset Permission…", #selector(resetAccess)))
             menu.addItem(.separator())
