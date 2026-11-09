@@ -1,0 +1,22 @@
+{
+  "displays" : [
+    {
+      "layout" : "dwindle",
+      "name" : "Apple Virtual",
+      "windows" : 4,
+      "workspace" : 1,
+      "workspaces" : [
+        1
+      ]
+    }
+  ],
+  "phase" : "running",
+  "pid" : 1964,
+  "tilingEnabled" : true,
+  "update" : {
+    "available" : {
+      "version" : "0.9.0"
+    }
+  },
+  "version" : "0.1.0"
+}
