@@ -1,0 +1,159 @@
+<!doctype html>
+<!-- DRAFT for review: not yet approved for publication. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Support · Tiles</title>
+<meta name="description" content="Install Tiles, allow Accessibility access, fix common problems, report a bug or uninstall.">
+<link rel="icon" href="img/icon.png">
+<meta property="og:title" content="Support · Tiles">
+<meta property="og:description" content="Install Tiles, allow Accessibility access, fix common problems, report a bug or uninstall.">
+<meta property="og:image" content="img/icon.png">
+<style>
+:root { --accent:#E8643C; --bg:#faf8f6; --card:#fff; --text:#1d1d1f; --sec:#6e6e73; --line:rgba(0,0,0,.08); --screen:rgba(0,0,0,.05); }
+@media (prefers-color-scheme: dark) { :root { --bg:#141416; --card:#1f1f22; --text:#f5f5f7; --sec:#a1a1a6; --line:rgba(255,255,255,.1); --screen:rgba(255,255,255,.06); } }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--text); font:17px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+a { color:var(--accent); text-decoration:none; overflow-wrap:anywhere; } a:hover { text-decoration:underline; }
+.wrap { max-width:1080px; margin:0 auto; padding:0 20px; }
+nav { display:flex; align-items:center; gap:12px; padding:18px 0; }
+nav .home { display:flex; align-items:center; gap:12px; color:var(--text); } nav .home:hover { text-decoration:none; }
+nav img { width:32px; height:32px; } nav b { font-size:18px; } nav .sp { flex:1; } nav a.l { color:var(--text); margin-left:20px; font-size:15px; }
+main { max-width:760px; margin:0 auto; padding:40px 0 0; }
+h1 { font-size:clamp(32px,5vw,46px); line-height:1.1; letter-spacing:-.02em; margin:0 0 6px; }
+h2 { font-size:24px; letter-spacing:-.01em; margin:44px 0 10px; }
+h3 { font-size:19px; margin:28px 0 8px; }
+p, li { color:var(--text); } ul, ol { padding-left:22px; } li { margin:4px 0; }
+code { font:.86em ui-monospace, SFMono-Regular, Menlo, monospace; background:var(--screen); border-radius:5px; padding:1px 5px; overflow-wrap:anywhere; }
+pre { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; overflow:auto; }
+pre code { background:none; padding:0; font-size:14px; overflow-wrap:normal; }
+table { width:100%; border-collapse:collapse; background:var(--card); border-radius:14px; overflow:hidden; border:1px solid var(--line); font-size:15px; margin:16px 0; }
+td, th { padding:11px 14px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; } tr:last-child td { border-bottom:0; }
+th { color:var(--sec); font-weight:600; }
+footer { padding:72px 0 48px; text-align:center; color:var(--sec); font-size:14px; }
+@media (max-width:600px) { nav a.hide { display:none; } td, th { padding:9px 10px; } table { display:block; overflow-x:auto; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="home" href="index.html"><img src="img/icon.png" alt="Tiles home"><b>Tiles</b></a><span class="sp"></span>
+    <a class="l hide" href="support.html">Support</a>
+    <a class="l" href="https://github.com/vannaenae/tiles">GitHub</a>
+  </nav>
+
+  <main>
+  <h1>Tiles Support</h1>
+<p>Tiles is free and open source, a SOULSPCE Collective product. Support happens in the open, on GitHub.</p>
+<ul>
+<li><strong>Ask a question or report a bug:</strong> <a href="https://github.com/vannaenae/tiles/issues">https://github.com/vannaenae/tiles/issues</a></li>
+<li><strong>Report a security problem privately:</strong> <a href="https://github.com/vannaenae/tiles/security/advisories/new">https://github.com/vannaenae/tiles/security/advisories/new</a> (see the <a href="https://github.com/vannaenae/tiles/blob/main/SECURITY.md">security policy</a>)</li>
+<li><strong>Something you can't post in public:</strong> [contact email]</li>
+</ul>
+<p>Before you open an issue, search the existing ones. Someone may have already found the answer.</p>
+<h2 id="install-tiles">Install Tiles</h2>
+<p>Tiles needs macOS 13 Ventura or later. It runs on Apple silicon and Intel Macs.</p>
+<p><strong>Terminal (easiest).</strong> Paste this into Terminal. It downloads the latest Tiles, puts it in Applications and opens it.</p>
+<pre class="bash"><code>curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.sh | bash</code></pre>
+<p><strong>Homebrew.</strong></p>
+<pre class="bash"><code>brew tap vannaenae/tiles https://github.com/vannaenae/tiles
+brew install --cask vannaenae/tiles/tiles</code></pre>
+<p><strong>Download.</strong> Get the zip from <a href="https://github.com/vannaenae/tiles/releases">Releases</a>, unzip it and drag <code>Tiles.app</code> to Applications. The first time, right-click <code>Tiles.app</code>, choose <strong>Open</strong>, then <strong>Open</strong> again. If macOS still refuses, run:</p>
+<pre class="bash"><code>xattr -dr com.apple.quarantine /Applications/Tiles.app</code></pre>
+<h2 id="allow-accessibility-access">Allow Accessibility access</h2>
+<p>Tiles needs the macOS Accessibility permission to read where your windows are and to move them. On first launch, Tiles asks you to switch it on in <strong>System Settings → Privacy &amp; Security → Accessibility</strong>. Once you do, Tiles starts on its own.</p>
+<p>Tiles doesn't need screen recording. Launch at Login is optional.</p>
+<h2 id="first-steps">First steps</h2>
+<ul>
+<li>New windows tile the moment they open. Tiles lives in the menu bar, the Dock or both.</li>
+<li>Press <strong>⌃⌥Space</strong> (Control + Option + Space) to try the next layout.</li>
+<li>Press <strong>⌃⌥</strong> + arrow keys to move focus between windows, and <strong>⌃⌥⇧</strong> + arrows to swap them.</li>
+<li>Press <strong>⌃⌥F</strong> to float or tile the focused window.</li>
+<li>Open <strong>Open Tiles…</strong> (⌘, from the menu) for the dashboard and settings. Turn on <strong>Launch at login</strong> in <strong>General</strong>.</li>
+<li>Every setting is also in <code>~/.config/tiles/config.json</code>. Choose <strong>Edit Config File…</strong> in the menu to open it.</li>
+</ul>
+<h2 id="common-fixes">Common fixes</h2>
+<h3 id="accessibility-is-switched-on-but-nothing-moves">Accessibility is switched on, but nothing moves</h3>
+<p>macOS sometimes keeps an old permission entry that no longer matches the app.</p>
+<ol type="1">
+<li>Click <strong>Reset</strong> on the Tiles dashboard, or choose <strong>Already Allowed? Reset Permission…</strong> from the Tiles menu.</li>
+<li>Switch Tiles on again in <strong>System Settings → Privacy &amp; Security → Accessibility</strong>.</li>
+<li>Still stuck? Remove Tiles from that list with <strong>−</strong>, add it again with <strong>+</strong> (from your Applications folder), then choose <strong>Restart Tiles</strong> from the Tiles menu.</li>
+</ol>
+<p>This often happens after you build Tiles from source or switch between install methods.</p>
+<h3 id="some-windows-dont-tile">Some windows don't tile</h3>
+<ul>
+<li>Windows in native full screen are left alone.</li>
+<li>Tiles tiles the current Space only.</li>
+<li>Stage Manager should be off.</li>
+<li>Check whether the window is floating: press <strong>⌃⌥F</strong>, or look at your app rules in <strong>Settings → App Rules</strong>.</li>
+<li>Check that tiling is on: press <strong>⌃⌥T</strong>, or see <strong>Tiling On</strong> in the menu.</li>
+<li>Press <strong>⌃⌥R</strong> to retile everything.</li>
+</ul>
+<h3 id="windows-disappeared">Windows disappeared</h3>
+<p>They are probably on another workspace. Press <strong>⌃⌘1</strong> to go back to workspace 1. The menu bar and dashboard show which workspaces hold windows. Turning tiling off or quitting Tiles always brings every window back.</p>
+<h3 id="the-menu-bar-says-config-error">The menu bar says "Config error"</h3>
+<p>Your config file has a mistake in it, often a missing comma or quote.</p>
+<ol type="1">
+<li>Open the Tiles menu. The ⚠︎ line shows what went wrong.</li>
+<li>Choose <strong>Edit Config File…</strong>, fix that line and save. Tiles reloads the file as soon as you save.</li>
+<li>To start over, use <strong>Settings → General → Restore All Defaults…</strong>.</li>
+</ol>
+<h3 id="a-shortcut-doesnt-work">A shortcut doesn't work</h3>
+<p>If another app already uses a shortcut, the Tiles menu shows a line such as <strong>⚠︎ ⌃⌥X is taken by another app</strong>.</p>
+<ul>
+<li>Change the Tiles shortcut in <strong>Settings → Shortcuts</strong>, or in the <code>hotkeys</code> section of the config file.</li>
+<li>Or change or quit the other app.</li>
+<li>Shortcuts use key positions on a US keyboard layout.</li>
+</ul>
+<h3 id="updates">Updates</h3>
+<ul>
+<li>Tiles checks GitHub once a day and shows <strong>Update to Tiles x.y.z…</strong> in the menu when there's a new version.</li>
+<li>To check now, go to <strong>Settings → General → Updates</strong> and click <strong>Check Now</strong>, then <strong>Install</strong>.</li>
+<li>Tiles only installs updates signed by the Tiles developer. If a download isn't, Tiles won't install it.</li>
+<li>You can also update by running the Terminal install line again, or with <code>brew upgrade --cask --greedy tiles</code>.</li>
+<li>To turn off automatic checks, switch off <strong>Check for updates automatically</strong> in the same place.</li>
+</ul>
+<p>If Tiles stops moving windows after an update, follow the Accessibility steps above.</p>
+<h2 id="is-tiles-working">Is Tiles working?</h2>
+<p>The <code>tiles</code> command shows what Tiles is doing, as JSON. The install script and Homebrew add it for you.</p>
+<pre class="bash"><code>tiles status</code></pre>
+<p>It shows the version, whether Tiles has permission, whether tiling is on, each display's layout, workspace and window count, and a plain-language <code>problem</code> if something is wrong. Check it before deciding Tiles is broken.</p>
+<h2 id="report-a-bug">Report a bug</h2>
+<p>Open an issue at <a href="https://github.com/vannaenae/tiles/issues">https://github.com/vannaenae/tiles/issues</a> and include:</p>
+<ul>
+<li><strong>Tiles version</strong> (in <strong>Settings → About</strong>, or in <code>tiles status</code>);</li>
+<li><strong>macOS version</strong> (Apple menu → <strong>About This Mac</strong>);</li>
+<li><strong>the output of <code>tiles status</code></strong>;</li>
+<li>your displays, for example "MacBook Air plus a 34-inch ultrawide";</li>
+<li>what you did, what you expected, and what happened instead;</li>
+<li>the relevant part of <code>~/.config/tiles/config.json</code>, if you changed it.</li>
+</ul>
+<p>Issues are public. <code>tiles status</code> includes your displays' names but no window titles. Read anything before you paste it and remove what you'd rather keep private.</p>
+<h2 id="uninstall-tiles">Uninstall Tiles</h2>
+<p>First, turn off <strong>Launch at login</strong> in <strong>Settings → General</strong> if you turned it on.</p>
+<p><strong>If you installed with Terminal:</strong></p>
+<pre class="bash"><code>curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.sh | bash -s uninstall</code></pre>
+<p>This quits Tiles and removes the app and the <code>tiles</code> command. Your settings stay, so delete them too if you want:</p>
+<pre class="bash"><code>rm -rf ~/.config/tiles &quot;$HOME/Library/Application Support/Tiles&quot;</code></pre>
+<p><strong>If you installed with Homebrew:</strong></p>
+<pre class="bash"><code>brew uninstall --zap --cask tiles</code></pre>
+<p><code>--zap</code> also removes your settings folders.</p>
+<p><strong>If you installed by hand:</strong> quit Tiles, drag <code>Tiles.app</code> from Applications to the Trash (Bin), then delete <code>~/.config/tiles</code> and <code>~/Library/Application Support/Tiles</code>.</p>
+<p>Finally, you can remove Tiles from <strong>System Settings → Privacy &amp; Security → Accessibility</strong>.</p>
+<h2 id="more">More</h2>
+<ul>
+<li><a href="privacy.html">Privacy Policy</a></li>
+<li><a href="terms.html">Terms of Use</a></li>
+<li><a href="https://github.com/vannaenae/tiles">Source code and documentation</a></li>
+</ul>
+  </main>
+
+  <footer>
+    <strong>Tiles v0.7.0</strong> · A SOULSPCE Collective product<br>
+    <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="support.html">Support</a> · <a href="https://github.com/vannaenae/tiles">Source on GitHub</a>
+  </footer>
+</div>
+</body>
+</html>

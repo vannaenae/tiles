@@ -1,80 +1,178 @@
 <!doctype html>
+<!-- DRAFT for legal review: not yet approved for publication. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tiles privacy policy</title>
-<meta name="description" content="Every window snaps into place the moment it opens. Layouts for every screen, scenes that come back when you dock. Free and open source.">
+<title>Privacy Policy · Tiles</title>
+<meta name="description" content="Tiles collects nothing. How the Tiles window manager for Mac handles your data, permissions and update checks.">
 <link rel="icon" href="img/icon.png">
-<meta property="og:title" content="Tiles: free auto-tiling window manager for Mac">
-<meta property="og:description" content="Every window snaps into place the moment it opens. Free and open source.">
-<meta property="og:image" content="img/dwindle.png">
+<meta property="og:title" content="Privacy Policy · Tiles">
+<meta property="og:description" content="Tiles collects nothing. How the Tiles window manager for Mac handles your data, permissions and update checks.">
+<meta property="og:image" content="img/icon.png">
 <style>
-:root { --accent:#E8643C; --bg:#faf8f6; --card:#fff; --text:#1d1d1f; --sec:#6e6e73; --line:rgba(0,0,0,.08); --tile2:rgba(232,100,60,.28); --screen:rgba(0,0,0,.05); }
-@media (prefers-color-scheme: dark) { :root { --bg:#141416; --card:#1f1f22; --text:#f5f5f7; --sec:#a1a1a6; --line:rgba(255,255,255,.1); --tile2:rgba(232,100,60,.35); --screen:rgba(255,255,255,.06); } }
+:root { --accent:#E8643C; --bg:#faf8f6; --card:#fff; --text:#1d1d1f; --sec:#6e6e73; --line:rgba(0,0,0,.08); --screen:rgba(0,0,0,.05); }
+@media (prefers-color-scheme: dark) { :root { --bg:#141416; --card:#1f1f22; --text:#f5f5f7; --sec:#a1a1a6; --line:rgba(255,255,255,.1); --screen:rgba(255,255,255,.06); } }
 * { box-sizing:border-box; }
-body { margin:0; background:var(--bg); color:var(--text); font:17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
-a { color:var(--accent); text-decoration:none; } a:hover { text-decoration:underline; }
+body { margin:0; background:var(--bg); color:var(--text); font:17px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+a { color:var(--accent); text-decoration:none; overflow-wrap:anywhere; } a:hover { text-decoration:underline; }
 .wrap { max-width:1080px; margin:0 auto; padding:0 20px; }
 nav { display:flex; align-items:center; gap:12px; padding:18px 0; }
-nav img { width:32px; height:32px; } nav b { font-size:18px; } nav .sp { flex:1; } nav a { color:var(--text); margin-left:20px; font-size:15px; }
-.hero { text-align:center; padding:56px 0 32px; }
-.hero img.icon { width:104px; height:104px; filter:drop-shadow(0 12px 24px rgba(0,0,0,.18)); }
-h1 { font-size:clamp(36px,6vw,60px); line-height:1.05; letter-spacing:-.02em; margin:18px 0 14px; }
-.lede { font-size:clamp(18px,2.4vw,21px); color:var(--sec); max-width:640px; margin:0 auto 28px; }
-.install { display:inline-flex; align-items:center; gap:10px; max-width:100%; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 10px 10px 16px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
-.install code { font:14px ui-monospace, SFMono-Regular, Menlo, monospace; white-space:nowrap; overflow:auto; }
-button { font:inherit; cursor:pointer; border:0; border-radius:8px; }
-.copy { background:var(--accent); color:#fff; padding:7px 14px; font-size:14px; font-weight:600; }
-.sub { margin-top:14px; font-size:14px; color:var(--sec); }
-.gif { display:block; width:100%; max-width:860px; margin:36px auto 0; border-radius:14px; box-shadow:0 30px 70px rgba(0,0,0,.22); }
-section { padding:72px 0 0; }
-h2 { font-size:clamp(28px,4vw,40px); letter-spacing:-.015em; text-align:center; margin:0 0 10px; }
-.center { text-align:center; color:var(--sec); max-width:620px; margin:0 auto 32px; }
-.demo { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px; }
-.row { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:12px; }
-.seg button { background:var(--screen); color:var(--text); padding:7px 12px; font-size:14px; }
-.seg button.on { background:var(--accent); color:#fff; }
-.screen { position:relative; margin:16px auto 0; background:var(--screen); border-radius:10px; overflow:hidden; transition:aspect-ratio .3s; }
-.tile { position:absolute; border-radius:6px; background:var(--tile2); border:1px solid rgba(0,0,0,.08); transition:all .35s cubic-bezier(.2,.8,.2,1); font-size:12px; font-weight:600; padding:6px 8px; color:var(--text); overflow:hidden; white-space:nowrap; }
-.tile.main { background:var(--accent); color:#fff; }
-.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
-.card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; }
-.card h3 { margin:0 0 6px; font-size:18px; } .card p { margin:0; color:var(--sec); font-size:15px; }
-.card .k { font-size:22px; margin-bottom:8px; }
-.shots { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; }
-.shots img { width:100%; border-radius:12px; border:1px solid var(--line); }
-.shots figcaption { text-align:center; color:var(--sec); font-size:14px; margin-top:6px; }
-table { width:100%; border-collapse:collapse; background:var(--card); border-radius:16px; overflow:hidden; border:1px solid var(--line); font-size:15px; }
-td, th { padding:12px 16px; border-bottom:1px solid var(--line); text-align:left; } tr:last-child td { border-bottom:0; }
-kbd { font:13px ui-monospace, Menlo, monospace; background:var(--screen); border:1px solid var(--line); border-radius:6px; padding:2px 6px; }
+nav .home { display:flex; align-items:center; gap:12px; color:var(--text); } nav .home:hover { text-decoration:none; }
+nav img { width:32px; height:32px; } nav b { font-size:18px; } nav .sp { flex:1; } nav a.l { color:var(--text); margin-left:20px; font-size:15px; }
+main { max-width:760px; margin:0 auto; padding:40px 0 0; }
+h1 { font-size:clamp(32px,5vw,46px); line-height:1.1; letter-spacing:-.02em; margin:0 0 6px; }
+h2 { font-size:24px; letter-spacing:-.01em; margin:44px 0 10px; }
+h3 { font-size:19px; margin:28px 0 8px; }
+p, li { color:var(--text); } ul, ol { padding-left:22px; } li { margin:4px 0; }
+code { font:.86em ui-monospace, SFMono-Regular, Menlo, monospace; background:var(--screen); border-radius:5px; padding:1px 5px; overflow-wrap:anywhere; }
+pre { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; overflow:auto; }
+pre code { background:none; padding:0; font-size:14px; overflow-wrap:normal; }
+table { width:100%; border-collapse:collapse; background:var(--card); border-radius:14px; overflow:hidden; border:1px solid var(--line); font-size:15px; margin:16px 0; }
+td, th { padding:11px 14px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; } tr:last-child td { border-bottom:0; }
+th { color:var(--sec); font-weight:600; }
 footer { padding:72px 0 48px; text-align:center; color:var(--sec); font-size:14px; }
-.btn { display:inline-block; background:var(--accent); color:#fff; font-weight:600; font-size:18px; padding:14px 28px; border-radius:12px; box-shadow:0 8px 20px rgba(232,100,60,.3); } .btn:hover { text-decoration:none; filter:brightness(1.06); }
-.card ul { margin:0; padding-left:18px; color:var(--sec); font-size:15px; } .card li { margin:4px 0; }
-.why h3 { font-size:20px; }
-.shots figure { margin:0; } .shots figcaption b { color:var(--text); }
-.faq { max-width:760px; margin:0 auto; } details { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 20px; margin-bottom:10px; }
-summary { font-weight:600; cursor:pointer; } details p { margin:10px 0 0; color:var(--sec); }
-.cta { text-align:center; } .cta .icon { width:84px; height:84px; }
-footer a { margin:0 8px; }
-@media (max-width:600px) { nav a.hide { display:none; } .install code { font-size:12px; } }
+@media (max-width:600px) { nav a.hide { display:none; } td, th { padding:9px 10px; } table { display:block; overflow-x:auto; } }
 </style>
 </head>
 <body>
-<div class="wrap" style="max-width:760px">
-  <nav><a href="./" style="margin:0;display:flex;align-items:center;gap:12px"><img src="img/icon.png" alt=""><b>Tiles</b></a><span class="sp"></span><a href="./">Home</a></nav>
-  <h1 style="font-size:40px">Privacy policy</h1>
-  <p class="sub">Last updated 9 November 2026</p>
-  <p><b>Tiles does not collect, store or share any personal data.</b> There is no account, no analytics and no advertising.</p>
-  <h3>What Tiles reads on your Mac</h3>
-  <p>To arrange windows, Tiles uses the macOS Accessibility permission to read the position, size and title of open windows and the names of the apps that own them, and to move and resize those windows. This happens on your Mac only. Tiles does not record your screen, read the contents of your windows, or log your keystrokes.</p>
-  <h3>What Tiles stores</h3>
-  <p>Your settings are saved in a file on your Mac (<code>~/.config/tiles/config.json</code>). Saved window arrangements store app identifiers and layout choices only, never window titles. Removing Tiles and that folder removes everything.</p>
-  <h3>Network use</h3>
-  <p>Once a day Tiles asks GitHub whether a newer version exists, and downloads it from GitHub if you choose to update. GitHub sees your IP address when this happens, as with any download. You can switch this off in Tiles → General → Updates. Tiles makes no other network requests.</p>
-  <h3>Contact</h3>
-  <p>Questions about this policy: <a href="https://github.com/vannaenae/tiles/issues">open an issue on GitHub</a>.</p>
-  <footer><a href="./">Back to Tiles</a></footer>
+<div class="wrap">
+  <nav>
+    <a class="home" href="index.html"><img src="img/icon.png" alt="Tiles home"><b>Tiles</b></a><span class="sp"></span>
+    <a class="l hide" href="support.html">Support</a>
+    <a class="l" href="https://github.com/vannaenae/tiles">GitHub</a>
+  </nav>
+
+  <main>
+  <h1>Tiles Privacy Policy</h1>
+<p><strong>Effective 9 November 2026</strong></p>
+<p>Tiles is a free, open-source window manager for Mac. It is a SOULSPCE Collective product. This policy covers the Tiles app and the Tiles website at <a href="https://vannaenae.github.io/tiles/">https://vannaenae.github.io/tiles/</a>. In this policy, "we" and "us" means SOULSPCE Collective.</p>
+<h2 id="the-short-version">The short version</h2>
+<p><strong>Tiles collects nothing.</strong></p>
+<ul>
+<li>There is no account and no sign-in.</li>
+<li>There are no ads and no in-app purchases.</li>
+<li>There is no analytics, no telemetry and no crash reporting.</li>
+<li>Your settings stay on your Mac.</li>
+<li>The only network traffic is the update check with GitHub, and you can turn it off.</li>
+<li>We never collect, sell or share your personal data.</li>
+</ul>
+<p>The rest of this page gives the details.</p>
+<h2 id="what-stays-on-your-mac">What stays on your Mac</h2>
+<p>Tiles saves a few files on your Mac so it can remember your setup. They never leave your Mac unless you copy or share them yourself.</p>
+<table>
+<thead>
+<tr class="header">
+<th>File</th>
+<th>What's in it</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>~/.config/tiles/config.json</code></td>
+<td>Your settings, app rules and keyboard shortcuts.</td>
+</tr>
+<tr class="even">
+<td><code>~/.config/tiles/profiles/</code></td>
+<td>Settings snapshots that you choose to save as profiles.</td>
+</tr>
+<tr class="odd">
+<td><code>~/Library/Application Support/Tiles/scenes.json</code></td>
+<td>Your layouts for each set of displays: display IDs and names, layout, split ratio, and app bundle identifiers such as <code>com.apple.Safari</code>. Never window titles.</td>
+</tr>
+<tr class="even">
+<td><code>~/Library/Application Support/Tiles/status.json</code></td>
+<td>What Tiles is doing right now: its current phase, your displays' names, their layouts and window counts. Tiles writes it while running and deletes it when it quits.</td>
+</tr>
+</tbody>
+</table>
+<p>If you export your settings, the file goes wherever you choose to save it.</p>
+<p>We can't see any of these files. You can open, edit or delete them at any time.</p>
+<h2 id="permissions-and-why-tiles-needs-them">Permissions and why Tiles needs them</h2>
+<p><strong>Accessibility.</strong> Tiles uses the macOS Accessibility permission to read each window's position, size, app and title, and to move and resize windows. Tiles can't tile without it. You can turn it off at any time in <strong>System Settings → Privacy &amp; Security → Accessibility</strong>.</p>
+<p><strong>Window titles.</strong> Tiles reads window titles in memory only, to check app rules that use <code>titleContains</code> (for example, "float Finder windows whose title contains Copy") and to list windows when you search with the window finder. Titles are never stored and never sent anywhere.</p>
+<p><strong>Keyboard shortcuts.</strong> Tiles registers global keyboard shortcuts so its commands work in any app. Tiles is told only when you press one of its own shortcuts. It does not record what you type.</p>
+<p><strong>Mouse and trackpad.</strong> Some features react to the pointer as you use it, such as focus follows mouse and scrolling with ⌃⌥ held in the Scrolling layout. Tiles handles these events as they happen and does not store or send them.</p>
+<p><strong>Launch at Login (optional).</strong> If you turn on Launch at Login, Tiles registers itself with macOS to open when you log in. You can turn it off in Tiles' settings or in <strong>System Settings → General → Login Items</strong>.</p>
+<h2 id="network-update-checks">Network: update checks</h2>
+<p>The only network traffic Tiles makes is for updates.</p>
+<p>If <strong>Check for updates automatically</strong> is on, Tiles asks GitHub for the latest release once when it launches and then once a day. It contacts this address:</p>
+<p><code>https://api.github.com/repos/vannaenae/tiles/releases/latest</code></p>
+<p>When you click <strong>Install</strong>, Tiles downloads the new version from:</p>
+<p><code>https://github.com/vannaenae/tiles/releases/download/v&lt;version&gt;/Tiles.zip</code></p>
+<p>Before installing, Tiles checks that the download is signed by the Tiles developer (team ID GQ638955FB). If it isn't, Tiles doesn't install it.</p>
+<p>These requests go to GitHub, Inc. Like any website, GitHub receives your IP address and standard request headers, and handles them under the <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub Privacy Statement</a>. Tiles sends no identifiers, no settings and nothing about your windows.</p>
+<p><strong>Turn it off:</strong> in Tiles, go to <strong>Settings → General → Updates</strong> and switch off <strong>Check for updates automatically</strong>. Or set <code>"checkForUpdates": false</code> in <code>~/.config/tiles/config.json</code>. Update checks are on by default.</p>
+<p><strong>Installing Tiles.</strong> The install script and the Homebrew cask download Tiles from GitHub too, so GitHub handles those requests in the same way. Homebrew is a separate project with its own privacy policy.</p>
+<p><strong>Mac App Store.</strong> If you get Tiles from the Mac App Store, Apple handles the download under Apple's own privacy policy. Apple may give developers aggregated download figures that don't identify you.</p>
+<h2 id="the-website">The website</h2>
+<p>The Tiles website is hosted on GitHub Pages. GitHub may log visits, including your IP address, under the GitHub Privacy Statement. The site itself sets no cookies, has no analytics and loads nothing from other websites.</p>
+<h2 id="contacting-us">Contacting us</h2>
+<p>If you open an issue or start a discussion on GitHub, it is public and handled under GitHub's terms. Please don't post anything private. Check <code>tiles status</code> output and config files before you paste them.</p>
+<p>If you email us at [contact email], we receive your email address and whatever you write. We use it only to reply to you.</p>
+<h2 id="children">Children</h2>
+<p>Tiles is not directed at children. It collects no data from anyone, including children.</p>
+<h2 id="your-rights-and-choices">Your rights and choices</h2>
+<p>We hold no personal data about you, so there is nothing for us to access, correct, export or delete. Everything Tiles saves is on your Mac and under your control.</p>
+<ul>
+<li><strong>Turn off update checks:</strong> Settings → General → Updates, or <code>"checkForUpdates": false</code> in the config file.</li>
+<li><strong>Remove Accessibility access:</strong> System Settings → Privacy &amp; Security → Accessibility.</li>
+<li><strong>Delete your data:</strong> delete <code>~/.config/tiles</code> and <code>~/Library/Application Support/Tiles</code>, and any settings files you exported.</li>
+<li><strong>Remove Tiles completely:</strong> see the uninstall steps on the <a href="support.html#uninstall-tiles">Support page</a>. If you used the install script, run <code>curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.sh | bash -s uninstall</code>, then delete the two folders above.</li>
+</ul>
+<p>Depending on where you live, you may have legal rights over your personal data, such as the right to complain to your local data protection authority. Those rights still apply.</p>
+<h2 id="changes-to-this-policy">Changes to this policy</h2>
+<p>If Tiles changes how it handles data, we will update this policy first. We will change the effective date at the top and publish the new version on the website and in the <a href="https://github.com/vannaenae/tiles">Tiles repository</a>. The repository history shows every past version.</p>
+<h2 id="contact">Contact</h2>
+<ul>
+<li>Publisher: SOULSPCE Collective, [legal entity name and address]</li>
+<li>Email: [contact email]</li>
+<li>Questions and issues: <a href="https://github.com/vannaenae/tiles/issues">https://github.com/vannaenae/tiles/issues</a></li>
+<li>Security reports: <a href="https://github.com/vannaenae/tiles/security/advisories/new">https://github.com/vannaenae/tiles/security/advisories/new</a></li>
+</ul>
+<h2 id="appendix-app-store-privacy-answers">Appendix: App Store privacy answers</h2>
+<p>For the Mac App Store listing ("App Privacy" in App Store Connect):</p>
+<table>
+<thead>
+<tr class="header">
+<th>Question</th>
+<th>Answer</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Data collection</td>
+<td><strong>Data Not Collected.</strong> Tiles does not collect any data from this app.</td>
+</tr>
+<tr class="even">
+<td>Tracking</td>
+<td><strong>No.</strong> Tiles does not track you across apps or websites owned by other companies.</td>
+</tr>
+<tr class="odd">
+<td>Third-party SDKs</td>
+<td>None.</td>
+</tr>
+<tr class="even">
+<td>Privacy Policy URL</td>
+<td><a href="privacy.html">https://vannaenae.github.io/tiles/privacy.html</a></td>
+</tr>
+<tr class="odd">
+<td>Support URL</td>
+<td><a href="support.html">https://vannaenae.github.io/tiles/support.html</a></td>
+</tr>
+</tbody>
+</table>
+<p>Notes for whoever fills in the form:</p>
+<ul>
+<li>Everything Tiles saves stays on the Mac. Apple counts data handled only on the device as not collected.</li>
+<li>The update check sends no identifiers and stores nothing about the user. If the App Store build leaves out the built-in updater, because the App Store delivers updates, then the App Store copy makes no network requests at all.</li>
+</ul>
+  </main>
+
+  <footer>
+    <strong>Tiles v0.7.0</strong> · A SOULSPCE Collective product<br>
+    <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="support.html">Support</a> · <a href="https://github.com/vannaenae/tiles">Source on GitHub</a>
+  </footer>
 </div>
 </body>
 </html>

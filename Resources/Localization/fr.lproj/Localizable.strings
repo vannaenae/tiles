@@ -44,6 +44,9 @@
 "Float keeps an app's windows out of the tiles. Otherwise, new windows of that app open on the display you pick, optionally in the main tile. The last matching rule wins. ⌃⌥F floats or tiles any single window." = "Flotter garde les fenêtres d'une app hors des tuiles. Sinon, ses nouvelles fenêtres s'ouvrent sur l'écran choisi, éventuellement dans la tuile principale. La dernière règle correspondante l'emporte. ⌃⌥F fait flotter ou range n'importe quelle fenêtre.";
 "Float" = "Flotter";
 "Focus follows mouse" = "Le focus suit la souris";
+"A SOULSPCE Collective product" = "Un produit SOULSPCE Collective";
+"Privacy" = "Confidentialité";
+"Terms" = "Conditions";
 "Free and open source under the MIT License." = "Libre et open source sous licence MIT.";
 "Gaps" = "Espaces";
 "Grant Access…" = "Autoriser l'accès…";

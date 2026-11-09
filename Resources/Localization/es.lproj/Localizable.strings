@@ -44,6 +44,9 @@
 "Float keeps an app's windows out of the tiles. Otherwise, new windows of that app open on the display you pick, optionally in the main tile. The last matching rule wins. ⌃⌥F floats or tiles any single window." = "Flotar deja las ventanas de una app fuera del mosaico. Si no, sus ventanas nuevas se abren en la pantalla que elijas, opcionalmente en el mosaico principal. Gana la última regla que coincida. ⌃⌥F hace flotar o encaja cualquier ventana.";
 "Float" = "Flotar";
 "Focus follows mouse" = "El foco sigue al ratón";
+"A SOULSPCE Collective product" = "Un producto de SOULSPCE Collective";
+"Privacy" = "Privacidad";
+"Terms" = "Términos";
 "Free and open source under the MIT License." = "Libre y de código abierto bajo la licencia MIT.";
 "Gaps" = "Espacios";
 "Grant Access…" = "Conceder acceso…";
