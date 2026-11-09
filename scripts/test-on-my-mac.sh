@@ -17,5 +17,13 @@ open "$HOME"
 sleep 4
 
 mkdir -p out
-swiftc -O scripts/e2e.swift -o "$docs/tiles-e2e"
+swiftc -O scripts/e2e.swift -o # Clean up after ourselves: close the test documents without saving, so TextEdit
+# doesn't reopen them next time, and delete them. (The test restores your Tiles settings itself.)
+cleanup() {
+  osascript -e 'tell application "TextEdit" to close (every document whose path contains "'"$docs"'") saving no' >/dev/null 2>&1 || true
+  osascript -e 'tell application "TextEdit" to if (count of documents) is 0 then quit' >/dev/null 2>&1 || true
+  rm -rf "$docs" "${TMPDIR:-/tmp}/rule-test.txt"
+}
+trap cleanup EXIT
+"$docs/tiles-e2e"
 "$docs/tiles-e2e"

@@ -124,6 +124,15 @@ func dragWindow(_ w: Win, to drop: CGPoint, beforeRelease: () -> Void = {}) {
 /// Empty title-bar space just right of the traffic lights: always grabs the window itself.
 func titleBar(_ w: Win) -> CGPoint { CGPoint(x: w.frame.minX + 90, y: w.frame.minY + 10) }
 
+// The test edits ~/.config/tiles/config.json (stack limit, an app rule, animation).
+// Keep the person's own settings and put them back however the test ends.
+let configFile = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".config/tiles/config.json")
+let savedConfig = try? Data(contentsOf: configFile)
+func finish(_ code: Int32) -> Never {
+    if let savedConfig { try? savedConfig.write(to: configFile, options: .atomic) }
+    exit(code)
+}
+
 // 0. Preflight: stop early with a clear reason instead of a page of FAILs.
 func shell(_ command: String) -> String {
     let p = Process(), pipe = Pipe()
@@ -136,7 +145,7 @@ func shell(_ command: String) -> String {
 }
 if shell("pgrep -x Tiles").isEmpty {
     print("STOP Tiles isn't running. Open /Applications/Tiles.app, allow it in System Settings → Privacy & Security → Accessibility, then run this again.")
-    exit(2)
+    finish(2)
 }
 // The app's own account of itself (see `tiles status`): the clearest reason when something's off.
 let statusFile = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/Tiles/status.json")
@@ -147,13 +156,13 @@ for _ in 0..<10 where appStatus.isEmpty {
 }
 if let problem = appStatus["problem"] as? String {
     print("STOP \(problem)")
-    exit(2)
+    finish(2)
 }
 check(appStatus["phase"] as? String == "running", "tiles status reports Tiles running (\(appStatus["phase"] ?? "no status file"))")
 check((appStatus["displays"] as? [[String: Any]])?.isEmpty == false, "tiles status lists the displays")
 if windows().count != 4 {
     print("STOP The test needs exactly 3 TextEdit windows and 1 Finder window open (found \(windows().count)). Run scripts/test-on-my-mac.sh, which sets that up for you.")
-    exit(2)
+    finish(2)
 }
 let untouched = frames()
 tiles("layout-columns")
@@ -163,7 +172,7 @@ if frames() == untouched {
         print("STOP Tiles is running but didn't move any window. Check the menu bar icon: a ⚠︎ triangle means Accessibility isn't allowed")
         print("     (System Settings → Privacy & Security → Accessibility → switch Tiles on, or remove it with − and add it again);")
         print("     a dashed outline means tiling is off (⌃⌥T or the menu turns it on).")
-        exit(2)
+        finish(2)
     }
 }
 
@@ -411,4 +420,4 @@ check(columns.allSatisfy { id, f in animated[id].map { abs($0.minX - f.minX) <= 
 editConfig { $0["animateWindows"] = false }
 
 print(failures == 0 ? "ALL PASSED" : "\(failures) FAILED")
-exit(failures == 0 ? 0 : 1)
+finish(failures == 0 ? 0 : 1)
