@@ -1,6 +1,6 @@
 name: Marketing screenshots
 
-# Runs the real app on a GitHub macOS machine with Safari, Notes, Calendar, Finder and Terminal,
+# Runs the real app on a GitHub macOS machine with Safari (GitHub, Claude, Google), the App Store and Terminal,
 # captures each layout, a scene restore and the Dashboard with scripts/marketing-shots.sh,
 # and pushes the PNGs to the marketing-screenshots branch. Run it by hand from the Actions tab.
 on:
@@ -38,10 +38,10 @@ jobs:
           for c in /usr/sbin/screencapture /bin/bash /bin/zsh; do grant kTCCServiceScreenCapture "$c" 1; done
           # The script clicks past first-run welcome screens with System Events.
           for c in /usr/bin/osascript /bin/bash /bin/zsh; do grant kTCCServiceAccessibility "$c" 1; done
-          # ...and fills Notes, Calendar and Reminders with AppleScript (Automation lives in the user database).
+          # ...and opens three Safari windows with AppleScript (Automation lives in the user database).
           udb="$HOME/Library/Application Support/com.apple.TCC/TCC.db"
           for c in /usr/bin/osascript /bin/bash /bin/zsh; do
-            for app in com.apple.Notes com.apple.iCal com.apple.reminders com.apple.systemevents com.apple.finder; do
+            for app in com.apple.Safari com.apple.systemevents com.apple.finder; do
               sqlite3 "$udb" "INSERT OR REPLACE INTO access (service,client,client_type,auth_value,auth_reason,auth_version,csreq,policy_id,indirect_object_identifier_type,indirect_object_identifier,indirect_object_code_identity,flags,last_modified,pid,pid_version,boot_uuid,last_reminded) VALUES ('kTCCServiceAppleEvents','$c',1,2,3,1,NULL,NULL,0,'$app',NULL,0,$now,NULL,NULL,'UNUSED',0);" \
                 && echo "automation: $c -> $app" || echo "could not grant automation $c -> $app"
             done

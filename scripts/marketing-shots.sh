@@ -3,8 +3,8 @@
 #
 #   ./scripts/marketing-shots.sh [output-folder]      (default: marketing-out)
 #
-# Opens Apple's own apps with real content (Safari, Notes, Calendar, Finder with photos and
-# documents, Terminal), lets Tiles arrange them, then saves one PNG per scene.
+# Opens real apps on real pages (Safari on Tiles' GitHub, Claude and Google; the App Store on
+# 3D Habits; Terminal with a made-up session), lets Tiles arrange them, saves one PNG per scene.
 # It takes over the screen for about 3 minutes; don't touch the mouse or keyboard meanwhile.
 #
 # Needs: macOS, /Applications/Tiles.app running with Accessibility access, and
@@ -66,131 +66,74 @@ fi
 restore_config() { [ -f "$WORK/config.backup.json" ] && cp "$WORK/config.backup.json" "$CONFIG"; }
 trap restore_config EXIT
 
-# --- Content: Apple's own apps, each with real content ------------------------------------
-# Safari, Notes, Calendar, Finder and Terminal. No empty windows: notes, events, files with
-# thumbnails and command output are created first. Set MARKETING_CLAUDE=1 to add the Claude app.
+# --- Content: real apps on real pages -------------------------------------------------------
+# Safari on Tiles' GitHub page, the Claude homepage and Google (three windows), the App Store
+# on a product page, and Terminal with a made-up developer session (no real names or paths).
+# Change the pages with MARKETING_GITHUB_URL, MARKETING_CLAUDE_URL, MARKETING_GOOGLE_URL and
+# MARKETING_APPSTORE_URL (an apps.apple.com link).
 if [ "${MARKETING_CI:-0}" = "1" ]; then defaults write -g NSAllowContinuousSpellChecking -bool false; fi
+GITHUB_URL="${MARKETING_GITHUB_URL:-https://github.com/vannaenae/tiles}"
+CLAUDE_URL="${MARKETING_CLAUDE_URL:-https://claude.com}"
+GOOGLE_URL="${MARKETING_GOOGLE_URL:-https://www.google.com}"
+APPSTORE_URL="${MARKETING_APPSTORE_URL:-https://apps.apple.com/us/app/3d-habits/id6756032720}"
 
-# Finder: a project folder with photos (macOS's own wallpapers) and real documents, so icon
-# view shows thumbnails. Made in a temp folder, so nothing is added to your Documents.
-DESK="$WORK/SOULSPACE Collective"
-mkdir -p "$DESK/Brand" "$DESK/Launch" "$DESK/Research"
-n=0
-for pic in /System/Library/Desktop\ Pictures/*.heic /System/Library/Desktop\ Pictures/*.jpg; do
-  [ -f "$pic" ] || continue
-  n=$((n + 1)); [ $n -le 6 ] || break
-  sips -s format jpeg -Z 1600 "$pic" --out "$DESK/Moodboard $n.jpg" >/dev/null 2>&1 || true
-done
-doc() { # file title body
-  printf '<html><body><h1>%s</h1><p>%s</p></body></html>' "$2" "$3" > "$WORK/doc.html"
-  textutil -convert rtf "$WORK/doc.html" -output "$DESK/$1" >/dev/null 2>&1 || true
-}
-doc "Launch plan.rtf" "Launch plan" "Monday: App Store. Tuesday: website and press. Wednesday: community."
-doc "Brand notes.rtf" "Brand notes" "Every window, in its place. Indigo to blue. Calm, direct, plain."
-doc "Meeting notes.rtf" "Meeting notes" "Screenshots approved. Final copy by Friday."
-
-cat > "$WORK/tiles.command" <<CMD
+# Terminal: a generated session for a fictional project, so nothing real is shown.
+mkdir -p "$WORK/weather-app"
+cat > "$WORK/session.command" <<'CMD'
 #!/bin/zsh
 clear
-cd "$ROOT"
-printf '\033]0;tiles\007'
-print -P '%F{green}%1~%f %% git log --oneline -8'
-git --no-pager log --oneline -8
+printf '\033]0;weather-app\007'
+p() { print -nP "%F{green}~/Projects/weather-app%f %% "; print -- "$1"; }
+p "swift build"
+print "Building for debugging..."
+print "[42/42] Linking WeatherApp"
+print -P "%F{green}Build complete!%f (6.84s)"
 print
-print -P '%F{green}%1~%f %% tiles layout-dwindle'
+p "swift test"
+print "Test Suite 'All tests' started at 2026-11-09 09:41:03.112"
+print "Test Suite 'ForecastTests' passed (64 tests)"
+print "Test Suite 'LocationTests' passed (38 tests)"
+print "Test Suite 'WidgetTests' passed (26 tests)"
+print -P "%F{green}Executed 128 tests, with 0 failures%f (0 unexpected) in 2.318 seconds"
 print
-print -nP '%F{green}%1~%f %% '
+p "git status"
+print "On branch main"
+print "Your branch is up to date with 'origin/main'."
+print
+print "nothing to commit, working tree clean"
+print
+print -nP "%F{green}~/Projects/weather-app%f %% "
 sleep 100000
 CMD
-chmod +x "$WORK/tiles.command"
+chmod +x "$WORK/session.command"
 
-# Notes, Calendar and Reminders content, added with AppleScript (asks for permission once on
-# your own Mac). Anything that fails is skipped; the app still opens.
-cat > "$WORK/content.applescript" <<'OSA'
-on dismissWelcome(appName)
-  try
-    tell application "System Events" to tell process appName
-      repeat with b in {"Continue", "Get Started", "Not Now", "OK", "Done"}
-        if exists (button (contents of b) of window 1) then click button (contents of b) of window 1
-      end repeat
-    end tell
-  end try
-end dismissWelcome
-
-on addEvent(cal, title, dayOffset, startHour, lengthHours)
-  set d to (current date) + dayOffset * days
-  set time of d to round (startHour * hours)
-  tell application "Calendar" to tell cal to make new event with properties {summary:title, start date:d, end date:d + (lengthHours * hours)}
-end addEvent
-
-try
-  tell application "Calendar" to activate
+# Separate Safari windows (not tabs), one per page.
+cat > "$WORK/safari.applescript" <<OSA
+tell application "Safari"
+  activate
+  make new document with properties {URL:"$GITHUB_URL"}
   delay 3
-  dismissWelcome("Calendar")
-  tell application "Calendar" to set cal to first calendar whose writable is true
-  addEvent(cal, "Team stand-up", 0, 9.5, 0.5)
-  addEvent(cal, "Design review", 0, 11, 1.5)
-  addEvent(cal, "Lunch with Ada", 0, 13, 1)
-  addEvent(cal, "Launch prep", 0, 15, 2)
-  addEvent(cal, "Team stand-up", 1, 9.5, 0.5)
-  addEvent(cal, "Press interviews", 1, 10.5, 2)
-  addEvent(cal, "Gym", 1, 18, 1)
-  addEvent(cal, "Team stand-up", -1, 9.5, 0.5)
-  addEvent(cal, "Roadmap planning", -1, 14, 2)
-  addEvent(cal, "Website copy", 2, 10, 3)
-  addEvent(cal, "Dinner", 2, 19, 2)
-  tell application "Calendar"
-    switch view to week view
-    view calendar at (current date)
-  end tell
-end try
-
-try
-  tell application "Reminders" to activate
+  make new document with properties {URL:"$CLAUDE_URL"}
   delay 3
-  dismissWelcome("Reminders")
-  tell application "Reminders" to tell default list
-    repeat with r in {"Send the press kit", "Book the launch call", "Update App Store screenshots", "Reply to Ada", "Order new desk lamp"}
-      make new reminder with properties {name:(contents of r)}
-    end repeat
-  end tell
-end try
-
-try
-  tell application "Notes" to activate
-  delay 3
-  dismissWelcome("Notes")
-  tell application "Notes"
-    make new note with properties {body:"<h1>Reading list</h1><ul><li>The Design of Everyday Things</li><li>Shape Up</li><li>The Mom Test</li></ul>"}
-    make new note with properties {body:"<h1>Ideas</h1><div>A calmer desk: one shortcut for every layout.</div><div>Scenes for home, office and travel.</div>"}
-    set n to make new note with properties {body:"<h1>Launch week</h1><div><b>Monday</b>: App Store goes live</div><div><b>Tuesday</b>: website and press</div><div><b>Wednesday</b>: community Q&amp;A</div><br><ul><li>Screenshots</li><li>Press kit</li><li>Release notes</li></ul>"}
-    try
-      show n
-    end try
-  end tell
-end try
+  make new document with properties {URL:"$GOOGLE_URL"}
+end tell
 OSA
 
 # --- Start Tiles, then open the apps so they tile as they arrive --------------------------
 open /Applications/Tiles.app
 sleep 6
 "$TILES" layout-dwindle
-open -a Safari "${MARKETING_URL:-https://en.wikipedia.org/wiki/Tiling_window_manager}"
+osascript "$WORK/safari.applescript" || {
+  echo "Safari scripting unavailable; opening the pages directly"
+  open -a Safari "$GITHUB_URL"; sleep 2; open -a Safari "$CLAUDE_URL"; sleep 2; open -a Safari "$GOOGLE_URL"
+}
+sleep 6
+open "${APPSTORE_URL/https:/macappstore:}"
+sleep 8
+open -a Terminal "$WORK/session.command"
 sleep 4
-osascript "$WORK/content.applescript" || echo "some app content couldn't be added"
-osascript -e 'quit app "Reminders"' >/dev/null 2>&1 || true   # five windows are plenty
-sleep 2
-open "$DESK"
-sleep 3
-osascript -e 'tell application "Finder" to set current view of front Finder window to icon view' >/dev/null 2>&1 || true
-open -a Terminal "$WORK/tiles.command"
-sleep 3
-if [ "${MARKETING_CLAUDE:-0}" = "1" ] && [ -d /Applications/Claude.app ]; then
-  xattr -dr com.apple.quarantine /Applications/Claude.app 2>/dev/null || true
-  open -a Claude
-  sleep 10
-fi
 "$TILES" retile
+osascript -e 'tell application "Safari" to set index of (first window whose name contains "tiles") to 1' >/dev/null 2>&1 || true
 open -a Safari
 shot 01-dwindle 4
 
