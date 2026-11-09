@@ -69,6 +69,7 @@ trap restore_config EXIT
 # --- Content: real apps, Tiles' own material, no third-party brands -----------------------
 # No red spelling underlines in TextEdit.
 defaults write com.apple.TextEdit CheckSpellingWhileTyping -bool false 2>/dev/null || true
+if [ "${MARKETING_CI:-0}" = "1" ]; then defaults write -g NSAllowContinuousSpellChecking -bool false; fi
 # Set MARKETING_XCODE=1 to show the code in Xcode. Off by default: on a fresh Mac, Xcode can
 # open a component-download prompt that covers the code.
 XCODE_APP=""
@@ -94,8 +95,8 @@ cat > "$WORK/tiles.command" <<CMD
 clear
 cd "$ROOT"
 printf '\033]0;tiles\007'
-print -P '%F{green}%1~%f %% tiles --help'
-"$TILES" --help
+print -P '%F{green}%1~%f %% tiles --help | head -9'
+"$TILES" --help | head -9
 print
 print -nP '%F{green}%1~%f %% '
 sleep 100000
@@ -109,7 +110,7 @@ open /Applications/Tiles.app
 sleep 6
 "$TILES" layout-dwindle
 # Tiles' home page. Set MARKETING_URL to show another page, such as the website once it's live.
-open -a Safari "${MARKETING_URL:-https://github.com/vannaenae/tiles}"
+open -a Safari "${MARKETING_URL:-https://github.com/vannaenae/tiles#readme}"
 sleep 3
 if [ -n "$XCODE_APP" ] && open -a "$XCODE_APP" "$ROOT/Sources/TilesCore/Layout.swift"; then
   echo "opened Layout.swift in $XCODE_APP"
