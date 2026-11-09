@@ -79,9 +79,30 @@ covered by the real-Mac test in `scripts/e2e.swift`.
 | **Settings window** | closed ↔ open (Dock icon shown while open) | `settingsWindow`, `iconPlacement` | Activation policy is derived from both, never stored. |
 | **Menu bar message** | blank ↔ showing text | `messageWork` | Clears after 1.6 s (5 s for long text). |
 
+## Known gaps (found by audit, not fixed yet)
+
+Each of these is a state the code can reach today where the user sees nothing, or sees something
+wrong. None has been reproduced on a Mac yet: confirm each one there before fixing it, one PR per gap.
+Each has a proposed screen in the Figma file
+[Tiles — Screens & Flows](https://www.figma.com/design/ufzXHsLVavjeuyf72GGcLK) (Screens page,
+"Error states" sections).
+
+| Gap | Where | What happens | Figma |
+|---|---|---|---|
+| **Broken config is overwritten** | `ConfigStore.update` (`ConfigStore.swift:52`) | While `config.json` fails to parse, any change in Settings or the menu writes the last good config over the file, losing the user's hand edits. `lastError` isn't cleared, so the menu keeps showing the old error for a now-valid file. | E2 |
+| **Restore while tiling is off** | display-change work item (`TilingManager.swift:164`), `restoreScene` | After docking, the scene restore runs even when tiling is off. `refresh()` does nothing, but the menu bar still shows "Restored … ⌃⌥Z to undo". | — |
+| **Messages hidden in Dock-only mode** | `flash` (`AppDelegate.swift:209`), `statusItem.isVisible` (`:450`) | Every menu bar message, including "Config error" and "Tiling is off", goes to a status item that isn't shown. | E9 |
+| **Corrupt scenes file replaced** | `SceneStore.load` (`Scene.swift:53-57`) | An unreadable `scenes.json` loads as empty; the next autosave overwrites it and every saved scene is lost, silently. | E7 |
+| **Launch at login needs approval** | `AppDelegate.swift:312`, `toggleLogin` (`:403`) | Only `.enabled` counts as on. `.requiresApproval` and `.notFound` both look like plain "off", with no hint what to do. | E5 |
+| **Profiles fail silently** | `SettingsModel` profile methods (`SettingsView.swift:83-112`) | Save, apply, delete, export and import all use `try?`: no confirmation before apply replaces every setting, and no message when a file can't be read. | E8 |
+| **"No windows" while paused** | display card (`SettingsView.swift:749`) | With tiling off, each card says "No windows on this display.", which reads as a bug. | E3 |
+| **"Tiling On ✓" without permission** | menu toggle (`AppDelegate.swift:237`) | In `permissionLost`, the menu still shows Tiling On with a check. `tiles status` explains it (`problem`), but the menu doesn't. | E1 |
+
 ## Adding state
 
 - If it has more than two states, or a bad combination would be a bug, make it an enum in `TilesCore`
   with a transition function and a table test, as `AppPhase` does.
 - If a person or agent would want to see it, add it to `StatusSnapshot`.
 - Otherwise add a row to the table above.
+- If it's a state the user can see or get stuck in, design it in the Figma file above, using the
+  Issue Banner component for problems.

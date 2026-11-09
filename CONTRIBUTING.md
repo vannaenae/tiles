@@ -16,6 +16,7 @@ swift build && swift test
 
 - **Layout maths, config parsing, scene matching, geometry** → `Sources/TilesCore`. No AppKit here. Add a test in `Tests/TilesCoreTests` for every change.
 - **Anything that touches windows, events, hotkeys or the menu** → `Sources/Tiles`.
+- **State, timers and flags** → read [`STATE_MACHINES.md`](STATE_MACHINES.md) first. It lists every state machine, which ones are explicit types, and the known gaps. Update it in the same PR when you add or change one.
 
 ## Adding a layout
 
