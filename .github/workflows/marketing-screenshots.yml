@@ -1,0 +1,53 @@
+name: Marketing screenshots
+
+# Runs the real app on a GitHub macOS machine with Safari, Xcode, Terminal and TextEdit,
+# captures each layout, a scene restore and the Dashboard with scripts/marketing-shots.sh,
+# and pushes the PNGs to the marketing-screenshots branch. Run it by hand from the Actions tab.
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/marketing-screenshots]
+    paths: [scripts/marketing-shots.sh, .github/workflows/marketing-screenshots.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  shots:
+    runs-on: macos-15
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Build and install
+        run: |
+          ./scripts/build-app.sh
+          cp -R dist/Tiles.app /Applications/
+          defaults write io.github.vannaenae.tiles didShowSettings -bool true
+
+      - name: Pre-approve Accessibility and screen capture (test machine only)
+        run: |
+          db="/Library/Application Support/com.apple.TCC/TCC.db"
+          now=$(date +%s)
+          grant() { # service client client_type
+            sudo sqlite3 "$db" "INSERT OR REPLACE INTO access (service,client,client_type,auth_value,auth_reason,auth_version,csreq,policy_id,indirect_object_identifier_type,indirect_object_identifier,indirect_object_code_identity,flags,last_modified,pid,pid_version,boot_uuid,last_reminded) VALUES ('$1','$2',$3,2,4,1,NULL,NULL,0,'UNUSED',NULL,0,$now,NULL,NULL,'UNUSED',0);" \
+              && echo "granted $1 to $2" || echo "could not grant $1 to $2"
+          }
+          grant kTCCServiceAccessibility io.github.vannaenae.tiles 0
+          grant kTCCServiceAccessibility /Applications/Tiles.app/Contents/MacOS/Tiles 1
+          for c in /usr/sbin/screencapture /bin/bash /bin/zsh; do grant kTCCServiceScreenCapture "$c" 1; done
+
+      - name: Install displayplacer (to pick the sharpest display mode)
+        run: brew install displayplacer || echo "displayplacer not available; keeping the default display"
+
+      - name: Capture
+        run: MARKETING_CI=1 ./scripts/marketing-shots.sh out
+
+      - name: Publish to the marketing-screenshots branch
+        if: ${{ always() }}
+        run: |
+          cd out
+          git init -q -b marketing-screenshots
+          git -c user.name=tiles-marketing -c user.email=marketing@users.noreply.github.com add -A
+          git -c user.name=tiles-marketing -c user.email=marketing@users.noreply.github.com commit -qm "Marketing screenshots for ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" marketing-screenshots
