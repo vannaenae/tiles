@@ -16,6 +16,7 @@ swift build && swift test
 
 - **Layout maths, config parsing, scene matching, geometry** → `Sources/TilesCore`. No AppKit here. Add a test in `Tests/TilesCoreTests` for every change.
 - **Anything that touches windows, events, hotkeys or the menu** → `Sources/Tiles`.
+- **State and timers.** Much of the app's behaviour is implicit state: flags, optionals, timers and work items. [`docs/STATE_MACHINES.md`](docs/STATE_MACHINES.md) maps all of it, with diagrams and error states. Read the relevant section before changing behaviour, and update it in the same PR if you add or change a flag, timer or work item.
 
 ## Adding a layout
 
