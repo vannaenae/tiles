@@ -3,7 +3,7 @@ import SwiftUI
 import TilesCore
 
 /// The welcome tour: five short pages shown on first launch, and any time from the menu.
-final class Tour: NSObject, NSWindowDelegate {
+final class Tour {
     private var window: NSWindow?
 
     func show(accentHex: String, perform: @escaping (Command) -> Void) {

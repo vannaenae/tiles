@@ -12,7 +12,7 @@ public enum SnapZone: String, CaseIterable {
     ///   - screen: the whole display, where the pointer can travel (top-left coordinates).
     ///   - skipLeft / skipRight: another display touches that side, so the pointer passes through it.
     public static func zone(atX x: Double, y: Double, screen: Rect, skipLeft: Bool = false, skipRight: Bool = false) -> SnapZone? {
-        guard screen.contains(x: x, y: y) || (x >= screen.minX - 1 && x <= screen.maxX + 1 && y >= screen.minY - 1 && y <= screen.maxY + 1) else { return nil }
+        guard x >= screen.minX - 1, x <= screen.maxX + 1, y >= screen.minY - 1, y <= screen.maxY + 1 else { return nil }
         let atLeft = !skipLeft && x <= screen.minX + edge
         let atRight = !skipRight && x >= screen.maxX - edge
         let atTop = y <= screen.minY + edge
