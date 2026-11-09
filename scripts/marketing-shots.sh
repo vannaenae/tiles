@@ -3,8 +3,8 @@
 #
 #   ./scripts/marketing-shots.sh [output-folder]      (default: marketing-out)
 #
-# Opens Safari (Tiles on GitHub), Tiles' own source code, Terminal (`tiles --help`) and a
-# TextEdit note, lets Tiles arrange them, then saves one PNG per scene with screencapture.
+# Opens the apps people use every day (Safari, Finder, Terminal, Calendar and Claude if it's
+# installed), lets Tiles arrange them, then saves one PNG per scene with screencapture.
 # It takes over the screen for about 3 minutes; don't touch the mouse or keyboard meanwhile.
 #
 # Needs: macOS, /Applications/Tiles.app running with Accessibility access, and
@@ -66,62 +66,50 @@ fi
 restore_config() { [ -f "$WORK/config.backup.json" ] && cp "$WORK/config.backup.json" "$CONFIG"; }
 trap restore_config EXIT
 
-# --- Content: real apps, Tiles' own material, no third-party brands -----------------------
-# No red spelling underlines in TextEdit.
-defaults write com.apple.TextEdit CheckSpellingWhileTyping -bool false 2>/dev/null || true
+# --- Content: the apps people use every day -------------------------------------------------
+# Safari, Finder, Terminal, Calendar and, when it's installed, the Claude desktop app.
 if [ "${MARKETING_CI:-0}" = "1" ]; then defaults write -g NSAllowContinuousSpellChecking -bool false; fi
-# Set MARKETING_XCODE=1 to show the code in Xcode. Off by default: on a fresh Mac, Xcode can
-# open a component-download prompt that covers the code.
-XCODE_APP=""
-if [ "${MARKETING_XCODE:-0}" = "1" ]; then
-  dev="$(xcode-select -p 2>/dev/null || true)"
-  case "$dev" in */Contents/Developer) XCODE_APP="${dev%/Contents/Developer}" ;; esac
-fi
-cat > "$WORK/Tiles launch notes.txt" <<'TXT'
-Tiles launch notes
 
-Every window, in its place.
-
-- Windows snap into place the moment they open
-- 11 layouts: Dwindle, Columns, Grid, Centered Master, Scrolling...
-- Ultrawide displays get Centered Master automatically
-- Scenes come back when you dock
-- 50+ shortcuts, all remappable
-- Free and open source. No account, no telemetry.
-TXT
+# A tidy Finder folder (made in a temp folder, so nothing is added to your Documents).
+DESK="$WORK/SOULSPACE Collective"
+mkdir -p "$DESK/Brand" "$DESK/Launch" "$DESK/Screenshots" "$DESK/Invoices" "$DESK/Research"
+for f in "Tiles roadmap.pdf" "Launch plan.key" "Budget 2026.numbers" "Press kit.zip" "Meeting notes.txt"; do
+  : > "$DESK/$f"
+done
+printf 'Launch on Monday.\nScreenshots, website, press kit.\n' > "$DESK/Meeting notes.txt"
 
 cat > "$WORK/tiles.command" <<CMD
 #!/bin/zsh
 clear
 cd "$ROOT"
 printf '\033]0;tiles\007'
-print -P '%F{green}%1~%f %% tiles --help | head -9'
-"$TILES" --help | head -9
+print -P '%F{green}%1~%f %% git log --oneline -6'
+git --no-pager log --oneline -6
+print
+print -P '%F{green}%1~%f %% tiles layout-dwindle'
 print
 print -nP '%F{green}%1~%f %% '
 sleep 100000
 CMD
 chmod +x "$WORK/tiles.command"
 
-defaults write com.apple.dt.Xcode XCShowWelcomeWindow -bool false 2>/dev/null || true
-
 # --- Start Tiles, then open the apps so they tile as they arrive --------------------------
 open /Applications/Tiles.app
 sleep 6
 "$TILES" layout-dwindle
-# Tiles' home page. Set MARKETING_URL to show another page, such as the website once it's live.
-open -a Safari "${MARKETING_URL:-https://github.com/vannaenae/tiles#readme}"
+open -a Safari "${MARKETING_URL:-https://en.wikipedia.org/wiki/Tiling_window_manager}"
+sleep 4
+open "$DESK"
 sleep 3
-if [ -n "$XCODE_APP" ] && open -a "$XCODE_APP" "$ROOT/Sources/TilesCore/Layout.swift"; then
-  echo "opened Layout.swift in $XCODE_APP"
-else
-  open -a TextEdit "$ROOT/Sources/TilesCore/Layout.swift"
-fi
-sleep 6
 open -a Terminal "$WORK/tiles.command"
 sleep 3
-open -a TextEdit "$WORK/Tiles launch notes.txt"
+open -a Calendar
 sleep 4
+if [ -d /Applications/Claude.app ]; then
+  xattr -dr com.apple.quarantine /Applications/Claude.app 2>/dev/null || true
+  open -a Claude
+  sleep 10
+fi
 "$TILES" retile
 open -a Safari
 shot 01-dwindle 4

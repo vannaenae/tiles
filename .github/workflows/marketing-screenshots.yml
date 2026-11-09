@@ -1,6 +1,6 @@
 name: Marketing screenshots
 
-# Runs the real app on a GitHub macOS machine with Safari, Xcode, Terminal and TextEdit,
+# Runs the real app on a GitHub macOS machine with Safari, Finder, Terminal, Calendar and Claude,
 # captures each layout, a scene restore and the Dashboard with scripts/marketing-shots.sh,
 # and pushes the PNGs to the marketing-screenshots branch. Run it by hand from the Actions tab.
 on:
@@ -39,6 +39,9 @@ jobs:
 
       - name: Install displayplacer (to pick the sharpest display mode)
         run: brew install displayplacer || echo "displayplacer not available; keeping the default display"
+
+      - name: Install the Claude desktop app (one of the everyday apps in the shots)
+        run: brew install --cask claude || echo "Claude not installed; the shots will skip it"
 
       - name: Capture
         run: MARKETING_CI=1 ./scripts/marketing-shots.sh out
