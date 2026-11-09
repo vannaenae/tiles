@@ -321,7 +321,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         menu.addItem(item("Show Shortcuts", #selector(showShortcuts)))
         menu.addItem(shortcutsMenu())
         menu.addItem(item("Open Tiles…", #selector(openSettings), key: ","))
-        menu.addItem(item("Edit Config File…", #selector(openConfig)))
         if let error = configStore.lastError {
             let warn = NSMenuItem(title: "⚠︎ Config: \(error)", action: nil, keyEquivalent: "")
             warn.isEnabled = false
@@ -470,11 +469,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         openSettings()
         return false
-    }
-
-    @objc private func openConfig() {
-        configStore.ensureFileExists()
-        NSWorkspace.shared.open(ConfigStore.fileURL)
     }
 
     @objc private func openRepo() { NSWorkspace.shared.open(Self.repoURL) }

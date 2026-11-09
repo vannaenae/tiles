@@ -38,7 +38,7 @@
 "Drag a window onto another to swap them" = "Arrastra una ventana sobre otra para intercambiarlas";
 "Drag a window onto another to swap them; hold ⌥ to stack them instead." = "Arrastra una ventana sobre otra para intercambiarlas; mantén ⌥ para apilarlas.";
 "Drag a window to another display to move it there. Hold ⌥ (Option) while dropping to stack it with the window underneath; drag it out again to unstack. Other resizes snap back to the grid." = "Arrastra una ventana a otra pantalla para moverla allí. Mantén ⌥ (Opción) al soltar para apilarla con la ventana de debajo; sácala arrastrando para desapilarla. Otros cambios de tamaño vuelven a la cuadrícula.";
-"Every setting here is saved to ~/.config/tiles/config.json the moment you change it." = "Cada ajuste se guarda en ~/.config/tiles/config.json en cuanto lo cambias.";
+"Your settings save automatically the moment you change them." = "Tus ajustes se guardan solos en cuanto los cambias.";
 "Export Settings…" = "Exportar ajustes…";
 "Float an App" = "Hacer flotar una app";
 "Float keeps an app's windows out of the tiles. Otherwise, new windows of that app open on the display you pick, optionally in the main tile. The last matching rule wins. ⌃⌥F floats or tiles any single window." = "Flotar deja las ventanas de una app fuera del mosaico. Si no, sus ventanas nuevas se abren en la pantalla que elijas, opcionalmente en el mosaico principal. Gana la última regla que coincida. ⌃⌥F hace flotar o encaja cualquier ventana.";
@@ -64,7 +64,6 @@
 "No profiles yet." = "Aún no hay perfiles.";
 "No rules yet." = "Aún no hay reglas.";
 "None yet. Arrange some windows and Tiles saves the scene a few seconds later." = "Ninguna aún. Coloca algunas ventanas y Tiles guardará la escena unos segundos después.";
-"Open Config File in Editor" = "Abrir el archivo de configuración";
 "Open on" = "Abrir en";
 "Outline colour" = "Color del borde";
 "Outline the focused window" = "Resaltar la ventana activa";
@@ -121,7 +120,6 @@
 "Already Allowed? Reset Permission…" = "¿Ya permitido? Restablecer permiso…";
 "Animate Windows" = "Animar ventanas";
 "Drag Window onto Another to Swap" = "Arrastrar una ventana sobre otra para intercambiar";
-"Edit Config File…" = "Editar archivo de configuración…";
 "Float / Tile Focused Window" = "Flotar / encajar ventana activa";
 "Grant Accessibility Access…" = "Conceder acceso de accesibilidad…";
 "Launch at Login" = "Abrir al iniciar sesión";

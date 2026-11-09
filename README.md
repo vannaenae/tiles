@@ -171,7 +171,7 @@ A scene is the arrangement for one combination of displays: each display's layou
 
 ## Configuration
 
-**Settings…** (`⌘,` from the menu) covers the everyday options with a live preview. Everything, including rules and shortcuts, lives in `~/.config/tiles/config.json`; **Edit Config File…** in the menu opens it. Tiles reloads it the moment you save. Every key is optional; anything you leave out uses the default.
+**Settings…** (`⌘,` from the menu) covers the everyday options with a live preview. Everything, including rules and shortcuts, also lives in `~/.config/tiles/config.json` for anyone who prefers editing a file; Tiles reloads it the moment you save. Every key is optional; anything you leave out uses the default.
 
 ```json
 {

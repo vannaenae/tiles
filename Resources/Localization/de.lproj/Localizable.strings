@@ -38,7 +38,7 @@
 "Drag a window onto another to swap them" = "Ziehe ein Fenster auf ein anderes, um sie zu tauschen";
 "Drag a window onto another to swap them; hold ⌥ to stack them instead." = "Ziehe ein Fenster auf ein anderes, um sie zu tauschen; halte ⌥, um sie zu stapeln.";
 "Drag a window to another display to move it there. Hold ⌥ (Option) while dropping to stack it with the window underneath; drag it out again to unstack. Other resizes snap back to the grid." = "Ziehe ein Fenster auf einen anderen Bildschirm, um es dorthin zu verschieben. Halte beim Loslassen ⌥ (Wahl), um es mit dem Fenster darunter zu stapeln; zieh es wieder heraus, um es zu lösen. Andere Größenänderungen springen ins Raster zurück.";
-"Every setting here is saved to ~/.config/tiles/config.json the moment you change it." = "Jede Einstellung wird sofort in ~/.config/tiles/config.json gesichert.";
+"Your settings save automatically the moment you change them." = "Deine Einstellungen werden sofort automatisch gesichert.";
 "Export Settings…" = "Einstellungen exportieren …";
 "Float an App" = "App schweben lassen";
 "Float keeps an app's windows out of the tiles. Otherwise, new windows of that app open on the display you pick, optionally in the main tile. The last matching rule wins. ⌃⌥F floats or tiles any single window." = "Schweben hält die Fenster einer App aus den Kacheln heraus. Andernfalls öffnen sich neue Fenster dieser App auf dem gewählten Bildschirm, optional in der Hauptkachel. Die letzte passende Regel gewinnt. ⌃⌥F lässt ein einzelnes Fenster schweben oder kachelt es.";
@@ -64,7 +64,6 @@
 "No profiles yet." = "Noch keine Profile.";
 "No rules yet." = "Noch keine Regeln.";
 "None yet. Arrange some windows and Tiles saves the scene a few seconds later." = "Noch keine. Ordne ein paar Fenster an, und Tiles sichert die Szene wenige Sekunden später.";
-"Open Config File in Editor" = "Konfigurationsdatei öffnen";
 "Open on" = "Öffnen auf";
 "Outline colour" = "Rahmenfarbe";
 "Outline the focused window" = "Aktives Fenster umranden";
@@ -121,7 +120,6 @@
 "Already Allowed? Reset Permission…" = "Schon erlaubt? Berechtigung zurücksetzen …";
 "Animate Windows" = "Fenster animieren";
 "Drag Window onto Another to Swap" = "Fenster auf anderes ziehen zum Tauschen";
-"Edit Config File…" = "Konfigurationsdatei bearbeiten …";
 "Float / Tile Focused Window" = "Aktives Fenster schweben / kacheln";
 "Grant Accessibility Access…" = "Bedienungshilfen-Zugriff erlauben …";
 "Launch at Login" = "Beim Anmelden öffnen";

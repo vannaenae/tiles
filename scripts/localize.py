@@ -67,10 +67,10 @@ T = {
  ("Arrastra una ventana a otra pantalla para moverla allí. Mantén ⌥ (Opción) al soltar para apilarla con la ventana de debajo; sácala arrastrando para desapilarla. Otros cambios de tamaño vuelven a la cuadrícula.",
   "Glissez une fenêtre vers un autre écran pour l'y déplacer. Maintenez ⌥ (Option) en la déposant pour l'empiler avec la fenêtre dessous ; ressortez-la pour la désempiler. Les autres redimensionnements reviennent à la grille.",
   "Ziehe ein Fenster auf einen anderen Bildschirm, um es dorthin zu verschieben. Halte beim Loslassen ⌥ (Wahl), um es mit dem Fenster darunter zu stapeln; zieh es wieder heraus, um es zu lösen. Andere Größenänderungen springen ins Raster zurück."),
-"Every setting here is saved to ~/.config/tiles/config.json the moment you change it.":
- ("Cada ajuste se guarda en ~/.config/tiles/config.json en cuanto lo cambias.",
-  "Chaque réglage est enregistré dans ~/.config/tiles/config.json dès que vous le modifiez.",
-  "Jede Einstellung wird sofort in ~/.config/tiles/config.json gesichert."),
+"Your settings save automatically the moment you change them.":
+ ("Tus ajustes se guardan solos en cuanto los cambias.",
+  "Vos réglages sont enregistrés automatiquement dès que vous les modifiez.",
+  "Deine Einstellungen werden sofort automatisch gesichert."),
 "Export Settings…": ("Exportar ajustes…", "Exporter les réglages…", "Einstellungen exportieren …"),
 "Float an App": ("Hacer flotar una app", "Laisser flotter une app", "App schweben lassen"),
 "Float keeps an app's windows out of the tiles. Otherwise, new windows of that app open on the display you pick, optionally in the main tile. The last matching rule wins. ⌃⌥F floats or tiles any single window.":
@@ -105,7 +105,6 @@ T = {
  ("Ninguna aún. Coloca algunas ventanas y Tiles guardará la escena unos segundos después.",
   "Aucune pour l'instant. Disposez quelques fenêtres et Tiles enregistre la scène quelques secondes plus tard.",
   "Noch keine. Ordne ein paar Fenster an, und Tiles sichert die Szene wenige Sekunden später."),
-"Open Config File in Editor": ("Abrir el archivo de configuración", "Ouvrir le fichier de configuration", "Konfigurationsdatei öffnen"),
 "Open on": ("Abrir en", "Ouvrir sur", "Öffnen auf"),
 "Outline colour": ("Color del borde", "Couleur de la bordure", "Rahmenfarbe"),
 "Outline the focused window": ("Resaltar la ventana activa", "Encadrer la fenêtre active", "Aktives Fenster umranden"),
@@ -172,7 +171,6 @@ T = {
 "Already Allowed? Reset Permission…": ("¿Ya permitido? Restablecer permiso…", "Déjà autorisé ? Réinitialiser l'autorisation…", "Schon erlaubt? Berechtigung zurücksetzen …"),
 "Animate Windows": ("Animar ventanas", "Animer les fenêtres", "Fenster animieren"),
 "Drag Window onto Another to Swap": ("Arrastrar una ventana sobre otra para intercambiar", "Glisser une fenêtre sur une autre pour échanger", "Fenster auf anderes ziehen zum Tauschen"),
-"Edit Config File…": ("Editar archivo de configuración…", "Modifier le fichier de configuration…", "Konfigurationsdatei bearbeiten …"),
 "Float / Tile Focused Window": ("Flotar / encajar ventana activa", "Flotter / ranger la fenêtre active", "Aktives Fenster schweben / kacheln"),
 "Grant Accessibility Access…": ("Conceder acceso de accesibilidad…", "Autoriser l'accès Accessibilité…", "Bedienungshilfen-Zugriff erlauben …"),
 "Launch at Login": ("Abrir al iniciar sesión", "Ouvrir à la connexion", "Beim Anmelden öffnen"),

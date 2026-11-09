@@ -320,10 +320,9 @@ private struct GeneralPane: View {
                 }
             }
             Section {
-                Button("Open Config File in Editor") { NSWorkspace.shared.open(ConfigStore.fileURL) }
                 Button("Restore All Defaults…", role: .destructive) { confirmReset = true }
             } footer: {
-                Text("Every setting here is saved to ~/.config/tiles/config.json the moment you change it.")
+                Text("Your settings save automatically the moment you change them.")
             }
         }
         .confirmationDialog("Restore all settings to their defaults?", isPresented: $confirmReset) {
