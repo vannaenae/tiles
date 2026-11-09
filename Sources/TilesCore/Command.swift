@@ -33,6 +33,10 @@ public enum Command: Equatable {
     case moveToWorkspace(Int)
     /// Pop up the cheat sheet of everyday shortcuts.
     case showShortcuts
+    /// Type a few letters to jump to any window.
+    case findWindow
+    /// The welcome tour.
+    case showTour
 
     /// Stable string form used in config files and URLs, e.g. `focus-left`, `layout-columns`.
     public var name: String {
@@ -65,6 +69,8 @@ public enum Command: Equatable {
         case .workspace(let n): return "workspace-\(n)"
         case .moveToWorkspace(let n): return "move-to-workspace-\(n)"
         case .showShortcuts: return "show-shortcuts"
+        case .findWindow: return "find-window"
+        case .showTour: return "show-tour"
         }
     }
 
@@ -74,7 +80,7 @@ public enum Command: Equatable {
             .promote, .nextLayout, .previousLayout, .growMaster, .shrinkMaster,
             .increaseMasterCount, .decreaseMasterCount, .toggleFloat, .toggleTiling,
             .retile, .focusNextWindow, .focusPreviousWindow, .moveToNextDisplay,
-            .moveToPreviousDisplay, .increaseGaps, .decreaseGaps, .saveScene, .restoreScene, .undoRestore, .toggleZoom, .cycleWidth, .centerWindow, .showShortcuts,
+            .moveToPreviousDisplay, .increaseGaps, .decreaseGaps, .saveScene, .restoreScene, .undoRestore, .toggleZoom, .cycleWidth, .centerWindow, .showShortcuts, .findWindow, .showTour,
         ] + Workspaces.numbers.map(Command.workspace) + Workspaces.numbers.map(Command.moveToWorkspace)
 
     public static var allNames: [String] { all.map(\.name) }

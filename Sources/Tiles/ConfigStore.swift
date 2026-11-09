@@ -37,7 +37,17 @@ final class ConfigStore {
         lastModified = modificationDate()
         do {
             let data = try Data(contentsOf: Self.fileURL)
-            config = try Config.decode(data)
+            var loaded = try Config.decode(data)
+            // A file written by an older Tiles picks up changed defaults once, then is left alone.
+            let version = Config.fileVersion(data)
+            if version < Config.currentVersion {
+                loaded = loaded.migrated(from: version)
+                if let updated = try? loaded.encoded() {
+                    try? updated.write(to: Self.fileURL, options: .atomic)
+                    lastModified = modificationDate()
+                }
+            }
+            config = loaded
             lastError = nil
             return true
         } catch let error as DecodingError {

@@ -384,3 +384,66 @@ final class FloatOverrideTests: XCTestCase {
         XCTAssertNil(FloatOverride.toggled(isTiled: false, ruleSaysFloat: false)) // back to following the rules
     }
 }
+
+final class SnapAndSearchTests: XCTestCase {
+    let screen = Rect(x: 0, y: 0, width: 1440, height: 900)
+    let noGaps = LayoutParameters(innerGap: 0, outerGap: 0, masterRatio: 0.5, masterCount: 1)
+
+    func testSnapZones() {
+        XCTAssertEqual(SnapZone.zone(atX: 2, y: 450, screen: screen), .left)
+        XCTAssertEqual(SnapZone.zone(atX: 1438, y: 450, screen: screen), .right)
+        XCTAssertEqual(SnapZone.zone(atX: 700, y: 3, screen: screen), .full)
+        XCTAssertEqual(SnapZone.zone(atX: 2, y: 40, screen: screen), .topLeft)
+        XCTAssertEqual(SnapZone.zone(atX: 60, y: 2, screen: screen), .topLeft)
+        XCTAssertEqual(SnapZone.zone(atX: 1438, y: 880, screen: screen), .bottomRight)
+        XCTAssertNil(SnapZone.zone(atX: 700, y: 450, screen: screen))
+        XCTAssertNil(SnapZone.zone(atX: 700, y: 898, screen: screen)) // bottom middle is the Dock's
+        // Another display on the right: the pointer passes through that edge.
+        XCTAssertNil(SnapZone.zone(atX: 1438, y: 450, screen: screen, skipRight: true))
+    }
+
+    func testSnapFramesTileTheScreen() {
+        XCTAssertEqual(SnapZone.left.frame(in: screen, parameters: noGaps), Rect(x: 0, y: 0, width: 720, height: 900))
+        XCTAssertEqual(SnapZone.right.frame(in: screen, parameters: noGaps), Rect(x: 720, y: 0, width: 720, height: 900))
+        XCTAssertEqual(SnapZone.full.frame(in: screen, parameters: noGaps), screen)
+        XCTAssertEqual(SnapZone.bottomRight.frame(in: screen, parameters: noGaps), Rect(x: 720, y: 450, width: 720, height: 450))
+    }
+
+    func testWindowSearch() {
+        let items = [
+            WindowSearch.Item(id: 1, app: "Safari", title: "Slack pricing"),
+            WindowSearch.Item(id: 2, app: "Slack", title: "general"),
+            WindowSearch.Item(id: 3, app: "Notes", title: "Shopping"),
+        ]
+        XCTAssertEqual(WindowSearch.rank("sla", in: items).map(\.id), [2, 1]) // the app beats a title mention
+        XCTAssertEqual(WindowSearch.rank("saf pric", in: items).map(\.id), [1])
+        XCTAssertEqual(WindowSearch.rank("", in: items).map(\.id), [1, 2, 3])
+        XCTAssertEqual(WindowSearch.rank("zzz", in: items), [])
+    }
+
+    func testQuieterDefaultsAndMigration() throws {
+        XCTAssertEqual(Config.default.outlineColor, "") // no outline unless you ask for one
+        // A file from an older Tiles has no version: the outline is switched off once.
+        let old = Data(#"{"outlineColor": "#E8643C", "theme": "pink"}"#.utf8)
+        XCTAssertEqual(Config.fileVersion(old), 1)
+        let migrated = try Config.decode(old).migrated(from: 1)
+        XCTAssertEqual(migrated.outlineColor, "")
+        XCTAssertEqual(migrated.theme, .pink)
+        // Once migrated, turning the outline back on sticks.
+        var again = migrated
+        again.outlineColor = "#3478F6"
+        let data = try again.encoded()
+        XCTAssertEqual(Config.fileVersion(data), Config.currentVersion)
+        XCTAssertEqual(try Config.decode(data).outlineColor, "#3478F6")
+    }
+
+    func testWorkspaceNamesAndModes() throws {
+        let config = try Config.decode(Data(#"{"mode": "snap", "workspaceNames": {"2": "Music"}, "workspaceLayouts": {"2": "columns"}}"#.utf8))
+        XCTAssertEqual(config.mode, .snap)
+        XCTAssertEqual(config.workspaceName(2), "Music")
+        XCTAssertEqual(config.workspaceName(3), "Workspace 3")
+        XCTAssertEqual(config.workspaceLayouts["2"], .columns)
+        XCTAssertEqual(Config.default.mode, .automatic)
+        XCTAssertEqual(Config.default.shortcuts(for: .findWindow).map(\.description), ["⌃⌥G"])
+    }
+}

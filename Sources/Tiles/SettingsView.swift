@@ -272,6 +272,17 @@ private struct GeneralPane: View {
                 .padding(.vertical, 4)
             }
             Section {
+                Picker("How Tiles works", selection: $model.config.mode) {
+                    Text("Automatic").tag(TilingMode.automatic)
+                    Text("Snap").tag(TilingMode.snap)
+                }
+                .pickerStyle(.segmented)
+            } footer: {
+                Text(LocalizedStringKey(model.config.mode == .snap
+                     ? "Windows stay where you put them. Drag one to a screen edge or corner to snap it to half, a quarter or the whole screen, or use ⌃⌥ + arrows."
+                     : "Every window is fitted into the layout as it opens, and the rest make room."))
+            }
+            Section {
                 Toggle("Tile windows automatically", isOn: $model.config.enabled)
                 Toggle("Launch at login", isOn: Binding(get: { model.launchAtLogin }, set: { model.setLaunchAtLogin($0) }))
                 LabeledContent("Accessibility access") {
@@ -320,6 +331,7 @@ private struct GeneralPane: View {
                 }
             }
             Section {
+                Button("Show the Welcome Tour") { model.perform(.showTour) }
                 Button("Restore All Defaults…", role: .destructive) { confirmReset = true }
             } footer: {
                 Text("Your settings save automatically the moment you change them.")
@@ -349,6 +361,32 @@ private struct LayoutsPane: View {
                 }
             } footer: {
                 Text("Used automatically on displays at least \(String(format: "%.1f", model.config.layout.ultrawideAspectRatio))× wider than tall.")
+            }
+            Section {
+                ForEach(1...5, id: \.self) { n in
+                    HStack(spacing: 12) {
+                        Text("\(n)").font(.headline).monospacedDigit().frame(width: 18)
+                        TextField("Name", text: Binding(
+                            get: { model.config.workspaceNames["\(n)"] ?? "" },
+                            set: { model.config.workspaceNames["\(n)"] = $0.isEmpty ? nil : $0 }
+                        ), prompt: Text("Workspace \(n)"))
+                        .labelsHidden()
+                        Picker("Layout", selection: Binding<LayoutKind?>(
+                            get: { model.config.workspaceLayouts["\(n)"] },
+                            set: { model.config.workspaceLayouts["\(n)"] = $0 }
+                        )) {
+                            Text("Same as the screen").tag(LayoutKind?.none)
+                            Divider()
+                            ForEach(LayoutKind.allCases.filter { $0 != .float }, id: \.self) { Text($0.displayName).tag(LayoutKind?.some($0)) }
+                        }
+                        .labelsHidden()
+                        .frame(width: 210)
+                    }
+                }
+            } header: {
+                Text("Desktops")
+            } footer: {
+                Text("Give a desktop a name and its own layout, like \"Music\" in Columns. ⌃⌥ + its number takes you there. Each desktop also remembers the layout you last used on it.")
             }
             Section("Connected displays") {
                 ForEach(Display.current(), id: \.id) { display in
@@ -732,7 +770,9 @@ private struct DashboardPane: View {
                         get: { display.workspace },
                         set: { model.showWorkspace($0, display.id) }
                     )) {
-                        ForEach(display.workspaces, id: \.self) { Text("\($0)").tag($0) }
+                        ForEach(display.workspaces, id: \.self) { n in
+                            Text((model.config.workspaceNames["\(n)"] ?? "").isEmpty ? "\(n)" : model.config.workspaceNames["\(n)"]!).tag(n)
+                        }
                     }
                     .pickerStyle(.segmented).labelsHidden().fixedSize()
                     .help("Workspaces on this display")
@@ -745,11 +785,13 @@ private struct DashboardPane: View {
                 .fixedSize()
             }
             if display.tiles.isEmpty {
-                Text(display.layout == .float ? "Tiles leaves this display alone." : "No windows on this display.")
+                Text(LocalizedStringKey(display.layout == .float || model.config.mode == .snap
+                     ? "Windows stay where you put them. Drag one to a screen edge to snap it."
+                     : "No windows on this display."))
                     .foregroundStyle(.secondary).frame(maxWidth: .infinity, minHeight: 120)
             } else {
-                TilesCanvas(area: display.size, frames: display.tiles.map(\.frame),
-                            labels: display.tiles.map(\.app), accent: model.accent)
+                let tiles = Self.merged(display.tiles)
+                TilesCanvas(area: display.size, frames: tiles.frames, labels: tiles.labels, accent: model.accent)
                     .frame(maxHeight: 220)
             }
         }
@@ -757,8 +799,25 @@ private struct DashboardPane: View {
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
     }
 
+    /// Windows sharing a tile (a stack) are drawn once, as "Safari +2", instead of on top of each other.
+    private static func merged(_ tiles: [TilingManager.DisplayStatus.Tile]) -> (frames: [Rect], labels: [String]) {
+        var frames: [Rect] = [], names: [String] = [], counts: [Int] = []
+        for tile in tiles {
+            if let i = frames.firstIndex(of: tile.frame) {
+                counts[i] += 1
+            } else {
+                frames.append(tile.frame)
+                names.append(tile.app)
+                counts.append(1)
+            }
+        }
+        return (frames, zip(names, counts).map { name, count in count > 1 ? "\(name) +\(count - 1)" : name })
+    }
+
     private var actions: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 12)], spacing: 12) {
+            action("Find Window", "magnifyingglass", .findWindow)
+            action("Shortcuts", "keyboard", .showShortcuts)
             action("Retile", "arrow.triangle.2.circlepath", .retile)
             action("Save Scene", "square.and.arrow.down", .saveScene)
             action("Restore Scene", "clock.arrow.circlepath", .restoreScene)

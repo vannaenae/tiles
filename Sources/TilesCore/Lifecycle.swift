@@ -115,18 +115,21 @@ public struct StatusSnapshot: Codable, Equatable {
     public var pid: Int32
     public var phase: AppPhase
     public var tilingEnabled: Bool
+    /// "automatic" (windows are tiled) or "snap" (windows only snap to screen edges).
+    public var mode: TilingMode
     public var update: UpdatePhase
     public var configError: String?
     public var displays: [DisplayInfo]
     /// Plain-language answer to "why isn't Tiles moving my windows?", or nil when all is well.
     public var problem: String?
 
-    public init(version: String, pid: Int32, phase: AppPhase, tilingEnabled: Bool, update: UpdatePhase,
+    public init(version: String, pid: Int32, phase: AppPhase, tilingEnabled: Bool, mode: TilingMode = .automatic, update: UpdatePhase,
                 configError: String?, displays: [DisplayInfo]) {
         self.version = version
         self.pid = pid
         self.phase = phase
         self.tilingEnabled = tilingEnabled
+        self.mode = mode
         self.update = update
         self.configError = configError
         self.displays = displays

@@ -64,10 +64,12 @@ covered by the real-Mac test in `scripts/e2e.swift`.
 | Machine | States | Variables | Notes |
 |---|---|---|---|
 | **Tiling on/off** | on, off | `isEnabled` ← `config.enabled` | `⌃⌥T` writes the config; the config change flips the state, so menu, dashboard and next launch agree. Off brings parked windows back. |
+| **Snap drag** | idle → tracking(window) → snap to zone / leave | `trackedWindow`, `mouseTimer` (shared with Mouse drag: only one drag at a time) | Untiled windows only (Snap mode or a Float display). Shows a preview while at an edge; a resize never snaps. Zones are `SnapZone` in TilesCore, tested. |
 | **Mouse drag** | idle → tracking(window) → swap / move / stack / resize | `trackedWindow`, `mouseTimer` | Starts on a window move with the button down; ends on release. ⌥ held at release means stack. |
 | **Programmatic-move quiet time** | quiet until T | `ignoreMovesUntil` | Tiles' own moves fire move events; they're ignored for 0.5 s (plus the animation time) so they aren't mistaken for drags. |
 | **Scroll pan** | idle → panning(display) → settle → idle | `panning`, `panWork`, `panEndWork` | While panning, the focused window doesn't pull the strip back. 0.35 s after the last scroll, the window nearest the middle is focused. |
 | **Animation** | idle ↔ animating(moves, start) | `animation`, `animationTimer` | New moves restart from where each window currently is. Off during panning and for parking. |
+| **Workspace layouts** | per display+workspace: remembered layout | `workspaceLayouts` | Swapped in and out of `layouts` by `switchWorkspace`, the only place a workspace changes. |
 | **Parking** | per window: parked (with its frame to return to) or not | `parked` | Hidden-workspace windows wait one point on screen in the corner. Only a *newly* focused hidden window pulls its workspace forward (`lastFocused`, `lastWorkspaceSwitch` debounce). |
 | **Stacks and Focus** | per window: stacked on a host or not; one zoomed window or none | `stackedOn`, `zoomed` | Floating windows drop out of stacks; a zoom ends when its window leaves the layout. |
 | **Docking** | steady → displays changing (1 s debounce) → restore → autosave blocked 8 s | `displayWork`, `autosaveBlockedUntil`, `undoSnapshot` | Only a different *set* of displays counts; resolution or Dock changes just retile. `⌃⌥Z` undoes one restore. |

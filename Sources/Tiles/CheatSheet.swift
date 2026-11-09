@@ -17,6 +17,7 @@ final class CheatSheet {
         (.toggleFloat, "Float or tile this window"),
         (.workspace(1), "Go to desktop 1 (any number)"),
         (.moveToWorkspace(1), "Send the window to desktop 1"),
+        (.findWindow, "Find a window by name"),
         (.toggleTiling, "Turn tiling on or off"),
         (.showShortcuts, "Show or hide this list"),
     ]

@@ -2,11 +2,14 @@ import AppKit
 import TilesCore
 
 /// A click-through coloured border drawn around the focused tiled window.
+/// With `filled`, a tinted panel instead: the preview of where a dragged window will snap.
 final class FocusOutline {
     private let window: NSWindow
     private let border = NSView()
+    private let filled: Bool
 
-    init() {
+    init(filled: Bool = false) {
+        self.filled = filled
         window = NSWindow(contentRect: .zero, styleMask: .borderless, backing: .buffered, defer: true)
         window.isOpaque = false
         window.backgroundColor = .clear
@@ -15,8 +18,8 @@ final class FocusOutline {
         window.level = .floating
         window.collectionBehavior = [.canJoinAllSpaces, .stationary, .ignoresCycle, .transient]
         border.wantsLayer = true
-        border.layer?.borderWidth = 3
-        border.layer?.cornerRadius = 12
+        border.layer?.borderWidth = 2
+        border.layer?.cornerRadius = 10
         window.contentView = border
     }
 
@@ -28,7 +31,8 @@ final class FocusOutline {
             return
         }
         let rect = NSRect(x: frame.x, y: Double(primaryHeight) - frame.maxY, width: frame.width, height: frame.height)
-        border.layer?.borderColor = color.cgColor
+        border.layer?.borderColor = color.withAlphaComponent(filled ? 0.9 : 0.8).cgColor
+        border.layer?.backgroundColor = filled ? color.withAlphaComponent(0.18).cgColor : nil
         window.setFrame(rect.insetBy(dx: -2, dy: -2), display: true)
         window.orderFrontRegardless()
     }

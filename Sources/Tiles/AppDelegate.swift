@@ -21,6 +21,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     private let outline = FocusOutline()
     private let badges = StackBadges()
     private let cheatSheet = CheatSheet()
+    private let finder = WindowFinder()
+    private let tour = Tour()
+    private let snapPreview = FocusOutline(filled: true)
     let updater = Updater()
     private var settingsWindow: NSWindow?
     private var settingsModel: SettingsModel?
@@ -49,6 +52,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         manager.onShowShortcuts = { [weak self] in
             guard let self else { return }
             self.cheatSheet.toggle(config: self.configStore.config)
+        }
+        manager.onFindWindow = { [weak self] in
+            guard let self else { return }
+            self.finder.toggle(items: self.manager.windowList())
+        }
+        finder.onChoose = { [weak self] id in self?.manager.jump(to: id) }
+        manager.onShowTour = { [weak self] in self?.showTour() }
+        manager.onSnapPreview = { [weak self] frame in
+            guard let self else { return }
+            self.snapPreview.show(around: frame, hex: self.configStore.config.theme.hex)
         }
         updater.onChange = { [weak self] in
             self?.settingsModel?.objectWillChange.send()
@@ -118,10 +131,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     private func startTiling() {
         manager.start()
         updateIcon()
-        // First run: show Settings so people see what Tiles can do.
-        if !UserDefaults.standard.bool(forKey: "didShowSettings") {
-            UserDefaults.standard.set(true, forKey: "didShowSettings")
-            openSettings()
+        // First run (and once for people updating): a short tour of how Tiles works.
+        if !UserDefaults.standard.bool(forKey: "didShowTour") {
+            UserDefaults.standard.set(true, forKey: "didShowTour")
+            showTour()
         }
     }
 
@@ -160,6 +173,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
                 pid: ProcessInfo.processInfo.processIdentifier,
                 phase: self.phase,
                 tilingEnabled: self.manager.isEnabled,
+                mode: self.configStore.config.mode,
                 update: self.updater.phase,
                 configError: self.configStore.lastError,
                 displays: self.manager.status().map {
@@ -266,7 +280,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
                                     action: nil, keyEquivalent: "")
             let spaceMenu = NSMenu()
             for n in Workspaces.numbers where n <= 5 || used.contains(n) {
-                let entry = item("Workspace \(n)" + (used.contains(n) && n != active ? "  •" : ""), #selector(pickWorkspace(_:)))
+                let name = config.workspaceName(n)
+                let title = name == "Workspace \(n)" ? name : "\(n) · \(name)"
+                let entry = item(title + (used.contains(n) && n != active ? "  •" : ""), #selector(pickWorkspace(_:)))
                 entry.representedObject = [display.id, String(n)]
                 entry.state = n == active ? .on : .off
                 spaceMenu.addItem(entry)
@@ -302,6 +318,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         optionsMenu.addItem(check("Restore Scenes When Displays Change", config.autoRestoreScenes, #selector(toggleAutoScenes)))
         optionsMenu.addItem(check("Mouse Follows Keyboard Focus", config.mouseFollowsFocus, #selector(toggleMouseFollows)))
         optionsMenu.addItem(check("Animate Windows", config.animateWindows, #selector(toggleAnimate)))
+        optionsMenu.addItem(check("Snap Mode (No Automatic Tiling)", config.mode == .snap, #selector(toggleSnapMode)))
         let placement = NSMenuItem(title: NSLocalizedString("New Windows Open", comment: "Menu"), action: nil, keyEquivalent: "")
         let placementMenu = NSMenu()
         let placements: [(String, NewWindowPlacement)] = [("At the End", .end), ("As Master", .master), ("Next to Focused", .afterFocused)]
@@ -318,7 +335,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         options.submenu = optionsMenu
         menu.addItem(options)
 
+        menu.addItem(item("Find Window…", #selector(findWindow)))
         menu.addItem(item("Show Shortcuts", #selector(showShortcuts)))
+        menu.addItem(item("Welcome Tour…", #selector(showTour)))
         menu.addItem(shortcutsMenu())
         menu.addItem(item("Open Tiles…", #selector(openSettings), key: ","))
         if let error = configStore.lastError {
@@ -367,6 +386,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     // MARK: - Actions
 
     @objc private func showShortcuts() { cheatSheet.toggle(config: configStore.config) }
+    @objc private func findWindow() { manager.perform(.findWindow) }
+    @objc private func toggleSnapMode() { configStore.update { $0.mode = $0.mode == .snap ? .automatic : .snap } }
+    @objc private func showTour() {
+        tour.show(accentHex: configStore.config.theme.hex) { [weak self] command in self?.manager.perform(command) }
+    }
     @objc private func grantAccess() { AccessibilityPermission.request() }
     @objc private func resetAccess() { AccessibilityPermission.reset() }
     @objc private func restart() { AccessibilityPermission.relaunch() }

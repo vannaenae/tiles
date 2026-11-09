@@ -27,6 +27,7 @@ jobs:
           ./scripts/build-app.sh
           cp -R dist/Tiles.app /Applications/
           defaults write io.github.vannaenae.tiles didShowSettings -bool true
+          defaults write io.github.vannaenae.tiles didShowTour -bool true   # the test opens the tour itself
 
       - name: Pre-approve Accessibility and screen capture (test machine only)
         run: |

@@ -1,6 +1,7 @@
 // Drives Tiles like a person would, on a real Mac: real key presses and mouse drags,
 // then checks where the windows ended up. Prints PASS/FAIL per check, exits 1 on any FAIL.
 // Needs Accessibility (to post input events). Used by .github/workflows/e2e.yml.
+import AppKit
 import ApplicationServices
 import CoreGraphics
 import Foundation
@@ -418,6 +419,76 @@ let animated = frames()
 check(columns.allSatisfy { id, f in animated[id].map { abs($0.minX - f.minX) <= 4 && abs($0.width - f.width) <= 4 } ?? false },
       "with animation on, windows still end up exactly in their tiles")
 editConfig { $0["animateWindows"] = false }
+
+/// Tiles' own windows of a given size (the finder, tour and cheat sheet are fixed-size panels).
+func tilesWindows(width: Double? = nil, minHeight: Double = 0) -> [CGRect] {
+    let info = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
+    return info.compactMap { w in
+        guard (w[kCGWindowOwnerName as String] as? String) == "Tiles", (w[kCGWindowLayer as String] as? Int) ?? 0 >= 0,
+              let b = w[kCGWindowBounds as String] as? [String: Double], let wd = b["Width"], let ht = b["Height"],
+              width == nil || wd == width, ht >= minHeight, ht > 100 else { return nil }
+        return CGRect(x: b["X"]!, y: b["Y"]!, width: wd, height: ht)
+    }
+}
+
+// 13. Each desktop keeps its own layout: Grid on desktop 2 doesn't change Columns on desktop 1.
+tiles("layout-columns")
+let deskOne = frames()
+press(19) // ⌃⌥2
+settle()
+tiles("layout-grid")
+press(18) // ⌃⌥1
+settle(2)
+let backOnOne = frames()
+check(deskOne.allSatisfy { id, f in backOnOne[id].map { abs($0.minX - f.minX) <= 4 && abs($0.width - f.width) <= 4 } ?? false },
+      "desktop 1 keeps Columns after desktop 2 switches to Grid")
+
+// 14. Snap mode: nothing tiles by itself; dragging a window to the left edge snaps it to the left half.
+editConfig { $0["mode"] = "snap" }
+if let mover = windows().filter({ $0.owner == "TextEdit" }).max(by: { $0.frame.minX < $1.frame.minX }) {
+    dragWindow(mover, to: CGPoint(x: screen.minX + 2, y: screen.midY)) { snapshot("snap-preview") }
+    settle(2)
+    snapshot("snapped-left")
+    let f = frames()[mover.id] ?? .zero
+    check(f.minX < screen.minX + 24 && abs(f.maxX - screen.midX) < 14 && f.height > screen.height * 0.75,
+          "Snap mode: dragging a window to the left edge fills the left half (\(Int(f.minX)),\(Int(f.width))x\(Int(f.height)))")
+    press(124) // ⌃⌥→ on the same window
+    settle()
+    let g = frames()[mover.id] ?? .zero
+    check(abs(g.minX - screen.midX) < 14 && g.maxX > screen.maxX - 24, "Snap mode: ⌃⌥→ moves it to the right half")
+}
+editConfig { $0["mode"] = "automatic" }
+check(Set(frames().values.map { "\($0)" }).count == frames().count, "back in Automatic, every window gets its own tile again")
+
+// 15. Window finder: ⌃⌥G, type a few letters, Return, and that app's window is in front.
+NSWorkspace.shared.runningApplications.first { $0.bundleIdentifier == "com.apple.finder" }?.activate()
+settle()
+press(5) // ⌃⌥G
+settle()
+check(tilesWindows(width: 520).count == 1, "⌃⌥G opens the window finder")
+for key: CGKeyCode in [17, 14, 7] { press(key, []) } // t e x
+settle(1)
+snapshot("window-finder")
+press(36, []) // Return
+settle(1.5)
+check(NSWorkspace.shared.frontmostApplication?.localizedName == "TextEdit",
+      "typing \"tex\" and Return jumps to TextEdit (front: \(NSWorkspace.shared.frontmostApplication?.localizedName ?? "?"))")
+check(tilesWindows(width: 520).isEmpty, "the finder closes itself")
+
+// 16. The welcome tour opens, pages through with Return, and closes on Done.
+tiles("show-tour")
+check(tilesWindows(width: 520, minHeight: 400).count == 1, "the welcome tour opens")
+snapshot("tour-1")
+press(36, []); settle(0.6)
+snapshot("tour-2")
+for _ in 0..<4 { press(36, []); settle(0.4) }
+check(tilesWindows(width: 520, minHeight: 400).isEmpty, "Return pages through the tour and Done closes it")
+
+// 17. The cheat sheet.
+tiles("show-shortcuts")
+check(tilesWindows().contains { $0.width >= 420 }, "⌃⌥/ shows the cheat sheet")
+snapshot("cheat-sheet")
+tiles("show-shortcuts")
 
 print(failures == 0 ? "ALL PASSED" : "\(failures) FAILED")
 finish(failures == 0 ? 0 : 1)

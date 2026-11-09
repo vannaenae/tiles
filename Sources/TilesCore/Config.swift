@@ -73,7 +73,24 @@ public struct WindowRule: Codable, Equatable {
     }
 }
 
+/// How Tiles arranges windows.
+public enum TilingMode: String, Codable, CaseIterable {
+    /// Every window is fitted into the layout as it opens.
+    case automatic
+    /// Windows stay where you put them; drag one to a screen edge to snap it.
+    case snap
+}
+
 public struct Config: Codable, Equatable {
+    /// Bumped when defaults change in a way existing files should pick up once. See `migrated(from:)`.
+    public static let currentVersion = 2
+    public var configVersion: Int
+    /// Automatic tiling, or snap-to-edge only.
+    public var mode: TilingMode
+    /// Names for workspaces, keyed by number ("2": "Music").
+    public var workspaceNames: [String: String]
+    /// A layout a workspace starts with, keyed by number. Others inherit the display's layout.
+    public var workspaceLayouts: [String: LayoutKind]
     /// Master switch. When false, Tiles leaves every window alone.
     public var enabled: Bool
     /// Layout used on displays without a more specific setting.
@@ -112,6 +129,10 @@ public struct Config: Codable, Equatable {
     public var hotkeys: [String: String]
 
     public init(
+        configVersion: Int = Config.currentVersion,
+        mode: TilingMode = .automatic,
+        workspaceNames: [String: String] = [:],
+        workspaceLayouts: [String: LayoutKind] = [:],
         enabled: Bool = true,
         defaultLayout: LayoutKind = .dwindle,
         ultrawideLayout: LayoutKind = .centeredMaster,
@@ -122,7 +143,7 @@ public struct Config: Codable, Equatable {
         resizeToAdjustRatio: Bool = true,
         autoRestoreScenes: Bool = true,
         mouseFollowsFocus: Bool = false,
-        outlineColor: String = "#E8643C",
+        outlineColor: String = "",
         theme: Theme = .orange,
         appearance: AppearanceMode = .system,
         iconPlacement: IconPlacement = .menuBar,
@@ -133,6 +154,10 @@ public struct Config: Codable, Equatable {
         rules: [WindowRule] = Config.defaultRules,
         hotkeys: [String: String] = [:]
     ) {
+        self.configVersion = configVersion
+        self.mode = mode
+        self.workspaceNames = workspaceNames
+        self.workspaceLayouts = workspaceLayouts
         self.enabled = enabled
         self.defaultLayout = defaultLayout
         self.ultrawideLayout = ultrawideLayout
@@ -190,7 +215,7 @@ public struct Config: Codable, Equatable {
             "ctrl+alt+n": "focus-next", "ctrl+alt+p": "focus-previous",
             "ctrl+alt+]": "move-to-next-display", "ctrl+alt+[": "move-to-previous-display",
             "ctrl+alt+s": "save-scene", "ctrl+alt+z": "undo-restore",
-            "ctrl+alt+/": "show-shortcuts",
+            "ctrl+alt+/": "show-shortcuts", "ctrl+alt+g": "find-window",
         ]
         // Numbers are desktops: ⌃⌥2 shows workspace 2, ⌃⌥⇧2 sends the window there.
         for n in Workspaces.numbers {
@@ -201,6 +226,7 @@ public struct Config: Codable, Equatable {
     }()
 
     enum CodingKeys: String, CodingKey {
+        case configVersion, mode, workspaceNames, workspaceLayouts
         case enabled, defaultLayout, ultrawideLayout, displays, layout, newWindowPlacement
         case dragToSwap, resizeToAdjustRatio, autoRestoreScenes, mouseFollowsFocus, outlineColor, theme, appearance, iconPlacement, restoreWindowsOnQuit, focusFollowsMouse, checkForUpdates, animateWindows, rules, hotkeys
     }
@@ -209,6 +235,10 @@ public struct Config: Codable, Equatable {
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         let d = Config.default
+        configVersion = try c.decodeIfPresent(Int.self, forKey: .configVersion) ?? d.configVersion
+        mode = try c.decodeIfPresent(TilingMode.self, forKey: .mode) ?? d.mode
+        workspaceNames = try c.decodeIfPresent([String: String].self, forKey: .workspaceNames) ?? d.workspaceNames
+        workspaceLayouts = try c.decodeIfPresent([String: LayoutKind].self, forKey: .workspaceLayouts) ?? d.workspaceLayouts
         enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? d.enabled
         defaultLayout = try c.decodeIfPresent(LayoutKind.self, forKey: .defaultLayout) ?? d.defaultLayout
         ultrawideLayout = try c.decodeIfPresent(LayoutKind.self, forKey: .ultrawideLayout) ?? d.ultrawideLayout
@@ -233,6 +263,27 @@ public struct Config: Codable, Equatable {
 
     public static func decode(_ data: Data) throws -> Config {
         try JSONDecoder().decode(Config.self, from: data)
+    }
+
+    /// The version a config file was written by. Files from before versions existed count as 1.
+    public static func fileVersion(_ data: Data) -> Int {
+        let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+        return json?["configVersion"] as? Int ?? 1
+    }
+
+    /// One-time changes for a file written by an older Tiles.
+    /// 1 → 2: the focus outline became opt-in (people found it distracting), so it's switched off once.
+    public func migrated(from version: Int) -> Config {
+        var config = self
+        if version < 2 { config.outlineColor = "" }
+        config.configVersion = Config.currentVersion
+        return config
+    }
+
+    /// What to call workspace `number`: its custom name, or "Workspace 3".
+    public func workspaceName(_ number: Int) -> String {
+        let name = (workspaceNames["\(number)"] ?? "").trimmingCharacters(in: .whitespaces)
+        return name.isEmpty ? "Workspace \(number)" : name
     }
 
     public func encoded() throws -> Data {

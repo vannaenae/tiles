@@ -46,6 +46,12 @@ final class TilingManager {
     var onFocusFrame: ((Rect?) -> Void)?
     /// ⌃⌥/ : show the shortcut cheat sheet (drawn by the app, not the manager).
     var onShowShortcuts: (() -> Void)?
+    var onFindWindow: (() -> Void)?
+    var onShowTour: (() -> Void)?
+    /// Snap mode: where the dragged window would land, or nil to hide the preview.
+    var onSnapPreview: ((Rect?) -> Void)?
+    /// Each workspace remembers its own layout: "display#number" → layout.
+    private var workspaceLayouts: [String: LayoutKind] = [:]
     /// Tiles holding more than one window, for the stack badges.
     var onStacks: (([(frame: Rect, ids: [WindowID])]) -> Void)?
     private var mouseMonitor: Any?
@@ -120,6 +126,12 @@ final class TilingManager {
         if old.defaultLayout != new.defaultLayout || old.ultrawideLayout != new.ultrawideLayout || old.displays != new.displays {
             layouts = [:]
         }
+        if old.workspaceLayouts != new.workspaceLayouts {
+            workspaceLayouts = [:]
+            for display in displays {
+                if let kind = new.workspaceLayouts["\(workspaces.active(on: display.id))"] { layouts[display.id] = kind }
+            }
+        }
         for (id, p) in parameters {
             var updated = new.layout
             if old.layout.masterRatio == new.layout.masterRatio { updated.masterRatio = p.masterRatio }
@@ -144,9 +156,14 @@ final class TilingManager {
             guard isEnabled, Date() > ignoreMovesUntil, trackedWindow == nil,
                   // Only a mouse drag or resize counts as the user rearranging.
                   NSEvent.pressedMouseButtons & 1 == 1,
-                  let id = element.windowID, targetFrames[id] != nil else { return }
-            onFocusFrame?(nil)
-            trackMouse(for: id)
+                  let id = element.windowID else { return }
+            if targetFrames[id] != nil {
+                onFocusFrame?(nil)
+                trackMouse(for: id)
+            } else if windows[id] != nil {
+                // Not tiled (Snap mode, or a display set to Float): offer the screen edges.
+                trackSnap(for: id)
+            }
         }
     }
 
@@ -287,7 +304,7 @@ final class TilingManager {
         var targets: [WindowID: Rect] = [:]
         let focusedID = focusedWindow()?.id
         for display in displays {
-            let kind = layouts[display.id] ?? config.defaultLayout
+            let kind = effectiveLayout(display.id)
             guard kind != .float else { continue }
             let all = visibleOrder(display.id)
             // Option-dragged windows share their host's tile instead of taking one.
@@ -325,6 +342,12 @@ final class TilingManager {
                 if parked[id] == nil { parked[id] = current }
                 let x = hasNeighbor(display, left: false) ? a.minX - current.width + 1 : a.maxX - 1
                 moves[id] = Rect(x: x, y: a.maxY - 1, width: current.width, height: current.height)
+            }
+        }
+        // On a display that isn't tiled, windows coming back go where they were.
+        for display in displays {
+            for id in visibleOrder(display.id) where targets[id] == nil {
+                if let back = parked.removeValue(forKey: id) { moves[id] = back }
             }
         }
         // Windows coming back from a hidden workspace are tiled again.
@@ -444,14 +467,108 @@ final class TilingManager {
     func showWorkspace(_ number: Int, on displayID: String?) {
         guard let d = displayID else { return }
         guard workspaces.active(on: d) != number else {
-            onMessage?("Workspace \(number)")
+            onMessage?(config.workspaceName(number))
             return
         }
-        workspaces.show(number, on: d)
-        lastWorkspaceSwitch = Date()
+        switchWorkspace(on: d, to: number)
         refresh()
         if let first = visibleOrder(d).first { focus(first) }
-        onMessage?("Workspace \(number)")
+        onMessage?(config.workspaceName(number))
+    }
+
+    /// Shows workspace `number`, swapping in the layout it had last time (or its configured one).
+    private func switchWorkspace(on d: String, to number: Int) {
+        let old = workspaces.active(on: d)
+        guard old != number else { return }
+        if let current = layouts[d] { workspaceLayouts["\(d)#\(old)"] = current }
+        workspaces.show(number, on: d)
+        if let kind = workspaceLayouts["\(d)#\(number)"] ?? config.workspaceLayouts["\(number)"] { layouts[d] = kind }
+        lastWorkspaceSwitch = Date()
+    }
+
+    /// Tiled by the display's layout, or left alone (Snap mode, or the Float layout).
+    private func effectiveLayout(_ displayID: String) -> LayoutKind {
+        config.mode == .snap ? .float : (layouts[displayID] ?? config.defaultLayout)
+    }
+
+    // MARK: - Window finder
+
+    /// Every window Tiles manages, front-most first.
+    func windowList() -> [WindowSearch.Item] {
+        let rank = Dictionary(onScreenWindowOrder().enumerated().map { ($1, $0) }, uniquingKeysWith: { first, _ in first })
+        return windows.values
+            .sorted { (rank[$0.id] ?? Int.max, $0.id) < (rank[$1.id] ?? Int.max, $1.id) }
+            .map { WindowSearch.Item(id: $0.id, app: $0.appName ?? "", title: $0.title ?? "") }
+    }
+
+    /// Brings a window forward wherever it is: another workspace, or minimised.
+    func jump(to id: WindowID) {
+        guard let window = windows[id] else { return }
+        if let d = displayID(of: id), !workspaces.isShown(id, on: d) {
+            switchWorkspace(on: d, to: workspaces.workspace(of: id, on: d))
+            refresh()
+        }
+        if window.isMinimized { window.element.set(kAXMinimizedAttribute, kCFBooleanFalse) }
+        focus(id)
+    }
+
+    // MARK: - Snap mode
+
+    /// Follows a drag of an untiled window: shows where it would snap, and snaps it on release.
+    private func trackSnap(for id: WindowID) {
+        trackedWindow = id
+        let start = windows[id]?.frame?.tilesRect
+        mouseTimer?.invalidate()
+        mouseTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] timer in
+            guard let self else { timer.invalidate(); return }
+            let target = self.snapTarget(for: id, start: start)
+            if NSEvent.pressedMouseButtons & 1 == 1 {
+                self.onSnapPreview?(target)
+                return
+            }
+            timer.invalidate()
+            self.mouseTimer = nil
+            self.trackedWindow = nil
+            self.onSnapPreview?(nil)
+            if let target {
+                self.ignoreMovesUntil = Date().addingTimeInterval(0.5)
+                self.setFrames([id: target])
+            }
+        }
+    }
+
+    /// Where the dragged window would snap: nil away from the edges, or when it's being resized.
+    private func snapTarget(for id: WindowID, start: Rect?) -> Rect? {
+        guard let frame = windows[id]?.frame?.tilesRect else { return nil }
+        if let start, abs(frame.width - start.width) > 2 || abs(frame.height - start.height) > 2 { return nil }
+        let mouse = Display.mouseLocation()
+        guard let display = Display.display(atX: mouse.x, y: mouse.y, in: displays), effectiveLayout(display.id) == .float,
+              let zone = SnapZone.zone(atX: mouse.x, y: mouse.y, screen: display.fullFrame,
+                                       skipLeft: hasNeighbor(display, left: true), skipRight: hasNeighbor(display, left: false))
+        else { return nil }
+        return zone.frame(in: display.area, parameters: parameters[display.id] ?? config.layout)
+    }
+
+    /// On an untiled display the arrow shortcuts place the focused window instead:
+    /// left and right halves, up to fill the screen, down to centre it.
+    private func snapWithKeyboard(_ command: Command, _ window: Window) -> Bool {
+        guard let frame = window.frame?.tilesRect, let display = Display.best(for: frame, in: displays),
+              effectiveLayout(display.id) == .float else { return false }
+        let p = parameters[display.id] ?? config.layout
+        let a = display.area
+        let target: Rect
+        switch command {
+        case .focus(.left), .swap(.left): target = SnapZone.left.frame(in: a, parameters: p)
+        case .focus(.right), .swap(.right): target = SnapZone.right.frame(in: a, parameters: p)
+        case .focus(.up), .swap(.up), .toggleZoom: target = SnapZone.full.frame(in: a, parameters: p)
+        case .focus(.down), .swap(.down):
+            let w = (a.width * 0.6).rounded(), h = (a.height * 0.7).rounded()
+            target = Rect(x: a.x + (a.width - w) / 2, y: a.y + (a.height - h) / 2, width: w, height: h)
+        default: return false
+        }
+        ignoreMovesUntil = Date().addingTimeInterval(0.5)
+        window.setFrame(CGRect(target))
+        return true
     }
 
     /// ⌘-Tab or a Dock click to a window on a hidden workspace shows that workspace.
@@ -462,10 +579,9 @@ final class TilingManager {
         defer { lastFocused = focused }
         guard isEnabled, Date().timeIntervalSince(lastWorkspaceSwitch) > 0.6, let id = focused, id != lastFocused,
               let d = displayID(of: id), !workspaces.isShown(id, on: d) else { return }
-        workspaces.show(workspaces.workspace(of: id, on: d), on: d)
-        lastWorkspaceSwitch = Date()
+        switchWorkspace(on: d, to: workspaces.workspace(of: id, on: d))
         scheduleRefresh()
-        onMessage?("Workspace \(workspaces.active(on: d))")
+        onMessage?(config.workspaceName(workspaces.active(on: d)))
     }
 
     /// Puts every parked window back on screen, e.g. when tiling is turned off or Tiles quits.
@@ -757,9 +873,11 @@ final class TilingManager {
     // MARK: - Commands
 
     func perform(_ command: Command) {
-        if command == .showShortcuts {
-            onShowShortcuts?()
-            return
+        switch command {
+        case .showShortcuts: onShowShortcuts?(); return
+        case .findWindow: onFindWindow?(); return
+        case .showTour: onShowTour?(); return
+        default: break
         }
         if command == .toggleTiling {
             // Saved like any other setting, so the menu, dashboard and next launch agree.
@@ -773,6 +891,8 @@ final class TilingManager {
         flushPendingRefresh()
         let focused = focusedWindow()
         let focusedID = focused.flatMap { targetFrames[$0.id] != nil ? $0.id : nil }
+        if let window = focused, targetFrames[window.id] == nil, windows[window.id] != nil,
+           snapWithKeyboard(command, window) { return }
 
         switch command {
         case .focus(let direction):
@@ -923,9 +1043,9 @@ final class TilingManager {
             for (w, h) in stackedOn where h == id { stackedOn[w] = nil }
             refresh()
             if let neighbour, neighbour != id { focus(neighbour) }
-            onMessage?("Sent to workspace \(number)")
+            onMessage?("Sent to \(config.workspaceName(number))")
 
-        case .toggleTiling, .showShortcuts:
+        case .toggleTiling, .showShortcuts, .findWindow, .showTour:
             break
         }
     }

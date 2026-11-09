@@ -51,6 +51,9 @@ curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.s
 | Workspaces | Up to 9 per display: `⌃⌥1`–`⌃⌥9` to switch, `⌃⌥⇧1`–`⌃⌥⇧9` to send a window. No need to turn off SIP |
 | Scroll to pan | In Scrolling, hold `⌃⌥` and swipe or scroll to slide the strip |
 | Animation | Optional: windows slide into place instead of jumping |
+| Snap mode | Prefer to place windows yourself? Windows stay put, and dragging one to a screen edge or corner snaps it to half, a quarter or the full screen |
+| Window finder | `⌃⌥G`, type a few letters, Return: you're in that window, even on another workspace |
+| Welcome tour | Five short pages on first launch that show how it all works |
 | Raycast | Ready-made script commands in `integrations/raycast` |
 | Languages | English, Spanish, French and German, following your Mac's language |
 | Updates | Checks GitHub daily and installs updates signed by the Tiles developer, in place |
@@ -142,6 +145,7 @@ Every default is **⌃⌥ (Control + Option)** plus one key, which apps rarely c
 | `⌃⌥1` … `⌃⌥9` | Show workspace 1–9 on the active display |
 | `⌃⌥⇧1` … `⌃⌥⇧9` | Send the focused window to workspace 1–9 |
 | `⌃⌥/` | Pop up the cheat sheet of everyday shortcuts |
+| `⌃⌥G` | Find a window by name |
 
 Remap anything in the config file (see below). Shortcuts use key positions on a US layout.
 
@@ -156,6 +160,8 @@ Remap anything in the config file (see below). Shortcuts use key positions on a 
 ## Workspaces
 
 Each display has up to nine workspaces, each with its own set of windows. `⌃⌥2` shows workspace 2 on the display you're using, and `⌃⌥⇧2` sends the focused window there. ⌘-Tab or a Dock click to a window on another workspace switches to it. The menu bar and dashboard show which workspaces hold windows.
+
+Give a workspace a name and its own layout in Settings → Layouts → Desktops ("Music" in Columns); each one also remembers the layout you last used on it.
 
 Windows on hidden workspaces wait just off the corner of the screen (the approach AeroSpace uses), so switching is instant and needs no change to System Integrity Protection. Turning tiling off or quitting Tiles always brings them back.
 
@@ -228,7 +234,9 @@ A scene is the arrangement for one combination of displays: each display's layou
 | `theme` | `orange`, `blue`, `green`, `purple` or `pink` |
 | `appearance` | `system`, `light` or `dark` |
 | `iconPlacement` | `menu-bar`, `dock` or `both` |
-| `outlineColor` | Focus outline colour as `#RRGGBB`, `""` for none |
+| `outlineColor` | Focus outline colour as `#RRGGBB`, `""` for none (the default) |
+| `mode` | `automatic` (tile everything) or `snap` (windows stay put; drag to a screen edge to snap) |
+| `workspaceNames` / `workspaceLayouts` | Name and starting layout per workspace number, e.g. `{"2": "Music"}` / `{"2": "columns"}` |
 | `animateWindows` | Slide windows into place instead of jumping (default off) |
 | `newWindowPlacement` | `end`, `master`, or `after-focused` |
 | `rules` | Match on `app` (bundle ID or name) and/or `titleContains`. Last match wins. Replaces the default list when set |
@@ -236,7 +244,7 @@ A scene is the arrangement for one combination of displays: each display's layou
 
 **Shortcut syntax:** modifiers `cmd`, `alt`/`opt`, `ctrl`, `shift`, plus `hyper` (all four) and `meh` (all but cmd), joined with `+` to a key: a letter, digit, `left` `right` `up` `down`, `return`, `space`, `tab`, `f1`–`f20`, or punctuation such as `-` `=` `[` `]` `,` `.` `/`.
 
-**Commands:** `focus-left|right|up|down`, `swap-left|right|up|down`, `promote`, `focus-next`, `focus-previous`, `layout-<name>`, `next-layout`, `previous-layout`, `grow-master`, `shrink-master`, `increase-master-count`, `decrease-master-count`, `increase-gaps`, `decrease-gaps`, `toggle-float`, `toggle-tiling`, `retile`, `move-to-next-display`, `move-to-previous-display`, `save-scene`, `restore-scene`, `undo-restore`, `toggle-zoom`, `cycle-width`, `center-window`, `workspace-1`…`workspace-9`, `move-to-workspace-1`…`move-to-workspace-9`.
+**Commands:** `focus-left|right|up|down`, `swap-left|right|up|down`, `promote`, `focus-next`, `focus-previous`, `layout-<name>`, `next-layout`, `previous-layout`, `grow-master`, `shrink-master`, `increase-master-count`, `decrease-master-count`, `increase-gaps`, `decrease-gaps`, `toggle-float`, `toggle-tiling`, `retile`, `move-to-next-display`, `move-to-previous-display`, `save-scene`, `restore-scene`, `undo-restore`, `toggle-zoom`, `cycle-width`, `center-window`, `workspace-1`…`workspace-9`, `move-to-workspace-1`…`move-to-workspace-9`, `show-shortcuts`, `find-window`, `show-tour`.
 
 ## Automation
 
