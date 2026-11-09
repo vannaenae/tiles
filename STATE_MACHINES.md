@@ -5,7 +5,7 @@ Every piece of Tiles that remembers "where it is" between events, what its state
 one owner; they're listed here so nobody has to rediscover them. Ask a running Tiles for its state with
 `tiles status`.
 
-## Explicit (enum in TilesCore, tested in `LifecycleTests`)
+## Explicit (types in TilesCore, each with unit tests)
 
 ### 1. App lifecycle and permission: `AppPhase` (owner: `AppDelegate`)
 
