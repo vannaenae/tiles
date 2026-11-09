@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     private var lastStatus: Data?
     private let outline = FocusOutline()
     private let badges = StackBadges()
+    private let cheatSheet = CheatSheet()
     let updater = Updater()
     private var settingsWindow: NSWindow?
     private var settingsModel: SettingsModel?
@@ -45,6 +46,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
             self.badges.show(stacks, hex: self.configStore.config.theme.hex)
         }
         badges.onClick = { [weak self] ids in self?.manager.cycleStack(ids) }
+        manager.onShowShortcuts = { [weak self] in
+            guard let self else { return }
+            self.cheatSheet.toggle(config: self.configStore.config)
+        }
         updater.onChange = { [weak self] in
             self?.settingsModel?.objectWillChange.send()
             self?.scheduleStatusWrite()
@@ -313,6 +318,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         options.submenu = optionsMenu
         menu.addItem(options)
 
+        menu.addItem(item("Show Shortcuts", #selector(showShortcuts)))
         menu.addItem(shortcutsMenu())
         menu.addItem(item("Open Tiles…", #selector(openSettings), key: ","))
         menu.addItem(item("Edit Config File…", #selector(openConfig)))
@@ -361,6 +367,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
 
     // MARK: - Actions
 
+    @objc private func showShortcuts() { cheatSheet.toggle(config: configStore.config) }
     @objc private func grantAccess() { AccessibilityPermission.request() }
     @objc private func resetAccess() { AccessibilityPermission.reset() }
     @objc private func restart() { AccessibilityPermission.relaunch() }

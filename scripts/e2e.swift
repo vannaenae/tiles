@@ -187,9 +187,9 @@ snapshot("master-stack")
 press(49) // ⌃⌥Space: next layout
 settle()
 check(frames() != start, "⌃⌥Space switches to the next layout")
-press(19) // ⌃⌥2: back to Master & Stack
+press(49, [.maskControl, .maskAlternate, .maskShift]) // ⌃⌥⇧Space: previous layout
 settle()
-check(frames() == start, "⌃⌥2 jumps straight to Master & Stack")
+check(frames() == start, "⌃⌥⇧Space goes back to the previous layout")
 
 // 3. Drag a window's title bar onto another: they swap.
 let byX = windows().sorted { ($0.frame.minX, $0.frame.minY) < ($1.frame.minX, $1.frame.minY) }
@@ -325,28 +325,28 @@ if let fresh = all.first(where: { !known.contains($0.id) }) {
     check(false, "a new TextEdit window opened")
 }
 
-// 9. Workspaces: ⌃⌥⌘2 sends the focused window to workspace 2, ⌃⌘2 / ⌃⌘1 switch.
+// 9. Workspaces: ⌃⌥⇧2 sends the focused window to workspace 2, ⌃⌥2 / ⌃⌥1 switch.
 let screen = CGDisplayBounds(CGMainDisplayID())
 func parked(_ f: CGRect) -> Bool { f.minX >= screen.maxX - 2 || f.maxX <= screen.minX + 2 }
 tiles("layout-master-stack")
 let beforeSend = frames()
-press(19, [.maskControl, .maskAlternate, .maskCommand]) // ⌃⌥⌘2
+press(19, [.maskControl, .maskAlternate, .maskShift]) // ⌃⌥⇧2
 settle(2)
 snapshot("sent-to-workspace-2")
 let afterSend = frames()
 let sent = afterSend.filter { parked($0.value) }.map(\.key)
-check(sent.count == 1, "⌃⌥⌘2 moves one window off to workspace 2 (\(sent.count) parked)")
+check(sent.count == 1, "⌃⌥⇧2 moves one window off to workspace 2 (\(sent.count) parked)")
 check(afterSend.filter { !parked($0.value) }.count == beforeSend.count - 1, "the rest re-tile to fill the gap")
-press(19, [.maskControl, .maskCommand]) // ⌃⌘2
+press(19) // ⌃⌥2
 settle(2)
 snapshot("workspace-2")
 let onTwo = frames()
 check(sent.allSatisfy { !parked(onTwo[$0] ?? .zero) } && onTwo.filter { !parked($0.value) }.count == sent.count,
-      "⌃⌘2 shows workspace 2: only that window is on screen")
-press(18, [.maskControl, .maskCommand]) // ⌃⌘1
+      "⌃⌥2 shows workspace 2: only that window is on screen")
+press(18) // ⌃⌥1
 settle(2)
 let onOne = frames()
-check(onOne.filter { !parked($0.value) }.count == beforeSend.count - 1, "⌃⌘1 brings workspace 1 back")
+check(onOne.filter { !parked($0.value) }.count == beforeSend.count - 1, "⌃⌥1 brings workspace 1 back")
 // Bring the sent window home: show 2 (which focuses it), send it to 1, show 1.
 tiles("workspace-2"); tiles("move-to-workspace-1"); tiles("workspace-1")
 check(frames().filter { parked($0.value) }.isEmpty, "every window is back on workspace 1")

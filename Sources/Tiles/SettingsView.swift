@@ -780,7 +780,7 @@ private struct DashboardPane: View {
             Group {
                 Text("⌃⌥ + arrows  focus a window   ·   ⌃⌥⇧ + arrows  swap")
                 Text("⌃⌥Space  next layout   ·   ⌃⌥M  fill the screen   ·   ⌃⌥F  float")
-                Text("⌃⌘1–5  switch workspace   ·   ⌃⌥⌘1–5  send the window there")
+                Text("⌃⌥1–9  switch desktop   ·   ⌃⌥⇧1–9  send the window there   ·   ⌃⌥/  all shortcuts")
                 Text("Drag a window onto another to swap them; hold ⌥ to stack them instead.")
             }
             .font(.callout).foregroundStyle(.secondary)

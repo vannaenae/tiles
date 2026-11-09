@@ -168,39 +168,37 @@ public struct Config: Codable, Equatable {
         WindowRule(app: "com.apple.Stickies", float: true),
     ]
 
-    /// Built-in bindings. Most use ⌃⌥ (control + option) so they rarely clash with apps;
-    /// workspaces use ⌃⌘ (show) and ⌃⌥⌘ (send a window).
-    public static let defaultHotkeys: [String: String] = [
-        "ctrl+alt+h": "focus-left", "ctrl+alt+j": "focus-down",
-        "ctrl+alt+k": "focus-up", "ctrl+alt+l": "focus-right",
-        "ctrl+alt+left": "focus-left", "ctrl+alt+down": "focus-down",
-        "ctrl+alt+up": "focus-up", "ctrl+alt+right": "focus-right",
-        "ctrl+alt+shift+h": "swap-left", "ctrl+alt+shift+j": "swap-down",
-        "ctrl+alt+shift+k": "swap-up", "ctrl+alt+shift+l": "swap-right",
-        "ctrl+alt+shift+left": "swap-left", "ctrl+alt+shift+down": "swap-down",
-        "ctrl+alt+shift+up": "swap-up", "ctrl+alt+shift+right": "swap-right",
-        "ctrl+alt+return": "promote",
-        "ctrl+alt+space": "next-layout", "ctrl+alt+shift+space": "previous-layout",
-        "ctrl+alt+1": "layout-dwindle", "ctrl+alt+2": "layout-master-stack",
-        "ctrl+alt+3": "layout-centered-master", "ctrl+alt+4": "layout-columns",
-        "ctrl+alt+5": "layout-grid", "ctrl+alt+6": "layout-monocle",
-        "ctrl+alt+7": "layout-wide-master", "ctrl+alt+8": "layout-rows",
-        "ctrl+alt+9": "layout-thirds",
-        "ctrl+alt+0": "layout-float",
-        "ctrl+alt+=": "grow-master", "ctrl+alt+-": "shrink-master",
-        "ctrl+alt+,": "increase-master-count", "ctrl+alt+.": "decrease-master-count",
-        "ctrl+alt+shift+=": "increase-gaps", "ctrl+alt+shift+-": "decrease-gaps",
-        "ctrl+alt+f": "toggle-float", "ctrl+alt+m": "toggle-zoom", "ctrl+alt+w": "cycle-width", "ctrl+alt+c": "center-window", "ctrl+alt+t": "toggle-tiling",
-        "ctrl+alt+r": "retile",
-        "ctrl+alt+n": "focus-next", "ctrl+alt+p": "focus-previous",
-        "ctrl+alt+]": "move-to-next-display", "ctrl+alt+[": "move-to-previous-display",
-        "ctrl+alt+s": "save-scene", "ctrl+alt+z": "undo-restore",
-        "ctrl+cmd+1": "workspace-1", "ctrl+cmd+2": "workspace-2", "ctrl+cmd+3": "workspace-3",
-        "ctrl+cmd+4": "workspace-4", "ctrl+cmd+5": "workspace-5",
-        "ctrl+alt+cmd+1": "move-to-workspace-1", "ctrl+alt+cmd+2": "move-to-workspace-2",
-        "ctrl+alt+cmd+3": "move-to-workspace-3", "ctrl+alt+cmd+4": "move-to-workspace-4",
-        "ctrl+alt+cmd+5": "move-to-workspace-5",
-    ]
+    /// Built-in bindings. Everything is ⌃⌥ (Control + Option) plus one key; adding ⇧ (Shift)
+    /// moves the window instead of the focus. ⌃⌥/ shows the cheat sheet.
+    public static let defaultHotkeys: [String: String] = {
+        var keys: [String: String] = [
+            "ctrl+alt+h": "focus-left", "ctrl+alt+j": "focus-down",
+            "ctrl+alt+k": "focus-up", "ctrl+alt+l": "focus-right",
+            "ctrl+alt+left": "focus-left", "ctrl+alt+down": "focus-down",
+            "ctrl+alt+up": "focus-up", "ctrl+alt+right": "focus-right",
+            "ctrl+alt+shift+h": "swap-left", "ctrl+alt+shift+j": "swap-down",
+            "ctrl+alt+shift+k": "swap-up", "ctrl+alt+shift+l": "swap-right",
+            "ctrl+alt+shift+left": "swap-left", "ctrl+alt+shift+down": "swap-down",
+            "ctrl+alt+shift+up": "swap-up", "ctrl+alt+shift+right": "swap-right",
+            "ctrl+alt+return": "promote",
+            "ctrl+alt+space": "next-layout", "ctrl+alt+shift+space": "previous-layout",
+            "ctrl+alt+=": "grow-master", "ctrl+alt+-": "shrink-master",
+            "ctrl+alt+,": "increase-master-count", "ctrl+alt+.": "decrease-master-count",
+            "ctrl+alt+shift+=": "increase-gaps", "ctrl+alt+shift+-": "decrease-gaps",
+            "ctrl+alt+f": "toggle-float", "ctrl+alt+m": "toggle-zoom", "ctrl+alt+w": "cycle-width", "ctrl+alt+c": "center-window", "ctrl+alt+t": "toggle-tiling",
+            "ctrl+alt+r": "retile",
+            "ctrl+alt+n": "focus-next", "ctrl+alt+p": "focus-previous",
+            "ctrl+alt+]": "move-to-next-display", "ctrl+alt+[": "move-to-previous-display",
+            "ctrl+alt+s": "save-scene", "ctrl+alt+z": "undo-restore",
+            "ctrl+alt+/": "show-shortcuts",
+        ]
+        // Numbers are desktops: ⌃⌥2 shows workspace 2, ⌃⌥⇧2 sends the window there.
+        for n in Workspaces.numbers {
+            keys["ctrl+alt+\(n)"] = "workspace-\(n)"
+            keys["ctrl+alt+shift+\(n)"] = "move-to-workspace-\(n)"
+        }
+        return keys
+    }()
 
     enum CodingKeys: String, CodingKey {
         case enabled, defaultLayout, ultrawideLayout, displays, layout, newWindowPlacement

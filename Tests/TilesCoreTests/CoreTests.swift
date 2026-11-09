@@ -299,7 +299,10 @@ final class WorkspaceTests: XCTestCase {
         XCTAssertEqual(Command(name: "workspace-3"), .workspace(3))
         XCTAssertEqual(Command(name: "move-to-workspace-9"), .moveToWorkspace(9))
         XCTAssertNil(Command(name: "workspace-10"))
-        XCTAssertEqual(Config.default.shortcuts(for: .workspace(2)).map(\.description), ["⌃⌘2"])
+        XCTAssertEqual(Config.default.shortcuts(for: .workspace(2)).map(\.description), ["⌃⌥2"])
+        XCTAssertEqual(Config.default.shortcuts(for: .moveToWorkspace(2)).map(\.description), ["⌃⌥⇧2"])
+        XCTAssertEqual(Config.default.shortcuts(for: .showShortcuts).map(\.description), ["⌃⌥/"])
+        XCTAssertEqual(Command(name: "show-shortcuts"), .showShortcuts)
     }
 }
 

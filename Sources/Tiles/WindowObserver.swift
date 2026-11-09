@@ -123,11 +123,16 @@ final class WorkspaceObserver {
                 }
                 self.syncApps()
                 self.handler(.structureChanged)
-                // Some apps create their first window a moment after launching.
-                if name == NSWorkspace.didLaunchApplicationNotification {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
-                        self?.syncApps()
-                        self?.handler(.structureChanged)
+                // Some apps create their first window a moment after launching, and after a
+                // desktop (Space) switch macOS still reports the old desktop's windows until the
+                // slide animation ends. Look again once things have settled.
+                // (Found on a real Mac: other desktops never got tiled.)
+                if name == NSWorkspace.didLaunchApplicationNotification || name == NSWorkspace.activeSpaceDidChangeNotification {
+                    for delay in [0.4, 1.0] {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+                            self?.syncApps()
+                            self?.handler(.structureChanged)
+                        }
                     }
                 }
             })

@@ -48,7 +48,7 @@ curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.s
 | Per-display | Different layout for each monitor, by name or by shape |
 | Rules | Float any app, or send its windows to a chosen display and the main tile |
 | Stacks | ⌥-drag a window onto another to stack them. A badge counts windows sharing a tile; click it to flip through |
-| Workspaces | Up to 9 per display: `⌃⌘1`–`⌃⌘9` to switch, `⌃⌥⌘1`–`⌃⌥⌘9` to send a window. No need to turn off SIP |
+| Workspaces | Up to 9 per display: `⌃⌥1`–`⌃⌥9` to switch, `⌃⌥⇧1`–`⌃⌥⇧9` to send a window. No need to turn off SIP |
 | Scroll to pan | In Scrolling, hold `⌃⌥` and swipe or scroll to slide the strip |
 | Animation | Optional: windows slide into place instead of jumping |
 | Raycast | Ready-made script commands in `integrations/raycast` |
@@ -114,11 +114,11 @@ If you rebuild from source, macOS may treat the new build as a different app. Re
 | **Monocle** | Every window full-screen; cycle with focus keys | Small screens, deep focus |
 | **Float** | Tiles leaves this display alone | Presentations |
 
-Each display has its own layout. Pick one from the menu bar, cycle with `⌃⌥Space`, or jump with `⌃⌥1`–`⌃⌥9`.
+Each display has its own layout. Pick one from the menu bar or cycle with `⌃⌥Space`. To jump straight to one, give it a shortcut in Settings → Shortcuts.
 
 ## Keyboard shortcuts
 
-All defaults use **⌃⌥ (Control + Option)**, which apps rarely claim.
+Every default is **⌃⌥ (Control + Option)** plus one key, which apps rarely claim. Add **⇧ Shift** to move the window instead of the focus. Forgot one? **`⌃⌥/`** pops up a cheat sheet.
 
 | Shortcut | Action |
 |---|---|
@@ -127,7 +127,6 @@ All defaults use **⌃⌥ (Control + Option)**, which apps rarely claim.
 | `⌃⌥↩` | Promote focused window to master (again to swap back) |
 | `⌃⌥N` / `⌃⌥P` | Focus next / previous window |
 | `⌃⌥Space` / `⌃⌥⇧Space` | Next / previous layout |
-| `⌃⌥1` … `⌃⌥9`, `⌃⌥0` | Dwindle, Master & Stack, Centered Master, Columns, Grid, Monocle, Wide Master, Rows, Thirds; Float |
 | `⌃⌥M` | Focus: fill the display with this window, again to put it back |
 | `⌃⌥W` | Scrolling: cycle the window's width through ⅓, ½, ⅔ and full |
 | `⌃⌥C` | Centre the window (Scrolling, or a floating window) |
@@ -140,8 +139,9 @@ All defaults use **⌃⌥ (Control + Option)**, which apps rarely claim.
 | `⌃⌥R` | Retile everything |
 | `⌃⌥S` | Save scene for this display setup |
 | `⌃⌥Z` | Undo the last scene restore |
-| `⌃⌘1` … `⌃⌘5` | Show workspace 1–5 on the active display (6–9 can be bound too) |
-| `⌃⌥⌘1` … `⌃⌥⌘5` | Send the focused window to workspace 1–5 |
+| `⌃⌥1` … `⌃⌥9` | Show workspace 1–9 on the active display |
+| `⌃⌥⇧1` … `⌃⌥⇧9` | Send the focused window to workspace 1–9 |
+| `⌃⌥/` | Pop up the cheat sheet of everyday shortcuts |
 
 Remap anything in the config file (see below). Shortcuts use key positions on a US layout.
 
@@ -155,7 +155,7 @@ Remap anything in the config file (see below). Shortcuts use key positions on a 
 
 ## Workspaces
 
-Each display has up to nine workspaces, each with its own set of windows. `⌃⌘2` shows workspace 2 on the display you're using, and `⌃⌥⌘2` sends the focused window there. ⌘-Tab or a Dock click to a window on another workspace switches to it. The menu bar and dashboard show which workspaces hold windows.
+Each display has up to nine workspaces, each with its own set of windows. `⌃⌥2` shows workspace 2 on the display you're using, and `⌃⌥⇧2` sends the focused window there. ⌘-Tab or a Dock click to a window on another workspace switches to it. The menu bar and dashboard show which workspaces hold windows.
 
 Windows on hidden workspaces wait just off the corner of the screen (the approach AeroSpace uses), so switching is instant and needs no change to System Integrity Protection. Turning tiling off or quitting Tiles always brings them back.
 

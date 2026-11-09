@@ -44,6 +44,8 @@ final class TilingManager {
     var onMessage: ((String) -> Void)?
     /// Frame of the focused tiled window for the outline, or nil to hide it.
     var onFocusFrame: ((Rect?) -> Void)?
+    /// ⌃⌥/ : show the shortcut cheat sheet (drawn by the app, not the manager).
+    var onShowShortcuts: (() -> Void)?
     /// Tiles holding more than one window, for the stack badges.
     var onStacks: (([(frame: Rect, ids: [WindowID])]) -> Void)?
     private var mouseMonitor: Any?
@@ -755,6 +757,10 @@ final class TilingManager {
     // MARK: - Commands
 
     func perform(_ command: Command) {
+        if command == .showShortcuts {
+            onShowShortcuts?()
+            return
+        }
         if command == .toggleTiling {
             // Saved like any other setting, so the menu, dashboard and next launch agree.
             configStore.update { $0.enabled = !isEnabled }
@@ -919,7 +925,7 @@ final class TilingManager {
             if let neighbour, neighbour != id { focus(neighbour) }
             onMessage?("Sent to workspace \(number)")
 
-        case .toggleTiling:
+        case .toggleTiling, .showShortcuts:
             break
         }
     }

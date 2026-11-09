@@ -145,8 +145,24 @@ T = {
 "Workspace": ("Espacio de trabajo", "Espace de travail", "Arbeitsbereich"),
 "You can also open Tiles any time from Spotlight or Finder.": ("También puedes abrir Tiles en cualquier momento desde Spotlight o el Finder.", "Vous pouvez aussi ouvrir Tiles à tout moment depuis Spotlight ou le Finder.", "Du kannst Tiles auch jederzeit über Spotlight oder den Finder öffnen."),
 "points": ("puntos", "points", "Punkte"),
-"⌃⌘1–5  switch workspace   ·   ⌃⌥⌘1–5  send the window there":
- ("⌃⌘1–5  cambiar de espacio   ·   ⌃⌥⌘1–5  enviar la ventana allí", "⌃⌘1–5  changer d'espace   ·   ⌃⌥⌘1–5  y envoyer la fenêtre", "⌃⌘1–5  Arbeitsbereich wechseln   ·   ⌃⌥⌘1–5  Fenster dorthin senden"),
+"⌃⌥1–9  switch desktop   ·   ⌃⌥⇧1–9  send the window there   ·   ⌃⌥/  all shortcuts":
+ ("⌃⌥1–9  cambiar de escritorio   ·   ⌃⌥⇧1–9  enviar la ventana allí   ·   ⌃⌥/  todos los atajos",
+  "⌃⌥1–9  changer de bureau   ·   ⌃⌥⇧1–9  y envoyer la fenêtre   ·   ⌃⌥/  tous les raccourcis",
+  "⌃⌥1–9  Schreibtisch wechseln   ·   ⌃⌥⇧1–9  Fenster dorthin senden   ·   ⌃⌥/  alle Kurzbefehle"),
+# Cheat sheet
+"Tiles shortcuts": ("Atajos de Tiles", "Raccourcis de Tiles", "Tiles-Kurzbefehle"),
+"Show Shortcuts": ("Mostrar atajos", "Afficher les raccourcis", "Kurzbefehle anzeigen"),
+"Hold ⌃ Control + ⌥ Option, then press:": ("Mantén ⌃ Control + ⌥ Opción y pulsa:", "Maintenez ⌃ Contrôle + ⌥ Option, puis appuyez sur :", "Halte ⌃ Control + ⌥ Wahl und drücke:"),
+"Change any of these in Tiles → Shortcuts.": ("Cámbialos en Tiles → Atajos.", "Modifiez-les dans Tiles → Raccourcis.", "Ändere sie in Tiles → Kurzbefehle."),
+"Move between windows (any arrow)": ("Moverte entre ventanas (cualquier flecha)", "Passer d'une fenêtre à l'autre (n'importe quelle flèche)", "Zwischen Fenstern wechseln (beliebiger Pfeil)"),
+"Move the window itself (any arrow)": ("Mover la propia ventana (cualquier flecha)", "Déplacer la fenêtre elle-même (n'importe quelle flèche)", "Das Fenster selbst verschieben (beliebiger Pfeil)"),
+"Fill the screen / put it back": ("Llenar la pantalla / devolverla", "Remplir l'écran / la remettre", "Bildschirm füllen / zurücksetzen"),
+"Make it the main window": ("Convertirla en la ventana principal", "En faire la fenêtre principale", "Zum Hauptfenster machen"),
+"Float or tile this window": ("Flotar o encajar esta ventana", "Faire flotter ou ranger cette fenêtre", "Dieses Fenster schweben lassen oder kacheln"),
+"Go to desktop 1 (any number)": ("Ir al escritorio 1 (cualquier número)", "Aller au bureau 1 (n'importe quel chiffre)", "Zu Schreibtisch 1 (beliebige Zahl)"),
+"Send the window to desktop 1": ("Enviar la ventana al escritorio 1", "Envoyer la fenêtre au bureau 1", "Fenster an Schreibtisch 1 senden"),
+"Turn tiling on or off": ("Activar o desactivar el mosaico", "Activer ou désactiver les tuiles", "Kacheln ein- oder ausschalten"),
+"Show or hide this list": ("Mostrar u ocultar esta lista", "Afficher ou masquer cette liste", "Diese Liste ein- oder ausblenden"),
 "⌃⌥ + arrows  focus a window   ·   ⌃⌥⇧ + arrows  swap":
  ("⌃⌥ + flechas  enfocar ventana   ·   ⌃⌥⇧ + flechas  intercambiar", "⌃⌥ + flèches  activer une fenêtre   ·   ⌃⌥⇧ + flèches  échanger", "⌃⌥ + Pfeile  Fenster fokussieren   ·   ⌃⌥⇧ + Pfeile  tauschen"),
 "⌃⌥Space  next layout   ·   ⌃⌥M  fill the screen   ·   ⌃⌥F  float":

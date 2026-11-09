@@ -31,6 +31,8 @@ public enum Command: Equatable {
     case workspace(Int)
     /// Send the focused window to workspace 1–9 on its display.
     case moveToWorkspace(Int)
+    /// Pop up the cheat sheet of everyday shortcuts.
+    case showShortcuts
 
     /// Stable string form used in config files and URLs, e.g. `focus-left`, `layout-columns`.
     public var name: String {
@@ -62,6 +64,7 @@ public enum Command: Equatable {
         case .centerWindow: return "center-window"
         case .workspace(let n): return "workspace-\(n)"
         case .moveToWorkspace(let n): return "move-to-workspace-\(n)"
+        case .showShortcuts: return "show-shortcuts"
         }
     }
 
@@ -71,7 +74,7 @@ public enum Command: Equatable {
             .promote, .nextLayout, .previousLayout, .growMaster, .shrinkMaster,
             .increaseMasterCount, .decreaseMasterCount, .toggleFloat, .toggleTiling,
             .retile, .focusNextWindow, .focusPreviousWindow, .moveToNextDisplay,
-            .moveToPreviousDisplay, .increaseGaps, .decreaseGaps, .saveScene, .restoreScene, .undoRestore, .toggleZoom, .cycleWidth, .centerWindow,
+            .moveToPreviousDisplay, .increaseGaps, .decreaseGaps, .saveScene, .restoreScene, .undoRestore, .toggleZoom, .cycleWidth, .centerWindow, .showShortcuts,
         ] + Workspaces.numbers.map(Command.workspace) + Workspaces.numbers.map(Command.moveToWorkspace)
 
     public static var allNames: [String] { all.map(\.name) }
