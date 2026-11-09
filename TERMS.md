@@ -4,7 +4,7 @@
 
 **Effective 9 November 2026**
 
-These terms cover the Tiles app and the Tiles website at <https://vannaenae.github.io/tiles/>. Tiles is a SOULSPACE Collective product. In these terms, "we" and "us" means SOULSPACE Collective, and "you" means anyone who uses Tiles or visits the website.
+These terms cover the Tiles app and the Tiles website at <https://vannaenae.github.io/tiles/>. Tiles is a SOULSPCE Collective product. In these terms, "we" and "us" means SOULSPCE Collective, and "you" means anyone who uses Tiles or visits the website.
 
 ## 1. Agreeing to these terms
 
@@ -30,7 +30,7 @@ In plain words: we work hard to make Tiles good, but we can't promise it will wo
 
 As the MIT License says, the authors and copyright holders are **not liable for any claim, damages or other liability**, whether in contract, tort or otherwise, arising from, out of or in connection with Tiles or its use.
 
-To the extent the law allows, the same applies to SOULSPACE Collective and to the website. We are not liable for any loss or damage that comes from using, or not being able to use, Tiles or the website. This includes lost data, lost work or lost profits.
+To the extent the law allows, the same applies to SOULSPCE Collective and to the website. We are not liable for any loss or damage that comes from using, or not being able to use, Tiles or the website. This includes lost data, lost work or lost profits.
 
 Some places don't allow some of these limits. Where that's the case, our liability is limited as far as the law there allows. Nothing in these terms limits any liability that can't be limited by law, or takes away rights you have as a consumer that can't be waived.
 
@@ -44,9 +44,9 @@ You're welcome to read, link to and share the website. Please don't:
 
 The website's content is provided "as is", like the app.
 
-## 6. The Tiles and SOULSPACE Collective names and icon
+## 6. The Tiles and SOULSPCE Collective names and icon
 
-The MIT License covers the Tiles code. It doesn't give you the right to use the **Tiles** name, the **SOULSPACE Collective** name or the **Tiles icon** as the brand of your own product.
+The MIT License covers the Tiles code. It doesn't give you the right to use the **Tiles** name, the **SOULSPCE Collective** name or the **Tiles icon** as the brand of your own product.
 
 You can:
 
@@ -57,7 +57,7 @@ You can:
 Please don't, without asking us first:
 
 - call your own app, fork or service "Tiles", or use a name or icon so close to ours that people could confuse them;
-- suggest that SOULSPACE Collective made, approved or supports something it didn't.
+- suggest that SOULSPCE Collective made, approved or supports something it didn't.
 
 If you publish a fork, give it its own name and icon. That keeps it clear for everyone which app is which.
 
@@ -97,7 +97,7 @@ We may update these terms. When we do, we will change the effective date at the 
 
 ## 13. Contact
 
-- Publisher: SOULSPACE Collective, [legal entity name and address]
+- Publisher: SOULSPCE Collective, [legal entity name and address]
 - Email: [contact email]
 - Questions and issues: <https://github.com/vannaenae/tiles/issues>
 

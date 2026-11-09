@@ -659,7 +659,7 @@ private struct AboutPane: View {
             Text("Tiles").font(.largeTitle.bold())
             Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev")")
                 .foregroundStyle(.secondary)
-            Text("A SOULSPACE Collective product")
+            Text("A SOULSPCE Collective product")
                 .font(.callout.weight(.medium))
                 .foregroundStyle(.secondary)
             Text("Free and open source under the MIT License.")

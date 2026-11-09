@@ -2,7 +2,7 @@
 
 <h1 align="center">Tiles</h1>
 
-<p align="center"><sub>Version 0.7.0 · A SOULSPACE Collective product</sub></p>
+<p align="center"><sub>Version 0.7.0 · A SOULSPCE Collective product</sub></p>
 
 <p align="center"><b>A free, open-source auto-tiling window manager for macOS.</b><br>
 Every window snaps into place the moment it opens. Every screen gets the right layout. Your desk setup comes back when you dock.</p>
@@ -295,7 +295,7 @@ Tiles collects nothing. Its only network traffic is the update check with GitHub
 
 ## License
 
-[MIT](LICENSE). Tiles is a SOULSPACE Collective product.
+[MIT](LICENSE). Tiles is a SOULSPCE Collective product.
 
 ## Releasing (maintainers)
 

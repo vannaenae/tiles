@@ -44,7 +44,7 @@
 "Float keeps an app's windows out of the tiles. Otherwise, new windows of that app open on the display you pick, optionally in the main tile. The last matching rule wins. ⌃⌥F floats or tiles any single window." = "Schweben hält die Fenster einer App aus den Kacheln heraus. Andernfalls öffnen sich neue Fenster dieser App auf dem gewählten Bildschirm, optional in der Hauptkachel. Die letzte passende Regel gewinnt. ⌃⌥F lässt ein einzelnes Fenster schweben oder kachelt es.";
 "Float" = "Schweben";
 "Focus follows mouse" = "Fokus folgt der Maus";
-"A SOULSPACE Collective product" = "Ein Produkt von SOULSPACE Collective";
+"A SOULSPCE Collective product" = "Ein Produkt von SOULSPCE Collective";
 "Privacy" = "Datenschutz";
 "Terms" = "Bedingungen";
 "Free and open source under the MIT License." = "Kostenlos und quelloffen unter der MIT-Lizenz.";

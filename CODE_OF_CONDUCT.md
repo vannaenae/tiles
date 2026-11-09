@@ -2,7 +2,7 @@
 
 # Code of Conduct
 
-Tiles is a SOULSPACE Collective product, built in the open by people who give their time to it. We want everyone who takes part to feel welcome and safe.
+Tiles is a SOULSPCE Collective product, built in the open by people who give their time to it. We want everyone who takes part to feel welcome and safe.
 
 This code applies in every Tiles project space: issues, pull requests, discussions, reviews, commit messages, and anywhere you speak for the project. It also applies to behaviour elsewhere that harms people in the project.
 

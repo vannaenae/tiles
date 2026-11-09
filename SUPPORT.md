@@ -2,7 +2,7 @@
 
 # Tiles Support
 
-Tiles is free and open source, a SOULSPACE Collective product. Support happens in the open, on GitHub.
+Tiles is free and open source, a SOULSPCE Collective product. Support happens in the open, on GitHub.
 
 - **Ask a question or report a bug:** <https://github.com/vannaenae/tiles/issues>
 - **Report a security problem privately:** <https://github.com/vannaenae/tiles/security/advisories/new> (see the [security policy](https://github.com/vannaenae/tiles/blob/main/SECURITY.md))

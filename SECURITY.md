@@ -2,7 +2,7 @@
 
 # Security Policy
 
-Tiles is a SOULSPACE Collective product. Thank you for helping keep Tiles and the people who use it safe.
+Tiles is a SOULSPCE Collective product. Thank you for helping keep Tiles and the people who use it safe.
 
 ## Report a vulnerability privately
 

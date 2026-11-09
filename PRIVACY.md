@@ -4,7 +4,7 @@
 
 **Effective 9 November 2026**
 
-Tiles is a free, open-source window manager for Mac. It is a SOULSPACE Collective product. This policy covers the Tiles app and the Tiles website at <https://vannaenae.github.io/tiles/>. In this policy, "we" and "us" means SOULSPACE Collective.
+Tiles is a free, open-source window manager for Mac. It is a SOULSPCE Collective product. This policy covers the Tiles app and the Tiles website at <https://vannaenae.github.io/tiles/>. In this policy, "we" and "us" means SOULSPCE Collective.
 
 ## The short version
 
@@ -99,7 +99,7 @@ If Tiles changes how it handles data, we will update this policy first. We will 
 
 ## Contact
 
-- Publisher: SOULSPACE Collective, [legal entity name and address]
+- Publisher: SOULSPCE Collective, [legal entity name and address]
 - Email: [contact email]
 - Questions and issues: <https://github.com/vannaenae/tiles/issues>
 - Security reports: <https://github.com/vannaenae/tiles/security/advisories/new>
