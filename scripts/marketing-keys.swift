@@ -2,6 +2,7 @@
 //
 //   marketing-keys new-window <url>   ⌘N, then type the URL and press Return (Safari: a new window, not a tab)
 //   marketing-keys dismiss <app name> clicks through first-run sheets (Continue, Not Now...) by button name
+//   marketing-keys hide <app name>    hides the app (like ⌘H), so its windows leave the layout
 //
 // Needs Accessibility (to post input events and read other apps' buttons).
 import AppKit
@@ -37,7 +38,7 @@ func type(_ text: String) {
 }
 
 // Buttons that move past a welcome or permissions sheet without signing in or turning anything on.
-let skipButtons: Set<String> = ["Continue", "Not Now", "Later", "Skip", "Done", "OK"]
+let skipButtons: Set<String> = ["continue", "not now", "later", "maybe later", "skip", "no thanks", "done", "ok"]
 
 func string(_ e: AXUIElement, _ attribute: String) -> String? {
     var v: CFTypeRef?
@@ -47,7 +48,7 @@ func string(_ e: AXUIElement, _ attribute: String) -> String? {
 
 func findSkipButton(in e: AXUIElement, depth: Int = 0) -> AXUIElement? {
     if string(e, kAXRoleAttribute) == kAXButtonRole as String,
-       let name = string(e, kAXTitleAttribute) ?? string(e, kAXDescriptionAttribute), skipButtons.contains(name) {
+       let name = string(e, kAXTitleAttribute) ?? string(e, kAXDescriptionAttribute), skipButtons.contains(name.lowercased()) {
         return e
     }
     guard depth < 12 else { return nil }
@@ -59,17 +60,38 @@ func findSkipButton(in e: AXUIElement, depth: Int = 0) -> AXUIElement? {
     return nil
 }
 
+func buttonNames(in e: AXUIElement, depth: Int = 0, into names: inout [String]) {
+    if string(e, kAXRoleAttribute) == kAXButtonRole as String,
+       let name = string(e, kAXTitleAttribute) ?? string(e, kAXDescriptionAttribute), !name.isEmpty {
+        names.append(name)
+    }
+    guard depth < 12, names.count < 40 else { return }
+    var v: CFTypeRef?
+    AXUIElementCopyAttributeValue(e, kAXChildrenAttribute as CFString, &v)
+    for child in (v as? [AXUIElement]) ?? [] { buttonNames(in: child, depth: depth + 1, into: &names) }
+}
+
+func app(named name: String) -> NSRunningApplication? {
+    NSWorkspace.shared.runningApplications.first { $0.localizedName == name }
+}
+
+/// Sheets can arrive one after another, a few seconds apart, so keep watching until
+/// none has shown up for a while.
 func dismissSheets(of appName: String) {
-    guard let app = NSWorkspace.shared.runningApplications.first(where: { $0.localizedName == appName }) else {
-        print("\(appName) isn't running"); return
+    guard let target = app(named: appName) else { print("\(appName) isn't running"); return }
+    let root = AXUIElementCreateApplication(target.processIdentifier)
+    var quietSince = Date()
+    while Date().timeIntervalSince(quietSince) < 8 {
+        if let button = findSkipButton(in: root) {
+            print("\(appName): pressed \(string(button, kAXTitleAttribute) ?? "button")")
+            AXUIElementPerformAction(button, kAXPressAction as CFString)
+            quietSince = Date()
+        }
+        Thread.sleep(forTimeInterval: 1)
     }
-    let root = AXUIElementCreateApplication(app.processIdentifier)
-    for _ in 0..<6 {
-        guard let button = findSkipButton(in: root) else { return }
-        print("\(appName): \(string(button, kAXTitleAttribute) ?? "button")")
-        AXUIElementPerformAction(button, kAXPressAction as CFString)
-        Thread.sleep(forTimeInterval: 2.5)
-    }
+    var names: [String] = []
+    buttonNames(in: root, into: &names)
+    print("\(appName) buttons now: \(names.joined(separator: ", "))")
 }
 
 let args = CommandLine.arguments.dropFirst()
@@ -83,7 +105,9 @@ case "new-window" where args.count == 2:
     post(36)                        // Return
 case "dismiss" where args.count == 2:
     dismissSheets(of: args[args.startIndex + 1])
+case "hide" where args.count == 2:
+    app(named: args[args.startIndex + 1])?.hide()
 default:
-    FileHandle.standardError.write("usage: marketing-keys new-window <url> | dismiss <app name>\n".data(using: .utf8)!)
+    FileHandle.standardError.write("usage: marketing-keys new-window <url> | dismiss <app name> | hide <app name>\n".data(using: .utf8)!)
     exit(2)
 }

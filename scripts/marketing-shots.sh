@@ -121,16 +121,17 @@ new_window() { # url
 }
 
 # --- Start Tiles, then open the apps so they tile as they arrive --------------------------
-# Order matters in Dwindle: earlier windows get bigger tiles, and the App Store can't shrink much.
+# Order matters in Dwindle: earlier windows get bigger tiles. The App Store can't be narrower
+# than about 1000 points, so it goes first and gets the big tile.
 open /Applications/Tiles.app
 sleep 6
 "$TILES" layout-dwindle
-open -a Safari "$GITHUB_URL"
-sleep 8
 open "${APPSTORE_URL/https:/macappstore:}"
 sleep 10
 # A fresh Mac shows welcome sheets ("What's New", notifications) over the page; click past them.
 [ -n "$KEYS" ] && "$KEYS" dismiss "App Store"
+open -a Safari "$GITHUB_URL"
+sleep 8
 new_window "$CLAUDE_URL"
 sleep 6
 new_window "$GOOGLE_URL"
@@ -146,6 +147,9 @@ sleep 5
 "$TILES" retile
 open -a Safari
 shot 01-dwindle 4
+
+# The other layouts make narrow tiles the App Store can't fit, so it sits them out.
+if [ -n "$KEYS" ]; then "$KEYS" hide "App Store"; sleep 2; "$TILES" retile; fi
 
 # --- Every layout -------------------------------------------------------------------------
 for layout in master-stack columns grid centered-master scrolling wide-master; do
