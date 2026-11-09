@@ -124,6 +124,36 @@ func dragWindow(_ w: Win, to drop: CGPoint, beforeRelease: () -> Void = {}) {
 /// Empty title-bar space just right of the traffic lights: always grabs the window itself.
 func titleBar(_ w: Win) -> CGPoint { CGPoint(x: w.frame.minX + 90, y: w.frame.minY + 10) }
 
+// 0. Preflight: stop early with a clear reason instead of a page of FAILs.
+func shell(_ command: String) -> String {
+    let p = Process(), pipe = Pipe()
+    p.executableURL = URL(fileURLWithPath: "/bin/sh")
+    p.arguments = ["-c", command]
+    p.standardOutput = pipe
+    try? p.run()
+    p.waitUntilExit()
+    return String(data: pipe.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+}
+if shell("pgrep -x Tiles").isEmpty {
+    print("STOP Tiles isn't running. Open /Applications/Tiles.app, allow it in System Settings → Privacy & Security → Accessibility, then run this again.")
+    exit(2)
+}
+if windows().count != 4 {
+    print("STOP The test needs exactly 3 TextEdit windows and 1 Finder window open (found \(windows().count)). Run scripts/test-on-my-mac.sh, which sets that up for you.")
+    exit(2)
+}
+let untouched = frames()
+tiles("layout-columns")
+if frames() == untouched {
+    tiles("layout-grid")
+    if frames() == untouched {
+        print("STOP Tiles is running but didn't move any window. Check the menu bar icon: a ⚠︎ triangle means Accessibility isn't allowed")
+        print("     (System Settings → Privacy & Security → Accessibility → switch Tiles on, or remove it with − and add it again);")
+        print("     a dashed outline means tiling is off (⌃⌥T or the menu turns it on).")
+        exit(2)
+    }
+}
+
 // 1. Master & Stack: every window gets its own tile.
 tiles("layout-master-stack")
 let start = frames()
