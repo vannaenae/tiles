@@ -3,8 +3,8 @@
 #
 #   ./scripts/marketing-shots.sh [output-folder]      (default: marketing-out)
 #
-# Opens Safari (the Tiles website), Xcode (Tiles' own source), Terminal (`tiles status`)
-# and TextEdit, lets Tiles arrange them, then saves one PNG per scene with screencapture.
+# Opens Safari (Tiles on GitHub), Tiles' own source code, Terminal (`tiles --help`) and a
+# TextEdit note, lets Tiles arrange them, then saves one PNG per scene with screencapture.
 # It takes over the screen for about 3 minutes; don't touch the mouse or keyboard meanwhile.
 #
 # Needs: macOS, /Applications/Tiles.app running with Accessibility access, and
@@ -69,10 +69,13 @@ trap restore_config EXIT
 # --- Content: real apps, Tiles' own material, no third-party brands -----------------------
 # No red spelling underlines in TextEdit.
 defaults write com.apple.TextEdit CheckSpellingWhileTyping -bool false 2>/dev/null || true
-# Xcode lives at different paths on different Macs; ask xcode-select where it is.
+# Set MARKETING_XCODE=1 to show the code in Xcode. Off by default: on a fresh Mac, Xcode can
+# open a component-download prompt that covers the code.
 XCODE_APP=""
-dev="$(xcode-select -p 2>/dev/null || true)"
-case "$dev" in */Contents/Developer) XCODE_APP="${dev%/Contents/Developer}" ;; esac
+if [ "${MARKETING_XCODE:-0}" = "1" ]; then
+  dev="$(xcode-select -p 2>/dev/null || true)"
+  case "$dev" in */Contents/Developer) XCODE_APP="${dev%/Contents/Developer}" ;; esac
+fi
 cat > "$WORK/Tiles launch notes.txt" <<'TXT'
 Tiles launch notes
 
@@ -91,8 +94,8 @@ cat > "$WORK/tiles.command" <<CMD
 clear
 cd "$ROOT"
 printf '\033]0;tiles\007'
-print -P '%F{green}%1~%f %% tiles status'
-"$TILES" status
+print -P '%F{green}%1~%f %% tiles --help'
+"$TILES" --help
 print
 print -nP '%F{green}%1~%f %% '
 sleep 100000
@@ -105,15 +108,15 @@ defaults write com.apple.dt.Xcode XCShowWelcomeWindow -bool false 2>/dev/null ||
 open /Applications/Tiles.app
 sleep 6
 "$TILES" layout-dwindle
-# The Tiles website, loaded from this repository, so it works even before it's published.
-open -a Safari "file://$ROOT/docs/index.html"
+# Tiles' home page. Set MARKETING_URL to show another page, such as the website once it's live.
+open -a Safari "${MARKETING_URL:-https://github.com/vannaenae/tiles}"
 sleep 3
 if [ -n "$XCODE_APP" ] && open -a "$XCODE_APP" "$ROOT/Sources/TilesCore/Layout.swift"; then
   echo "opened Layout.swift in $XCODE_APP"
 else
   open -a TextEdit "$ROOT/Sources/TilesCore/Layout.swift"
 fi
-sleep 20
+sleep 6
 open -a Terminal "$WORK/tiles.command"
 sleep 3
 open -a TextEdit "$WORK/Tiles launch notes.txt"
