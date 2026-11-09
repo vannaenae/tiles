@@ -67,6 +67,12 @@ restore_config() { [ -f "$WORK/config.backup.json" ] && cp "$WORK/config.backup.
 trap restore_config EXIT
 
 # --- Content: real apps, Tiles' own material, no third-party brands -----------------------
+# No red spelling underlines in TextEdit.
+defaults write com.apple.TextEdit CheckSpellingWhileTyping -bool false 2>/dev/null || true
+# Xcode lives at different paths on different Macs; ask xcode-select where it is.
+XCODE_APP=""
+dev="$(xcode-select -p 2>/dev/null || true)"
+case "$dev" in */Contents/Developer) XCODE_APP="${dev%/Contents/Developer}" ;; esac
 cat > "$WORK/Tiles launch notes.txt" <<'TXT'
 Tiles launch notes
 
@@ -84,11 +90,9 @@ cat > "$WORK/tiles.command" <<CMD
 #!/bin/zsh
 clear
 cd "$ROOT"
+printf '\033]0;tiles\007'
 print -P '%F{green}%1~%f %% tiles status'
 "$TILES" status
-print
-print -P '%F{green}%1~%f %% tiles --help | head -8'
-"$TILES" --help | head -8
 print
 print -nP '%F{green}%1~%f %% '
 sleep 100000
@@ -101,10 +105,15 @@ defaults write com.apple.dt.Xcode XCShowWelcomeWindow -bool false 2>/dev/null ||
 open /Applications/Tiles.app
 sleep 6
 "$TILES" layout-dwindle
-open -a Safari "https://vannaenae.github.io/tiles/"
+# The Tiles website, loaded from this repository, so it works even before it's published.
+open -a Safari "file://$ROOT/docs/index.html"
 sleep 3
-open -a Xcode "$ROOT/Sources/TilesCore/Layout.swift" || open -a TextEdit "$ROOT/Sources/TilesCore/Layout.swift"
-sleep 12
+if [ -n "$XCODE_APP" ] && open -a "$XCODE_APP" "$ROOT/Sources/TilesCore/Layout.swift"; then
+  echo "opened Layout.swift in $XCODE_APP"
+else
+  open -a TextEdit "$ROOT/Sources/TilesCore/Layout.swift"
+fi
+sleep 20
 open -a Terminal "$WORK/tiles.command"
 sleep 3
 open -a TextEdit "$WORK/Tiles launch notes.txt"
