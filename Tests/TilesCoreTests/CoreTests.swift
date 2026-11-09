@@ -280,6 +280,21 @@ final class WorkspaceTests: XCTestCase {
         XCTAssertEqual(w.workspace(of: 7, on: "A"), 1)
     }
 
+    func testWindowFromAnUnpluggedDisplayStaysVisible() {
+        // A window on the LG's workspace 2; the laptop shows workspace 1. Unplug the LG:
+        // the window lands on the laptop and must be on the workspace the laptop shows.
+        var w = Workspaces()
+        w.show(2, on: "LG")
+        w.adopt(9, on: "LG")
+        XCTAssertEqual(w.workspace(of: 9, on: "LG"), 2)
+        w.adopt(9, on: "laptop")
+        XCTAssertTrue(w.isShown(9, on: "laptop"))
+        // Staying on the same display keeps an explicit choice.
+        w.move(9, to: 3)
+        w.adopt(9, on: "laptop")
+        XCTAssertEqual(w.workspace(of: 9, on: "laptop"), 3)
+    }
+
     func testWorkspaceCommandsRoundTrip() {
         XCTAssertEqual(Command(name: "workspace-3"), .workspace(3))
         XCTAssertEqual(Command(name: "move-to-workspace-9"), .moveToWorkspace(9))
@@ -345,5 +360,24 @@ final class LifecycleTests: XCTestCase {
         XCTAssertEqual(decoded, original)
         let text = String(decoding: try original.encoded(), as: UTF8.self)
         XCTAssertTrue(text.contains("\"phase\" : \"running\""))
+    }
+}
+
+final class FloatOverrideTests: XCTestCase {
+    func testOverrideBeatsTheRules() {
+        XCTAssertTrue(FloatOverride.floats(.float, ruleSaysFloat: false))
+        XCTAssertFalse(FloatOverride.floats(.tile, ruleSaysFloat: true))
+        XCTAssertTrue(FloatOverride.floats(nil, ruleSaysFloat: true))
+        XCTAssertFalse(FloatOverride.floats(nil, ruleSaysFloat: false))
+    }
+
+    func testToggleAlwaysFlipsTheOutcome() {
+        for tiled in [true, false] {
+            for rule in [true, false] {
+                let next = FloatOverride.toggled(isTiled: tiled, ruleSaysFloat: rule)
+                XCTAssertEqual(FloatOverride.floats(next, ruleSaysFloat: rule), tiled, "tiled=\(tiled) rule=\(rule)")
+            }
+        }
+        XCTAssertNil(FloatOverride.toggled(isTiled: false, ruleSaysFloat: false)) // back to following the rules
     }
 }

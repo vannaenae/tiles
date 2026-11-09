@@ -14,10 +14,8 @@ final class TilingManager {
     private var orders: [String: [WindowID]] = [:]
     private var layouts: [String: LayoutKind] = [:]
     private var parameters: [String: LayoutParameters] = [:]
-    /// Windows the user floated by hand.
-    private var userFloating = Set<WindowID>()
-    /// Windows the user tiled by hand even though a rule says float.
-    private var userTiled = Set<WindowID>()
+    /// ⌃⌥F choices that beat the app rules (TilesCore.FloatOverride).
+    private var floatOverrides: [WindowID: FloatOverride] = [:]
 
     private var windows: [WindowID: Window] = [:]
     private var visible = Set<WindowID>()
@@ -583,8 +581,11 @@ final class TilingManager {
     }
 
     private func isFloating(_ window: Window) -> Bool {
-        if userFloating.contains(window.id) { return true }
-        if userTiled.contains(window.id) { return false }
+        if let override = floatOverrides[window.id] { return override == .float }
+        return ruleFloats(window)
+    }
+
+    private func ruleFloats(_ window: Window) -> Bool {
         let needsTitle = config.rules.contains { $0.titleContains != nil }
         return config.shouldFloat(bundleID: window.bundleID, appName: window.appName, title: needsTitle ? window.title : nil)
     }
@@ -725,7 +726,7 @@ final class TilingManager {
     private func move(_ id: WindowID, from: String, to: String) {
         orders[from]?.removeAll { $0 == id }
         orders[to, default: []].append(id)
-        workspaces.move(id, to: workspaces.active(on: to))
+        // Its workspace follows on the next refresh: Workspaces.adopt sees the new display.
     }
 
     // MARK: - Focus
@@ -992,9 +993,8 @@ final class TilingManager {
 
     private func toggleFloat(_ window: Window) {
         let tiled = targetFrames[window.id] != nil
+        floatOverrides[window.id] = FloatOverride.toggled(isTiled: tiled, ruleSaysFloat: ruleFloats(window))
         if tiled {
-            userFloating.insert(window.id)
-            userTiled.remove(window.id)
             refresh()
             // Make it obvious the window is floating: centre it at a comfortable size.
             if let frame = window.frame?.tilesRect, let display = Display.best(for: frame, in: displays) {
@@ -1004,10 +1004,6 @@ final class TilingManager {
             }
             onMessage?("Floating")
         } else {
-            userFloating.remove(window.id)
-            if config.shouldFloat(bundleID: window.bundleID, appName: window.appName, title: window.title) {
-                userTiled.insert(window.id)
-            }
             refresh()
             onMessage?("Tiled")
         }

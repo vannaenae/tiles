@@ -40,9 +40,24 @@ and each display's layout, workspace and window count), plus a plain-language `p
 `~/Library/Application Support/Tiles/status.json` at most twice a second, only when it changes, and
 deleted on quit. `tiles status` prints it; the e2e test reads it before starting.
 
-## Implicit (documented, deliberately left as variables)
+### 4. Float override: `FloatOverride` (owner: `TilingManager.floatOverrides`)
 
-These live inside `TilingManager`'s event loop. They overlap in time (you can pan while an animation
+Per window: none (follow the app rules), `float`, or `tile`. `⌃⌥F` sets `toggled(isTiled:ruleSaysFloat:)`,
+which always flips what you see and drops the override when the rules already agree. One value per
+window replaced two sets that could, in principle, both hold the same window.
+
+### 5. Workspaces: `Workspaces` (owner: `TilingManager.workspaces`)
+
+Per display: the workspace it shows. Per window: its workspace and the display that number belongs to.
+A window that arrives on another display (dragged over, or its monitor unplugged) joins the workspace
+that display is showing, so it can never land hidden. Tested in `WorkspaceTests`.
+
+## Implicit (audited, deliberately left as variables)
+
+Each of these is one optional, one flag or one timer with a single owner. All were audited for bad
+combinations; none were found, so an enum would add code without removing risk.
+
+The ones inside `TilingManager`'s event loop overlap in time (you can pan while an animation
 finishes; a docking change can land mid-drag), so one enum would forbid real combinations. Each is
 covered by the real-Mac test in `scripts/e2e.swift`.
 
@@ -53,8 +68,8 @@ covered by the real-Mac test in `scripts/e2e.swift`.
 | **Programmatic-move quiet time** | quiet until T | `ignoreMovesUntil` | Tiles' own moves fire move events; they're ignored for 0.5 s (plus the animation time) so they aren't mistaken for drags. |
 | **Scroll pan** | idle → panning(display) → settle → idle | `panning`, `panWork`, `panEndWork` | While panning, the focused window doesn't pull the strip back. 0.35 s after the last scroll, the window nearest the middle is focused. |
 | **Animation** | idle ↔ animating(moves, start) | `animation`, `animationTimer` | New moves restart from where each window currently is. Off during panning and for parking. |
-| **Workspaces** | per display: showing N; per window: on N; parked or not | `Workspaces` (TilesCore, tested), `parked` | Switching parks the others just off screen. Only a *newly* focused hidden window pulls its workspace forward (`lastFocused`, `lastWorkspaceSwitch` debounce). |
-| **Window mode** | tiled, floating (rule / forced float / forced tile), stacked on host, zoomed | `userFloating`, `userTiled`, `stackedOn`, `zoomed` | Floating windows drop out of stacks; a zoom ends when its window leaves the layout. |
+| **Parking** | per window: parked (with its frame to return to) or not | `parked` | Hidden-workspace windows wait one point on screen in the corner. Only a *newly* focused hidden window pulls its workspace forward (`lastFocused`, `lastWorkspaceSwitch` debounce). |
+| **Stacks and Focus** | per window: stacked on a host or not; one zoomed window or none | `stackedOn`, `zoomed` | Floating windows drop out of stacks; a zoom ends when its window leaves the layout. |
 | **Docking** | steady → displays changing (1 s debounce) → restore → autosave blocked 8 s | `displayWork`, `autosaveBlockedUntil`, `undoSnapshot` | Only a different *set* of displays counts; resolution or Dock changes just retile. `⌃⌥Z` undoes one restore. |
 | **Refresh / autosave** | idle → scheduled → run | `refreshWork`, `autosaveWork` | Debounces bursts of window events. |
 | **Shortcut recording** | listening ↔ not | `ShortcutRecorder.recording`, `AppDelegate.hotkeysPaused` | While listening, global shortcuts stay unregistered even if the config reloads underneath. |
