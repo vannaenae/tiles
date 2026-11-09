@@ -424,7 +424,7 @@ final class SnapAndSearchTests: XCTestCase {
     func testQuieterDefaultsAndMigration() throws {
         XCTAssertEqual(Config.default.outlineColor, "") // no outline unless you ask for one
         // A file from an older Tiles has no version: the outline is switched off once.
-        let old = Data(#"{"outlineColor": "#E8643C", "theme": "pink"}"#.utf8)
+        let old = Data(##"{"outlineColor": "#E8643C", "theme": "pink"}"##.utf8)
         XCTAssertEqual(Config.fileVersion(old), 1)
         let migrated = try Config.decode(old).migrated(from: 1)
         XCTAssertEqual(migrated.outlineColor, "")
