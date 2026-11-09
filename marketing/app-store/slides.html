@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tiles · Mac App Store screenshots</title>
+<!--
+  Six Mac App Store screenshots, 2880×1800 each, built from real captures.
+  Render them with:  node marketing/app-store/render.mjs <captures folder> <output folder>
+  The captures come from scripts/marketing-shots.sh (the marketing-screenshots branch).
+-->
+<style>
+  :root {
+    --ink: #0A0C1B;
+    --text: #F5F6FB;
+    --sec: rgba(226, 232, 255, .66);
+    --blue-1: #3B4BD0;
+    --blue-2: #1A92E4;
+    --orange: #E8643C;
+    --display: "Inter Display", "SF Pro Display", -apple-system, "Inter", sans-serif;
+    --body: "Inter", "SF Pro Text", -apple-system, sans-serif;
+    --mono: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #000; font-family: var(--body); color: var(--text); -webkit-font-smoothing: antialiased; }
+
+  .slide { position: relative; width: 2880px; height: 1800px; overflow: hidden; background: var(--ink); margin-bottom: 40px; }
+
+  /* Background: two coloured glows and a faint grid of tiles that fades out from the centre. */
+  .slide::before { content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(1400px 900px at var(--g1x, 20%) var(--g1y, 0%), var(--g1, rgba(59, 75, 208, .55)), transparent 70%),
+      radial-gradient(1200px 800px at var(--g2x, 85%) var(--g2y, 100%), var(--g2, rgba(26, 146, 228, .35)), transparent 70%); }
+  .slide::after { content: ""; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.035) 2px, transparent 2px),
+      linear-gradient(90deg, rgba(255,255,255,.035) 2px, transparent 2px);
+    background-size: 144px 144px; background-position: -2px -2px;
+    -webkit-mask-image: radial-gradient(1500px 1000px at 50% 30%, #000 20%, transparent 75%); }
+  .slide > * { position: relative; z-index: 1; }
+
+  /* Type */
+  .eyebrow { display: inline-flex; align-items: center; gap: 18px; padding: 14px 30px 14px 24px; border-radius: 999px;
+    background: rgba(255,255,255,.07); border: 2px solid rgba(255,255,255,.12);
+    font: 600 30px/1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: #C9D3FF; }
+  .eyebrow i { width: 16px; height: 16px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 24px var(--orange); }
+  h1 { font: 700 136px/1.02 var(--display); letter-spacing: -.035em; color: var(--text); }
+  .grad { background: linear-gradient(95deg, #8C9BFF 0%, #4FC3FF 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .grad.warm { background-image: linear-gradient(95deg, #FF9A6B 0%, #E8643C 55%, #E84393 100%); }
+  .sub { font: 400 46px/1.38 var(--body); color: var(--sec); letter-spacing: -.005em; }
+  .center { text-align: center; }
+  .top { position: absolute; left: 0; right: 0; top: 112px; display: flex; flex-direction: column; align-items: center; gap: 34px; }
+
+  /* A MacBook: lid with a thin bezel and notch, the real capture inside, and the base. */
+  .mac { position: absolute; filter: drop-shadow(0 70px 90px rgba(0,0,0,.55)) drop-shadow(0 20px 30px rgba(0,0,0,.35)); }
+  .mac .lid { position: relative; padding: 2.1% 2.1% 2.4%; border-radius: 3.4% 3.4% 1.2% 1.2% / 6% 6% 2% 2%;
+    background: #0B0B0D; box-shadow: inset 0 0 0 3px #3A3B40, inset 0 0 0 5px #121214; }
+  .mac .screen { position: relative; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #000 center / cover no-repeat; }
+  .mac .notch { position: absolute; top: 0; left: 50%; width: 9%; height: 2.6%; transform: translateX(-50%);
+    background: #0B0B0D; border-radius: 0 0 14px 14px; z-index: 2; }
+  .mac .base { position: relative; width: 112%; margin-left: -6%; height: 44px; border-radius: 4px 4px 40px 40px / 4px 4px 22px 22px;
+    background: linear-gradient(#F0F1F4 0%, #C9CBD1 35%, #8E9097 100%); box-shadow: inset 0 2px 0 rgba(255,255,255,.8); }
+  .mac .base::before { content: ""; position: absolute; left: 50%; top: 0; width: 15%; height: 16px; transform: translateX(-50%);
+    background: linear-gradient(#A7A9AF, #C7C9CE); border-radius: 0 0 16px 16px; }
+  .glow { position: absolute; border-radius: 50%; filter: blur(140px); opacity: .55; z-index: 0; }
+
+  /* A plain window card holding a capture (or a crop of one). */
+  .card { position: absolute; border-radius: 26px; overflow: hidden; background: #000 no-repeat;
+    box-shadow: 0 0 0 2px rgba(255,255,255,.10), 0 60px 120px rgba(0,0,0,.55), 0 18px 36px rgba(0,0,0,.35); }
+  .label { position: absolute; z-index: 3; padding: 14px 26px; border-radius: 999px; font: 600 30px/1 var(--body);
+    color: #fff; background: rgba(14,16,32,.72); border: 2px solid rgba(255,255,255,.16); backdrop-filter: blur(16px); }
+
+  /* Keycaps */
+  .keys { display: flex; gap: 22px; }
+  .key { min-width: 138px; height: 138px; padding: 0 40px; display: flex; align-items: center; justify-content: center;
+    border-radius: 30px; font: 600 60px/1 var(--display); color: #fff;
+    background: linear-gradient(180deg, #343A50 0%, #20243A 100%);
+    border: 2px solid rgba(255,255,255,.14);
+    box-shadow: inset 0 -10px 0 rgba(0,0,0,.32), inset 0 2px 0 rgba(255,255,255,.12), 0 24px 50px rgba(0,0,0,.45); }
+  .key.wide { min-width: 330px; }
+  .key.small { min-width: 0; height: 64px; padding: 0 18px; border-radius: 14px; font-size: 30px;
+    box-shadow: inset 0 -5px 0 rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.12), 0 10px 22px rgba(0,0,0,.35); }
+
+  /* Layout glyphs (slide 2) */
+  .glyphs { display: grid; grid-template-columns: repeat(4, 176px); gap: 30px 26px; }
+  .glyph { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+  .glyph .g { position: relative; width: 176px; height: 110px; border-radius: 14px; overflow: hidden;
+    background: rgba(255,255,255,.05); border: 2px solid rgba(255,255,255,.12); }
+  .glyph .g b { position: absolute; border-radius: 6px; background: rgba(160,176,255,.38); }
+  .glyph.on .g { border-color: var(--orange); box-shadow: 0 0 0 4px rgba(232,100,60,.25); }
+  .glyph.on .g b:first-child { background: var(--orange); }
+  .glyph span { white-space: nowrap; font: 500 25px/1.1 var(--body); color: rgba(226,232,255,.72); }
+  .glyph.on span { color: #fff; }
+
+  /* Shortcut list (slide 6) */
+  .shortcuts { display: flex; flex-direction: column; gap: 30px; }
+  .row { display: flex; align-items: center; gap: 30px; }
+  .row .combo { display: flex; gap: 10px; width: 470px; }
+  .row .what { font: 500 38px/1.2 var(--body); color: rgba(235,240,255,.86); }
+  code.cli { font: 500 34px/1 var(--mono); color: #FFB59A; background: rgba(232,100,60,.12); border: 2px solid rgba(232,100,60,.3);
+    padding: 16px 22px; border-radius: 14px; }
+
+  /* Themes (slide 5) */
+  .swatches { display: flex; gap: 34px; }
+  .sw { display: flex; flex-direction: column; align-items: center; gap: 16px; font: 500 28px/1 var(--body); color: rgba(226,232,255,.75); }
+  .sw i { width: 92px; height: 92px; border-radius: 28px; box-shadow: inset 0 0 0 3px rgba(255,255,255,.25), 0 16px 34px rgba(0,0,0,.4); }
+
+  /* Callout (slide 4) */
+  .ring { position: absolute; z-index: 4; border: 5px solid var(--orange); border-radius: 12px; box-shadow: 0 0 0 10px rgba(232,100,60,.22), 0 0 40px rgba(232,100,60,.6); }
+  .callout { position: absolute; z-index: 5; padding: 26px; border-radius: 30px; background: rgba(20,22,40,.82);
+    border: 2px solid rgba(255,255,255,.16); backdrop-filter: blur(20px); box-shadow: 0 40px 90px rgba(0,0,0,.55); }
+  .callout .zoom { border-radius: 14px; background: #ECECEE no-repeat; }
+  .callout p { margin-top: 20px; font: 500 30px/1.3 var(--body); color: rgba(235,240,255,.8); }
+</style>
+</head>
+<body>
+
+<!-- 1 · Hero -->
+<section class="slide" id="s1" style="--g1x:50%; --g1y:-5%; --g2x:50%; --g2y:110%; --g2:rgba(232,100,60,.22)">
+  <div class="top">
+    <span class="eyebrow"><i></i>Tiling window manager for macOS</span>
+    <h1 class="center">Every window, <span class="grad">in its place.</span></h1>
+    <p class="sub center">Tiles arranges each window the moment it opens. Free, open source and private.</p>
+  </div>
+  <div class="glow" style="left:900px; top:820px; width:1100px; height:700px; background:#3B4BD0"></div>
+  <div class="mac" style="left:430px; top:540px; width:2020px">
+    <div class="lid"><div class="screen" data-shot="01-dwindle.png"><div class="notch"></div></div></div>
+    <div class="base"></div>
+  </div>
+</section>
+
+<!-- 2 · Layouts -->
+<section class="slide" id="s2" style="--g1x:10%; --g1y:20%; --g2x:95%; --g2y:90%; --g2:rgba(142,92,247,.32)">
+  <div style="position:absolute; left:170px; top:190px; width:900px; display:flex; flex-direction:column; gap:40px">
+    <span class="eyebrow" style="align-self:flex-start"><i></i>11 layouts</span>
+    <h1>Pick a shape.<br><span class="grad">One shortcut.</span></h1>
+    <p class="sub">Dwindle, Columns, Grid, Scrolling and more. Your windows rearrange in an instant.</p>
+    <div class="keys" style="margin-top:6px"><div class="key">⌃</div><div class="key">⌥</div><div class="key wide">Space</div></div>
+    <div class="glyphs" id="glyphs" style="margin-top:34px"></div>
+  </div>
+  <div class="glow" style="left:1700px; top:600px; width:1000px; height:700px; background:#8E5CF7"></div>
+  <div class="mac" style="left:1160px; top:440px; width:1620px">
+    <div class="lid"><div class="screen" data-shot="02-master-stack.png"><div class="notch"></div></div></div>
+    <div class="base"></div>
+  </div>
+  <span class="label" style="left:1240px; top:360px"><i style="display:inline-block;width:14px;height:14px;border-radius:50%;background:var(--orange);margin-right:14px"></i>Master &amp; Stack · ⌃⌥2</span>
+</section>
+
+<!-- 3 · Scrolling -->
+<section class="slide" id="s3" style="--g1x:85%; --g1y:0%; --g1:rgba(26,146,228,.45); --g2x:10%; --g2y:100%; --g2:rgba(59,75,208,.45)">
+  <div class="top">
+    <span class="eyebrow"><i></i>Scrolling layout</span>
+    <h1 class="center">Room for <span class="grad">every window.</span></h1>
+    <p class="sub center">Windows line up at their own width. Focus one and the strip slides to it.</p>
+  </div>
+  <div class="mac" style="left:430px; top:540px; width:2020px">
+    <div class="lid"><div class="screen" data-shot="02-scrolling.png"><div class="notch"></div></div></div>
+    <div class="base"></div>
+  </div>
+  <div class="keys" style="position:absolute; left:150px; top:1080px; flex-direction:column; gap:20px; align-items:center">
+    <div class="key small">⌃⌥</div><div class="key" style="height:120px; min-width:120px; font-size:54px">←</div>
+  </div>
+  <div class="keys" style="position:absolute; right:150px; top:1080px; flex-direction:column; gap:20px; align-items:center">
+    <div class="key small">⌃⌥</div><div class="key" style="height:120px; min-width:120px; font-size:54px">→</div>
+  </div>
+</section>
+
+<!-- 4 · Scenes -->
+<section class="slide" id="s4" style="--g1x:15%; --g1y:5%; --g2x:90%; --g2y:15%; --g2:rgba(232,100,60,.30)">
+  <div class="top">
+    <span class="eyebrow"><i></i>Scenes</span>
+    <h1 class="center">Your desk, back <span class="grad warm">when you dock.</span></h1>
+    <p class="sub center">Tiles remembers each display setup and puts every window back when you plug in.</p>
+  </div>
+  <div class="mac" id="s4mac" style="left:150px; top:600px; width:1840px">
+    <div class="lid"><div class="screen" data-shot="03-scene-restored.png"><div class="notch"></div></div></div>
+    <div class="base"></div>
+  </div>
+  <div class="ring" id="s4ring"></div>
+  <svg id="s4line" style="position:absolute; inset:0; z-index:4; overflow:visible" width="2880" height="1800"></svg>
+  <div class="callout" id="s4callout" style="left:2030px; top:820px; width:760px">
+    <div class="zoom" data-shot="03-scene-restored.png" data-crop="1354,0,342,24" style="width:708px; height:50px"></div>
+    <p>Plug in and every window goes back where it was. ⌃⌥Z undoes it.</p>
+  </div>
+</section>
+
+<!-- 5 · Themes -->
+<section class="slide" id="s5" style="--g1x:80%; --g1y:20%; --g1:rgba(142,92,247,.55); --g2x:10%; --g2y:100%; --g2:rgba(232,67,147,.25)">
+  <div style="position:absolute; left:170px; top:250px; width:900px; display:flex; flex-direction:column; gap:40px">
+    <span class="eyebrow" style="align-self:flex-start"><i></i>Themes</span>
+    <h1>Make it <span class="grad warm">yours.</span></h1>
+    <p class="sub">Five accent colours, light and dark, and a dashboard that shows every display live.</p>
+    <div class="swatches" style="margin-top:30px">
+      <div class="sw"><i style="background:#E8643C"></i>Orange</div>
+      <div class="sw"><i style="background:#3478F6"></i>Blue</div>
+      <div class="sw"><i style="background:#30A46C"></i>Green</div>
+      <div class="sw"><i style="background:#8E5CF7"></i>Purple</div>
+      <div class="sw"><i style="background:#E84393"></i>Pink</div>
+    </div>
+  </div>
+  <div class="card" data-shot="04-dashboard-light.png" data-crop="510,129,900,640" style="left:1240px; top:250px; width:1080px; height:768px"></div>
+  <div class="card" data-shot="05-dashboard-dark-purple.png" data-crop="510,129,900,640" style="left:1640px; top:820px; width:1080px; height:768px"></div>
+</section>
+
+<!-- 6 · Keyboard -->
+<section class="slide" id="s6" style="--g1x:10%; --g1y:10%; --g2x:100%; --g2y:70%; --g2:rgba(26,146,228,.35)">
+  <div style="position:absolute; left:170px; top:180px; width:1080px; display:flex; flex-direction:column; gap:40px">
+    <span class="eyebrow" style="align-self:flex-start"><i></i>Keyboard first</span>
+    <h1>Hands stay <br><span class="grad">on the keys.</span></h1>
+    <p class="sub">50+ shortcuts, all remappable. Plus a tiles command and tiles:// links for Raycast, Alfred and Shortcuts.</p>
+    <div class="shortcuts" style="margin-top:20px">
+      <div class="row"><div class="combo"><span class="key small">⌃</span><span class="key small">⌥</span><span class="key small">← → ↑ ↓</span></div><span class="what">Focus a window</span></div>
+      <div class="row"><div class="combo"><span class="key small">⌃</span><span class="key small">⌥</span><span class="key small">⇧</span><span class="key small">←</span></div><span class="what">Swap windows</span></div>
+      <div class="row"><div class="combo"><span class="key small">⌃</span><span class="key small">⌥</span><span class="key small">M</span></div><span class="what">Fill the screen, then put it back</span></div>
+      <div class="row"><div class="combo"><span class="key small">⌃</span><span class="key small">⌘</span><span class="key small">1 – 5</span></div><span class="what">Switch workspace</span></div>
+      <div class="row"><div class="combo"><code class="cli">$ tiles layout-grid</code></div><span class="what">From the terminal</span></div>
+    </div>
+  </div>
+  <div class="mac" style="left:1380px; top:560px; width:1640px">
+    <div class="lid"><div class="screen" data-shot="02-grid.png"><div class="notch"></div></div></div>
+    <div class="base"></div>
+  </div>
+</section>
+
+<script>
+  // Where the captures live: ?shots=<folder URL>, default ./shots/
+  const SHOTS = (new URLSearchParams(location.search).get("shots") || "shots/").replace(/\/?$/, "/");
+  const SRC_W = 1920, SRC_H = 1080;
+
+  // Full captures fill their element; data-crop="x,y,w,h" (in capture pixels) shows just that part.
+  for (const el of document.querySelectorAll("[data-shot]")) {
+    el.style.backgroundImage = `url("${SHOTS}${el.dataset.shot}")`;
+    if (el.dataset.crop) {
+      const [x, y, w, h] = el.dataset.crop.split(",").map(Number);
+      const s = el.getBoundingClientRect().width / w;
+      el.style.backgroundSize = `${SRC_W * s}px ${SRC_H * s}px`;
+      el.style.backgroundPosition = `${-x * s}px ${-y * s}px`;
+    } else {
+      el.style.backgroundSize = "cover";
+    }
+  }
+
+  // Slide 4: ring the notice on the laptop screen and link it to the zoomed callout.
+  (() => {
+    const screen = document.querySelector("#s4mac .screen").getBoundingClientRect();
+    const slide = document.getElementById("s4").getBoundingClientRect();
+    const s = screen.width / SRC_W;
+    const ring = document.getElementById("s4ring");
+    const [x, y, w, h] = [1352, 0, 352, 24];
+    Object.assign(ring.style, {
+      left: `${screen.left - slide.left + x * s - 8}px`, top: `${screen.top - slide.top + y * s - 6}px`,
+      width: `${w * s + 16}px`, height: `${h * s + 12}px`,
+    });
+    const r = ring.getBoundingClientRect(), c = document.getElementById("s4callout").getBoundingClientRect();
+    const x1 = r.right - slide.left, y1 = r.bottom - slide.top, x2 = c.left - slide.left + 60, y2 = c.top - slide.top;
+    document.getElementById("s4line").innerHTML =
+      `<path d="M${x1 - 30} ${y1} C ${x1 - 30} ${y1 + 90}, ${x2} ${y2 - 90}, ${x2} ${y2}" fill="none" stroke="#E8643C" stroke-width="5" stroke-dasharray="14 12" stroke-linecap="round"/>` +
+      `<circle cx="${x2}" cy="${y2}" r="9" fill="#E8643C"/>`;
+  })();
+
+  // Slide 2: the 11 layouts as little diagrams. Rects are [x, y, w, h] in fractions of the screen.
+  const layouts = [
+    ["Dwindle", [[0,0,.55,1],[.55,0,.45,.5],[.55,.5,.225,.5],[.775,.5,.225,.5]]],
+    ["Master & Stack", [[0,0,.55,1],[.55,0,.45,.334],[.55,.334,.45,.333],[.55,.667,.45,.333]], true],
+    ["Wide Master", [[0,0,1,.55],[0,.55,.334,.45],[.334,.55,.333,.45],[.667,.55,.333,.45]]],
+    ["Centered", [[.225,0,.55,1],[0,0,.225,.5],[0,.5,.225,.5],[.775,0,.225,.5],[.775,.5,.225,.5]]],
+    ["Columns", [[0,0,.25,1],[.25,0,.25,1],[.5,0,.25,1],[.75,0,.25,1]]],
+    ["Thirds", [[0,0,.667,1],[.667,0,.333,.5],[.667,.5,.333,.5]]],
+    ["Rows", [[0,0,1,.334],[0,.334,1,.333],[0,.667,1,.333]]],
+    ["Grid", [[0,0,.5,.5],[.5,0,.5,.5],[0,.5,.5,.5],[.5,.5,.5,.5]]],
+    ["Monocle", [[0,0,1,1]]],
+    ["Scrolling", [[-.22,0,.5,1],[.3,0,.5,1],[.82,0,.5,1]]],
+    ["Float", [[.08,.12,.5,.55],[.42,.36,.5,.55]]],
+  ];
+  const host = document.getElementById("glyphs"), pad = 5;
+  for (const [name, rects, on] of layouts) {
+    const g = document.createElement("div");
+    g.className = "glyph" + (on ? " on" : "");
+    const box = document.createElement("div"); box.className = "g";
+    for (const [x, y, w, h] of rects) {
+      const b = document.createElement("b");
+      Object.assign(b.style, { left: `calc(${x * 100}% + ${pad}px)`, top: `calc(${y * 100}% + ${pad}px)`,
+        width: `calc(${w * 100}% - ${pad * 2}px)`, height: `calc(${h * 100}% - ${pad * 2}px)` });
+      box.appendChild(b);
+    }
+    const label = document.createElement("span"); label.textContent = name;
+    g.append(box, label); host.appendChild(g);
+  }
+</script>
+</body>
+</html>
