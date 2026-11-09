@@ -7,7 +7,7 @@
 set -e
 if [ -z "$1" ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
   cat <<'HELP'
-usage: tiles <command>
+usage: tiles <command>     (tiles status prints what Tiles is doing, as JSON)
 
 focus-left|right|up|down     swap-left|right|up|down     promote
 focus-next  focus-previous   move-to-next-display  move-to-previous-display
@@ -19,6 +19,16 @@ toggle-float  toggle-tiling  toggle-zoom  cycle-width  center-window  retile
 save-scene  restore-scene  undo-restore  layout-thirds  layout-scrolling
 workspace-1 … workspace-9   move-to-workspace-1 … move-to-workspace-9
 HELP
+  exit 0
+fi
+# Read-only: what Tiles is doing right now, as JSON (written by the app; see STATE_MACHINES.md).
+if [ "$1" = "status" ]; then
+  file="$HOME/Library/Application Support/Tiles/status.json"
+  if ! pgrep -x Tiles >/dev/null || [ ! -f "$file" ]; then
+    echo '{ "phase" : "not-running", "problem" : "Tiles is not running. Open /Applications/Tiles.app." }'
+    exit 1
+  fi
+  cat "$file"
   exit 0
 fi
 open -g "tiles://$1"

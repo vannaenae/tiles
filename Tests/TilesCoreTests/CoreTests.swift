@@ -287,3 +287,63 @@ final class WorkspaceTests: XCTestCase {
         XCTAssertEqual(Config.default.shortcuts(for: .workspace(2)).map(\.description), ["⌃⌘2"])
     }
 }
+
+final class LifecycleTests: XCTestCase {
+    func testAppPhaseTransitions() {
+        // Every (phase, trusted) pair: where it goes and what the app must do.
+        let table: [(AppPhase, Bool, AppPhase, AppPhase.Effect)] = [
+            (.launching, false, .needsPermission, .none),
+            (.launching, true, .running, .start),
+            (.needsPermission, false, .needsPermission, .none),
+            (.needsPermission, true, .running, .start),
+            (.running, true, .running, .none),
+            (.running, false, .permissionLost, .pause),
+            (.permissionLost, false, .permissionLost, .none),
+            (.permissionLost, true, .running, .resume), // switched back on: resumes, never starts twice
+        ]
+        XCTAssertEqual(table.count, AppPhase.allCases.count * 2)
+        for (from, trusted, to, effect) in table {
+            let result = from.next(trusted: trusted)
+            XCTAssertEqual(result.phase, to, "\(from) trusted=\(trusted)")
+            XCTAssertEqual(result.effect, effect, "\(from) trusted=\(trusted)")
+        }
+        XCTAssertFalse(AppPhase.needsPermission.hasStarted)
+        XCTAssertTrue(AppPhase.permissionLost.hasStarted)
+    }
+
+    func testUpdatePhaseNeverInterruptsADownload() {
+        XCTAssertFalse(UpdatePhase.checking.canCheck)
+        XCTAssertFalse(UpdatePhase.downloading(version: "1.0").canCheck)
+        XCTAssertFalse(UpdatePhase.installing(version: "1.0").canCheck)
+        XCTAssertTrue(UpdatePhase.failed(version: "1.0").canCheck)
+        // Install is offered when available, and again after a failure; never mid-download.
+        XCTAssertEqual(UpdatePhase.available(version: "1.0").installable, "1.0")
+        XCTAssertEqual(UpdatePhase.failed(version: "1.0").installable, "1.0")
+        XCTAssertNil(UpdatePhase.downloading(version: "1.0").installable)
+        XCTAssertNil(UpdatePhase.upToDate.installable)
+    }
+
+    func testUpdateCheckResult() {
+        XCTAssertEqual(UpdatePhase.checked(latest: "0.10.0", current: "0.9.2"), .available(version: "0.10.0"))
+        XCTAssertEqual(UpdatePhase.checked(latest: "0.6.0", current: "0.6.0"), .upToDate)
+        XCTAssertEqual(UpdatePhase.checked(latest: nil, current: "0.6.0"), .offline)
+    }
+
+    func testStatusSnapshotExplainsProblemsAndRoundTrips() throws {
+        func snapshot(_ phase: AppPhase, enabled: Bool = true, error: String? = nil) -> StatusSnapshot {
+            StatusSnapshot(version: "0.7.0", pid: 42, phase: phase, tilingEnabled: enabled, update: .upToDate,
+                           configError: error, displays: [.init(name: "LG", layout: .dwindle, workspace: 2, workspaces: [1, 2], windows: 3)])
+        }
+        XCTAssertNil(snapshot(.running).problem)
+        XCTAssertTrue(snapshot(.needsPermission).problem?.contains("Accessibility") == true)
+        XCTAssertTrue(snapshot(.permissionLost).problem?.contains("Accessibility") == true)
+        XCTAssertTrue(snapshot(.running, enabled: false).problem?.contains("⌃⌥T") == true)
+        XCTAssertTrue(snapshot(.running, error: "Invalid JSON").problem?.contains("Invalid JSON") == true)
+
+        let original = snapshot(.running)
+        let decoded = try JSONDecoder().decode(StatusSnapshot.self, from: original.encoded())
+        XCTAssertEqual(decoded, original)
+        let text = String(decoding: try original.encoded(), as: UTF8.self)
+        XCTAssertTrue(text.contains("\"phase\" : \"running\""))
+    }
+}
