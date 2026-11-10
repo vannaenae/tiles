@@ -22,8 +22,24 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #ccc; font-family: var(--body); color: var(--text); -webkit-font-smoothing: antialiased; }
 
-  .slide { position: relative; width: 2880px; height: 1800px; overflow: hidden; background: var(--bg); margin-bottom: 40px; }
-  .slide.dark { --bg: #161618; --text: #F5F5F7; --sec: #A1A1A6; --line: rgba(255, 255, 255, .12); }
+  /* Each slide wears one of Tiles' five theme colours, with the app icon's diagonal gradient. */
+  .slide { position: relative; width: 2880px; height: 1800px; overflow: hidden; margin-bottom: 40px;
+    --text: #FFFFFF; --sec: rgba(255, 255, 255, .86); --line: rgba(255, 255, 255, .22);
+    background: linear-gradient(135deg, var(--c1) 0%, var(--c2) 100%); }
+  .blue   { --c1: #3B4BD0; --c2: #1A92E4; }
+  .orange { --c1: #F0784A; --c2: #D9482A; }
+  .green  { --c1: #3BB37A; --c2: #1F8A58; }
+  .purple { --c1: #9A6BFA; --c2: #6B3FD8; }
+  .pink   { --c1: #F05AA2; --c2: #C92D7B; }
+  .azure  { --c1: #4A8CFA; --c2: #2459D6; }
+  .slide > * { position: absolute; z-index: 1; }
+
+  /* The app icon's three tiles, very large and faint, behind everything. */
+  .brand { inset: 0; z-index: 0; }
+  .brand i { position: absolute; border-radius: 120px; background: rgba(255, 255, 255, .09); }
+  .brand i:nth-child(1) { left: -160px; top: 300px; width: 1180px; height: 1700px; }
+  .brand i:nth-child(2) { left: 1100px; top: -260px; width: 2000px; height: 760px; }
+  .brand i:nth-child(3) { left: 1100px; top: 620px; width: 2000px; height: 1400px; }
 
   .caption { position: absolute; left: 0; right: 0; top: 118px; text-align: center; }
   h1 { font: 600 112px/1.04 var(--display); letter-spacing: -.025em; color: var(--text); }
@@ -31,21 +47,19 @@
 
   /* A real screen: rounded corners, a hairline edge and a soft shadow. */
   .shot { position: absolute; border-radius: 22px; background: #000 no-repeat; overflow: hidden;
-    box-shadow: 0 0 0 2px var(--line), 0 40px 90px rgba(0, 0, 0, .16), 0 10px 24px rgba(0, 0, 0, .08); }
-  .slide.dark .shot { box-shadow: 0 0 0 2px var(--line), 0 40px 90px rgba(0, 0, 0, .5); }
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, .25), 0 50px 110px rgba(0, 0, 0, .30), 0 12px 28px rgba(0, 0, 0, .14); }
   .wide { left: 320px; top: 430px; width: 2240px; height: 1260px; }
 
   kbd { display: inline-block; min-width: 72px; padding: 10px 20px; border-radius: 14px; text-align: center;
-    font: 500 36px/1.1 var(--body); color: var(--text); background: rgba(0, 0, 0, .05); border: 2px solid var(--line); }
-  .slide.dark kbd { background: rgba(255, 255, 255, .08); }
+    font: 500 36px/1.1 var(--body); color: #fff; background: rgba(255, 255, 255, .16); border: 2px solid rgba(255, 255, 255, .32); }
   .keys { display: inline-flex; gap: 10px; align-items: center; vertical-align: middle; }
   .keys + .keys { margin-left: 46px; }
   .keys span { font: 400 34px/1 var(--body); color: var(--sec); margin-left: 8px; }
 
   .dots { display: inline-flex; gap: 20px; margin-top: 34px; }
-  .dots i { width: 46px; height: 46px; border-radius: 50%; }
+  .dots i { width: 46px; height: 46px; border-radius: 50%; box-shadow: 0 0 0 4px rgba(255, 255, 255, .9); }
 
-  .ring { position: absolute; border: 5px solid var(--accent); border-radius: 12px; }
+  .ring { position: absolute; border: 5px solid #fff; box-shadow: 0 0 0 4px rgba(0, 0, 0, .25); border-radius: 12px; }
   .callout { position: absolute; padding: 22px; border-radius: 22px; background: #fff;
     box-shadow: 0 0 0 2px var(--line), 0 30px 70px rgba(0, 0, 0, .18); }
   .callout .zoom { border-radius: 10px; background: #ECECEE no-repeat; }
@@ -55,7 +69,8 @@
 <body>
 
 <!-- 1 · Every window, in its place -->
-<section class="slide" id="s1">
+<section class="slide blue" id="s1">
+  <div class="brand"><i></i><i></i><i></i></div>
   <div class="caption">
     <h1>Every window, in its place.</h1>
     <p class="sub">Tiles arranges each window the moment it opens. Free, open source and private.</p>
@@ -64,7 +79,8 @@
 </section>
 
 <!-- 2 · Layouts -->
-<section class="slide" id="s2">
+<section class="slide orange" id="s2">
+  <div class="brand"><i></i><i></i><i></i></div>
   <div class="caption">
     <h1>11 layouts. One shortcut.</h1>
     <p class="sub">Master &amp; Stack, Columns, Grid, Scrolling and more. Press <span class="keys"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>Space</kbd></span> to switch.</p>
@@ -73,7 +89,8 @@
 </section>
 
 <!-- 3 · Scrolling -->
-<section class="slide" id="s3">
+<section class="slide green" id="s3">
+  <div class="brand"><i></i><i></i><i></i></div>
   <div class="caption">
     <h1>Room for every window.</h1>
     <p class="sub">The Scrolling layout lines windows up at their own width and slides to the one you focus.</p>
@@ -82,7 +99,8 @@
 </section>
 
 <!-- 4 · Scenes -->
-<section class="slide" id="s4">
+<section class="slide purple" id="s4">
+  <div class="brand"><i></i><i></i><i></i></div>
   <div class="caption">
     <h1>Your desk, back when you dock.</h1>
     <p class="sub">Tiles remembers each display setup and puts every window back when you plug in.</p>
@@ -95,7 +113,8 @@
 </section>
 
 <!-- 5 · Themes -->
-<section class="slide" id="s5">
+<section class="slide pink" id="s5">
+  <div class="brand"><i></i><i></i><i></i></div>
   <div class="caption">
     <h1>Make it yours.</h1>
     <p class="sub">Five accent colours, light and dark, and a dashboard that shows every display live.</p>
@@ -108,7 +127,8 @@
 </section>
 
 <!-- 6 · Keyboard -->
-<section class="slide" id="s6">
+<section class="slide azure" id="s6">
+  <div class="brand"><i></i><i></i><i></i></div>
   <div class="caption">
     <h1>Keyboard first.</h1>
     <p class="sub" style="margin-top:34px">
