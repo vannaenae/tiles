@@ -7,77 +7,15 @@
 <meta name="description" content="Every window snaps into place the moment it opens. Layouts for every screen, scenes that come back when you dock. Free and open source.">
 <link rel="icon" href="img/icon.png">
 <meta property="og:title" content="Tiles: free auto-tiling window manager for Mac">
-<meta property="og:description" content="Every window snaps into place the moment it opens. Free and open source.">
+<meta property="og:description" content="Every window snaps into place the moment it opens. Layouts for every screen, scenes that come back when you dock. Free and open source.">
 <meta property="og:image" content="img/real-apps.jpg">
-<style>
-:root { --accent:#E8643C; --bg:#faf8f6; --card:#fff; --text:#1d1d1f; --sec:#6e6e73; --line:rgba(0,0,0,.08); --tile2:rgba(232,100,60,.28); --screen:rgba(0,0,0,.05); }
-@media (prefers-color-scheme: dark) { :root { --bg:#141416; --card:#1f1f22; --text:#f5f5f7; --sec:#a1a1a6; --line:rgba(255,255,255,.1); --tile2:rgba(232,100,60,.35); --screen:rgba(255,255,255,.06); } }
-* { box-sizing:border-box; }
-body { margin:0; background:var(--bg); color:var(--text); font:17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
-a { color:var(--accent); text-decoration:none; } a:hover { text-decoration:underline; }
-.wrap { max-width:1080px; margin:0 auto; padding:0 20px; }
-nav { display:flex; align-items:center; gap:12px; padding:18px 0; }
-nav img { width:32px; height:32px; } nav b { font-size:18px; } nav .sp { flex:1; } nav a { color:var(--text); margin-left:20px; font-size:15px; }
-.hero { text-align:center; padding:56px 0 32px; }
-.hero img.icon { width:104px; height:104px; filter:drop-shadow(0 12px 24px rgba(0,0,0,.18)); }
-h1 { font-size:clamp(36px,6vw,60px); line-height:1.05; letter-spacing:-.02em; margin:18px 0 14px; }
-.lede { font-size:clamp(18px,2.4vw,21px); color:var(--sec); max-width:640px; margin:0 auto 28px; }
-.install { display:inline-flex; align-items:center; gap:10px; max-width:100%; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:10px 10px 10px 16px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
-.install code { font:14px ui-monospace, SFMono-Regular, Menlo, monospace; white-space:nowrap; overflow:auto; }
-button { font:inherit; cursor:pointer; border:0; border-radius:8px; }
-.copy { background:var(--accent); color:#fff; padding:7px 14px; font-size:14px; font-weight:600; }
-.sub { margin-top:14px; font-size:14px; color:var(--sec); }
-section { padding:72px 0 0; }
-h2 { font-size:clamp(28px,4vw,40px); letter-spacing:-.015em; text-align:center; margin:0 0 10px; }
-.center { text-align:center; color:var(--sec); max-width:620px; margin:0 auto 32px; }
-.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:28px 36px; }
-.card { padding:4px 0; }
-.card h3 { margin:0 0 6px; font-size:18px; } .card p { margin:0; color:var(--sec); font-size:15px; }
-.card .k { font-size:22px; margin-bottom:8px; }
-table { width:100%; border-collapse:collapse; background:var(--card); border-radius:16px; overflow:hidden; border:1px solid var(--line); font-size:15px; }
-td, th { padding:12px 16px; border-bottom:1px solid var(--line); text-align:left; } tr:last-child td { border-bottom:0; }
-kbd { font:13px ui-monospace, Menlo, monospace; background:var(--screen); border:1px solid var(--line); border-radius:6px; padding:2px 6px; }
-footer { padding:72px 0 48px; text-align:center; color:var(--sec); font-size:14px; }
-.btn { display:inline-block; background:var(--accent); color:#fff; font-weight:600; font-size:18px; padding:14px 28px; border-radius:12px; box-shadow:0 8px 20px rgba(232,100,60,.3); } .btn:hover { text-decoration:none; filter:brightness(1.06); }
-.card ul { margin:0; padding-left:18px; color:var(--sec); font-size:15px; } .card li { margin:4px 0; }
-.why { grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); } .why h3 { font-size:20px; }
-.faq { max-width:760px; margin:0 auto; } details { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px 20px; margin-bottom:10px; }
-summary { font-weight:600; cursor:pointer; } details p { margin:10px 0 0; color:var(--sec); }
-.cta { text-align:center; } .cta .icon { width:84px; height:84px; }
-footer a { margin:0 8px; }
-.slides { display:grid; gap:28px; margin-bottom:28px; } .slides img { display:block; width:100%; height:auto; border-radius:18px; box-shadow:0 24px 60px rgba(0,0,0,.16); }
-:root { --ease-out:cubic-bezier(0.23,1,0.32,1); --ease-in-out:cubic-bezier(0.77,0,0.175,1); }
-.btn, .copy { transition:transform 140ms var(--ease-out); } .btn:active, .copy:active { transform:scale(.97); }
-.js .reveal { opacity:0; transform:translateY(12px); transition:opacity 500ms var(--ease-out), transform 500ms var(--ease-out); transition-delay:calc(var(--i,0) * 60ms); }
-.js .reveal[data-visible] { opacity:1; transform:none; }
-.js .wipe { clip-path:inset(0 0 100% 0 round 18px); transition:clip-path 600ms var(--ease-in-out); }
-.js .wipe[data-visible] { clip-path:inset(0 round 18px); }
-.switch { max-width:980px; margin:36px auto 0; }
-.tabs { display:inline-flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:5px; margin-bottom:18px; background:var(--screen); border-radius:999px; }
-.tabs button { background:none; color:var(--sec); padding:8px 16px; border-radius:999px; font-size:15px; font-weight:600; transition:background-color 200ms ease, color 200ms ease, transform 140ms var(--ease-out); }
-.tabs button[aria-selected=true] { background:var(--card); color:var(--text); box-shadow:0 1px 3px rgba(0,0,0,.12); } .tabs button:active { transform:scale(.97); }
-.stage { position:relative; aspect-ratio:16/9; border-radius:14px; overflow:hidden; box-shadow:0 30px 70px rgba(0,0,0,.22); background:#000; }
-.stage img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transform:scale(.97); transition:opacity 500ms var(--ease-in-out), transform 500ms var(--ease-in-out); }
-.stage img.on { opacity:1; transform:none; }
-.strip { overflow:hidden; margin-top:56px; padding:14px 0; border-block:1px solid var(--line); color:var(--sec); font-weight:600; -webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent); mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent); }
-.strip > div { display:flex; width:max-content; animation:strip 40s linear infinite; } .strip span { padding:0 28px; white-space:nowrap; }
-@keyframes strip { to { transform:translateX(-50%); } }
-@media (hover:hover) and (pointer:fine) { .btn:hover { transform:scale(1.03); } .tabs button:hover { color:var(--text); } }
-.hero > * { animation:rise 600ms var(--ease-out) backwards; } .hero > :nth-child(2) { animation-delay:60ms; } .hero > :nth-child(3) { animation-delay:120ms; } .hero > :nth-child(n+4) { animation-delay:180ms; }
-@keyframes rise { from { opacity:0; transform:translateY(12px); } }
-@media (prefers-reduced-motion:reduce) {
-  .js .reveal { transform:none; transition:opacity 200ms ease; transition-delay:0s; }
-  .js .wipe { clip-path:none; opacity:0; transition:opacity 200ms ease; } .js .wipe[data-visible] { opacity:1; }
-  .hero > * { animation:none; } .strip > div { animation:none; } .stage img { transform:none; transition:opacity 200ms ease; }
-}
-@media (max-width:600px) { nav a.hide { display:none; } .install code { font-size:12px; } }
-</style>
+<link rel="stylesheet" href="site.css">
 </head>
 <body>
 <div class="wrap">
   <nav>
-    <img src="img/icon.png" alt=""><b>Tiles</b><span class="sp"></span>
-    <a class="hide" href="#why">Why Tiles</a><a class="hide" href="#features">Features</a><a class="hide" href="#faq">FAQ</a>
+    <a class="home" href="./"><img src="img/icon.png" alt=""><b>Tiles</b></a><span class="sp"></span>
+    <a class="hide" href="layouts.html">Layouts</a><a class="hide" href="features.html">Features</a><a class="hide" href="faq.html">FAQ</a><a class="hide" href="support.html">Support</a>
     <a href="https://github.com/vannaenae/tiles">GitHub</a>
   </nav>
 
@@ -103,6 +41,7 @@ footer a { margin:0 8px; }
         <img loading="lazy" width="1600" height="900" src="img/scrolling.jpg" alt="Two Safari windows side by side in the Scrolling layout">
       </div>
       <p class="sub" id="cap" aria-live="polite">Dwindle splits the screen as each window opens.</p>
+      <p class="more"><a href="layouts.html">Try every layout yourself →</a></p>
     </div>
   </div>
 
@@ -129,84 +68,7 @@ footer a { margin:0 8px; }
       <div class="card"><h3>Your way</h3><p>Automatic tiling, or Snap mode where windows stay put until you drag one to an edge. Switch any time.</p></div>
       <div class="card"><h3>Private by design</h3><p>No account, no analytics, no screen recording. Tiles reads window positions and app names, and nothing leaves your Mac.</p></div>
     </div>
-  </section>
-
-  <section id="features">
-    <h2>Everything in Tiles</h2>
-    <div class="grid">
-      <div class="card"><h3>Layouts</h3><ul>
-        <li>11 layouts: Dwindle, Master &amp; Stack, Center Stage, Columns, Thirds, Rows, Grid, Monocle, Scrolling and more</li>
-        <li>A different layout for each display</li>
-        <li>Ultrawide screens detected automatically, with a width cap so nothing stretches</li>
-        <li>Scrolling: windows keep their width in a row you slide along</li></ul></div>
-      <div class="card"><h3>Desktops</h3><ul>
-        <li>Up to nine workspaces per display</li>
-        <li>Name them and give each its own layout</li>
-        <li><kbd>⌃⌥2</kbd> to switch, <kbd>⌃⌥⇧2</kbd> to send a window</li>
-        <li>No need to change any macOS security settings</li></ul></div>
-      <div class="card"><h3>Mouse</h3><ul>
-        <li>Drag one window onto another to swap them</li>
-        <li>Hold ⌥ while dropping to stack them in one tile</li>
-        <li>Drag the edge between windows and both resize</li>
-        <li>Snap mode: edges and corners snap, with a preview</li></ul></div>
-      <div class="card"><h3>Keyboard</h3><ul>
-        <li>50+ shortcuts, every one remappable</li>
-        <li>Window finder: <kbd>⌃⌥G</kbd>, type a few letters, Return</li>
-        <li>On-screen cheat sheet with <kbd>⌃⌥/</kbd></li>
-        <li>Focus: one window fills the screen, then goes back</li></ul></div>
-      <div class="card"><h3>Docking</h3><ul>
-        <li>Your arrangement is saved for each set of displays</li>
-        <li>Plug your monitor back in and it returns</li>
-        <li>One shortcut undoes a restore</li>
-        <li>Windows from an unplugged screen never go missing</li></ul></div>
-      <div class="card"><h3>App rules</h3><ul>
-        <li>Send an app's windows to a chosen display</li>
-        <li>Open an app in the main tile every time</li>
-        <li>Keep apps like Calculator floating</li></ul></div>
-      <div class="card"><h3>Look and feel</h3><ul>
-        <li>Light, Dark or follow macOS</li>
-        <li>Five colour themes</li>
-        <li>Optional focus outline and window animation</li>
-        <li>English, Spanish, French and German</li></ul></div>
-      <div class="card"><h3>Settings that travel</h3><ul>
-        <li>A live dashboard of every display</li>
-        <li>Named profiles, switched in one click</li>
-        <li>Export and import between Macs</li>
-        <li>Built-in updates, signed by the developer</li></ul></div>
-      <div class="card"><h3>Automation</h3><ul>
-        <li><code>tiles://</code> links for Shortcuts and Alfred</li>
-        <li>A <code>tiles</code> command for Terminal</li>
-        <li>Ready-made Raycast commands</li>
-        <li><code>tiles status</code> for scripts and AI agents</li></ul></div>
-    </div>
-  </section>
-
-
-  <section id="shortcuts">
-    <h2>Handy shortcuts</h2>
-    <p class="center">Hold <kbd>⌃</kbd> Control and <kbd>⌥</kbd> Option, then press one key. Every one can be changed.</p>
-    <table>
-      <tr><td>arrow</td><td>Jump to the window on that side</td></tr>
-      <tr><td><kbd>⇧</kbd> + arrow</td><td>Move the window itself</td></tr>
-      <tr><td><kbd>Space</kbd></td><td>Next layout</td></tr>
-      <tr><td><kbd>M</kbd></td><td>Fill the screen with this window; press again to put it back</td></tr>
-      <tr><td><kbd>F</kbd></td><td>Float or tile this window</td></tr>
-      <tr><td><kbd>1</kbd>–<kbd>9</kbd></td><td>Go to that desktop; add <kbd>⇧</kbd> to send the window there</td></tr>
-      <tr><td><kbd>G</kbd></td><td>Find a window by name</td></tr>
-      <tr><td><kbd>/</kbd></td><td>Show the shortcut list on screen</td></tr>
-    </table>
-  </section>
-
-  <section id="faq">
-    <h2>Questions</h2>
-    <div class="faq">
-      <details><summary>Is it really free?</summary><p>Yes. Tiles is free and open source under the MIT License. There is no paid tier.</p></details>
-      <details><summary>Why does it need Accessibility access?</summary><p>macOS only lets an app move other apps' windows with that permission. Tiles uses it to read window positions and app names and to move windows. It does not record your screen or read what's inside your windows.</p></details>
-      <details><summary>Does Tiles collect any data?</summary><p>No. There is no account and no analytics. The only network request is a daily check with GitHub for a new version, which you can switch off. See the <a href="privacy.html">privacy policy</a>.</p></details>
-      <details><summary>I don't want everything tiled automatically.</summary><p>Choose Snap mode in Settings. Windows stay where you put them, and dragging one to a screen edge snaps it. You can also float a single window or a whole app.</p></details>
-      <details><summary>Which Macs does it run on?</summary><p>macOS 13 Ventura or later, on Apple silicon and Intel.</p></details>
-      <details><summary>How do I remove it?</summary><p>Quit Tiles and drag it from Applications to the Bin. Your windows go back to normal straight away.</p></details>
-    </div>
+    <p class="more"><a href="features.html">See everything Tiles does →</a></p>
   </section>
 
   <section class="cta">
@@ -221,31 +83,7 @@ footer a { margin:0 8px; }
     Free and open source under the MIT License · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="support.html">Support</a> · <a href="https://github.com/vannaenae/tiles">Source on GitHub</a>
   </footer>
 </div>
-<script>
-function copyCmd(b) { navigator.clipboard.writeText(document.getElementById('cmd').textContent).then(() => { b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1500); }); }
-</script>
-<script>
-// Scroll reveal, once per element. Without JS (or IntersectionObserver) everything is simply visible.
-if ('IntersectionObserver' in window) {
-  document.documentElement.classList.add('js');
-  document.querySelectorAll('section h2, section .center, .card, table, details, .cta .icon, .cta .btn').forEach(el => el.classList.add('reveal'));
-  document.querySelectorAll('.grid, .faq').forEach(g => [...g.children].forEach((el, i) => el.style.setProperty('--i', i % 4)));
-  const seen = new IntersectionObserver(entries => entries.forEach(e => { if (e.isIntersecting) { e.target.dataset.visible = ''; seen.unobserve(e.target); } }), { rootMargin: '0px 0px -80px 0px' });
-  document.querySelectorAll('.reveal, .wipe').forEach(el => seen.observe(el));
-}
-</script>
-<script>
-// Layout switcher: click a tab to see that layout. It plays through by itself until you touch it.
-(() => {
-  const tabs = [...document.querySelectorAll('.tabs button')], shots = [...document.querySelectorAll('.stage img')], cap = document.getElementById('cap');
-  let current = 0;
-  const show = i => { current = i; tabs.forEach((t, k) => t.setAttribute('aria-selected', k === i)); shots.forEach((im, k) => im.classList.toggle('on', k === i)); cap.textContent = tabs[i].dataset.cap; };
-  let auto = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : setInterval(() => show((current + 1) % tabs.length), 4000);
-  const stop = () => { clearInterval(auto); auto = 0; };
-  tabs.forEach((t, i) => t.addEventListener('click', () => { stop(); show(i); }));
-  document.querySelector('.stage').addEventListener('pointerenter', stop);
-})();
-</script>
+<script src="site.js"></script>
 <script src="version.js" defer></script>
 </body>
 </html>
