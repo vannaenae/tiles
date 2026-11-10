@@ -69,7 +69,8 @@ The Tiles source code lives on GitHub. If you contribute code, documentation or 
 
 Tiles and its website rely on other companies' services. Their own terms and privacy policies apply when you use them.
 
-- **GitHub.** The website, the source code, releases, downloads, update checks and issue tracker are hosted by GitHub, Inc. under the [GitHub Terms of Service](https://docs.github.com/site-policy/github-terms/github-terms-of-service) and the [GitHub Privacy Statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement).
+- **GitHub.** The source code, releases, downloads, update checks and issue tracker are hosted by GitHub, Inc. under the [GitHub Terms of Service](https://docs.github.com/site-policy/github-terms/github-terms-of-service) and the [GitHub Privacy Statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement).
+- **Vercel.** The website is hosted by Vercel Inc. under the [Vercel Privacy Policy](https://vercel.com/legal/privacy-policy).
 - **Apple.** Tiles runs on macOS and uses macOS permissions. If you get Tiles from the Mac App Store, Apple's [Licensed Application End User License Agreement](https://www.apple.com/legal/internet-services/itunes/dev/stdeula/) (the "Standard EULA") applies to that copy, alongside these terms.
 - **Homebrew.** If you install Tiles with Homebrew, Homebrew's own terms apply to Homebrew.
 
