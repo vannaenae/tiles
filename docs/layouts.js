@@ -20,7 +20,7 @@ const SCREENS = [['MacBook 14″', 1512, 945, .62], ['27″', 2560, 1415, .8], [
 const LAYOUTS = [['dwindle', 'Dwindle'], ['master', 'Master & Stack'], ['centered', 'Center Stage'], ['columns', 'Columns'], ['thirds', 'Thirds'], ['grid', 'Grid'], ['scrolling', 'Scrolling'], ['monocle', 'Monocle']];
 // Real windows, cut from screenshots: [image, its width in points, background below the screenshot].
 const WINDOWS = [['github', 784, '#fff'], ['claude', 714, '#faf9f5'], ['google', 708, '#fff'], ['terminal', 714, '#fff'], ['appstore', 784, '#fff']];
-const MENU_BAR = 24, DOCK = 70; // points the menu bar and the Dock take from the screen
+const MENU_BAR = 24;
 let screen = 0, layout = 'dwindle', n = 4;
 let order = WINDOWS.map((_, i) => i); // order[slot] = which window sits in that tile
 let focused = 0, slots = [], tried = false; // tried: the visitor has moved a window, so the hint can go quiet
@@ -48,7 +48,7 @@ function render() {
   mac.style.width = width + 20 + 'px'; mac.classList.toggle('laptop', screen === 0);
   desk.style.width = width + 'px'; desk.style.height = Math.round(H * s) + 'px'; bar.style.height = MENU_BAR * s + 'px'; desk.style.setProperty('--s', s);
   if (order.indexOf(focused) >= n) focused = order[0];
-  slots = frames(layout, n, W, H - MENU_BAR - DOCK).map(r => ({ x: r.x * s, y: (r.y + MENU_BAR) * s, w: r.w * s, h: r.h * s }));
+  slots = frames(layout, n, W, H - MENU_BAR).map(r => ({ x: r.x * s, y: (r.y + MENU_BAR) * s, w: r.w * s, h: r.h * s }));
   order.forEach((w, slot) => {
     const d = wins[w];
     d.classList.toggle('focus', w === focused && slot < n);
@@ -57,7 +57,6 @@ function render() {
     const r = slots[slot];
     d.style.opacity = 1; d.style.pointerEvents = ''; d.style.zIndex = w === focused ? 2 : 1; d.style.borderRadius = Math.max(3, 10 * s) + 'px';
     Object.assign(d.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' });
-    d.firstChild.style.setProperty('--w', WINDOWS[w][1] * s + 'px');
   });
   document.getElementById('count').textContent = n + (n === 1 ? ' window' : ' windows');
 }

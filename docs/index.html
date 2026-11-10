@@ -27,38 +27,21 @@
     <p class="sub" style="margin-bottom:10px">or install from Terminal:</p>
     <div class="install"><code id="cmd">curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.sh | bash</code><button class="copy" onclick="copyCmd(this)">Copy</button></div>
     <p class="sub">macOS 13 or later · Apple silicon and Intel · Free and open source</p>
-    <div class="switch">
-      <div class="tabs" role="tablist" aria-label="Layouts">
-        <button role="tab" aria-selected="true" data-cap="Dwindle splits the screen as each window opens.">Dwindle</button>
-        <button role="tab" aria-selected="false" data-cap="Master &amp; Stack keeps one main window, with the rest stacked beside it.">Master &amp; Stack</button>
-        <button role="tab" aria-selected="false" data-cap="Grid gives every window an equal share.">Grid</button>
-        <button role="tab" aria-selected="false" data-cap="Scrolling keeps windows at their own width in a row you slide along.">Scrolling</button>
-      </div>
-      <div class="mac"><div class="stage">
-        <img class="on" width="1600" height="900" src="img/real-apps.jpg" alt="Five windows on a Mac in the Dwindle layout">
-        <img loading="lazy" width="1552" height="872" src="img/layout-master.jpg" alt="Four windows in the Master and Stack layout">
-        <img loading="lazy" width="1552" height="872" src="img/layout-grid.jpg" alt="Four windows in a two by two grid">
-        <img loading="lazy" width="1600" height="900" src="img/scrolling.jpg" alt="Two Safari windows side by side in the Scrolling layout">
-      </div></div>
-      <p class="sub" id="cap" aria-live="polite">Dwindle splits the screen as each window opens.</p>
-      <p class="more"><a href="layouts.html">Try every layout yourself →</a></p>
-    </div>
   </div>
+
+  <section class="play" style="padding-top:24px">
+    <div class="tabs" id="screens" role="tablist" aria-label="Screen size"></div><br>
+    <div class="tabs" id="layouts" role="tablist" aria-label="Layout"></div>
+    <div class="row"><button class="copy" id="add">+ Window</button><button class="copy ghost" id="remove">− Window</button></div>
+    <p class="sub" id="count" aria-live="polite"></p>
+    <p class="hint" id="hint"><b>This screen is live. Try it now.</b> Drag a window onto another to swap them. Double-click one to make it the main window.</p>
+    <div class="setup" id="setup"><div class="mac"><div class="desk" id="desk" tabindex="0" aria-label="A Mac screen with tiled windows. Arrow keys move between windows, Return makes one the main window, Space changes the layout."><div class="bar"><img src="img/win-menubar.jpg" alt=""></div></div></div></div>
+  </section>
 
   <div class="strip" aria-hidden="true"><div>
     <span>Dwindle</span><span>Master &amp; Stack</span><span>Wide Master</span><span>Center Stage</span><span>Columns</span><span>Thirds</span><span>Rows</span><span>Grid</span><span>Monocle</span><span>Scrolling</span><span>Snap</span>
     <span>Dwindle</span><span>Master &amp; Stack</span><span>Wide Master</span><span>Center Stage</span><span>Columns</span><span>Thirds</span><span>Rows</span><span>Grid</span><span>Monocle</span><span>Scrolling</span><span>Snap</span>
   </div></div>
-
-  <section id="look">
-        <div class="slides">
-      <img class="wipe" loading="lazy" width="2000" height="1250" src="img/slide-layouts.webp" alt="11 layouts, one shortcut. Master and Stack, Columns, Grid, Scrolling and more; press Control, Option, Space to switch.">
-      <img class="wipe" loading="lazy" width="2000" height="1250" src="img/slide-keyboard.webp" alt="Keyboard first: shortcuts to focus a window, fill the screen and switch desktops, shown over four tiled windows.">
-      <img class="wipe" loading="lazy" width="2000" height="1250" src="img/slide-scrolling.webp" alt="Room for every window. The Scrolling layout lines windows up at their own width and slides to the one you focus.">
-      <img class="wipe" loading="lazy" width="2000" height="1250" src="img/slide-dock.webp" alt="Your desk, back when you dock. Tiles remembers each display setup and puts every window back when you plug in.">
-      <img class="wipe" loading="lazy" width="2000" height="1250" src="img/slide-themes.webp" alt="Make it yours: five accent colours, light and dark, and a dashboard that shows every display live.">
-    </div>
-  </section>
 
   <section id="why">
     <h2>A tidy desktop, without the effort</h2>
@@ -84,6 +67,7 @@
   </footer>
 </div>
 <script src="site.js"></script>
+<script src="layouts.js"></script>
 <script src="version.js" defer></script>
 </body>
 </html>
