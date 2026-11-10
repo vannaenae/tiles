@@ -40,7 +40,7 @@ function seg(id, items, isOn, pick) {
 function render() {
   seg('screens', SCREENS.map(s => s[0]), i => i === screen, i => screen = i);
   seg('layouts', LAYOUTS.map(l => l[1]), i => LAYOUTS[i][0] === layout, i => layout = LAYOUTS[i][0]);
-  const [, W, H] = SCREENS[screen], width = Math.min(desk.parentElement.clientWidth, 980), s = width / W;
+  const [, W, H] = SCREENS[screen], box = desk.parentElement, width = Math.min(box.clientWidth - 2 * parseFloat(getComputedStyle(box).paddingLeft), 980), s = width / W;
   desk.style.width = width + 'px'; desk.style.height = Math.round(H * s) + 'px'; bar.style.height = MENU_BAR * s + 'px';
   if (order.indexOf(focused) >= n) focused = order[0];
   slots = frames(layout, n, W, H - MENU_BAR).map(r => ({ x: r.x * s, y: (r.y + MENU_BAR) * s, w: r.w * s, h: r.h * s }));

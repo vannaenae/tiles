@@ -74,6 +74,11 @@ nav a.home { display:flex; align-items:center; gap:12px; margin:0; } nav a[aria-
 .win.drop::after { content:""; position:absolute; inset:0; background:color-mix(in srgb, var(--accent) 28%, transparent); }
 .desk:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
 .kinds { max-width:760px; margin:0 auto; } .kinds dt { font-weight:600; margin-top:14px; } .kinds dd { margin:2px 0 0; color:var(--sec); }
+/* The coloured panel behind a screen, like the App Store slides: flat colour with two soft blocks. */
+.backdrop { position:relative; overflow:hidden; margin:18px auto 0; padding:clamp(16px,5vw,56px); border-radius:24px; background:#E24E93; }
+.backdrop::before, .backdrop::after { content:""; position:absolute; background:rgba(255,255,255,.08); }
+.backdrop::before { inset:0 0 72% 38%; border-bottom-left-radius:80px; } .backdrop::after { inset:17% 65% 0 0; border-top-right-radius:80px; }
+.backdrop > * { position:relative; z-index:1; margin-top:0; }
 .hint { display:inline-block; margin:14px 0 0; padding:10px 18px; border-radius:14px; background:var(--text); color:var(--bg); font-size:15px; transition:background-color 300ms ease, color 300ms ease; animation:rise 500ms var(--ease-out) 700ms backwards; }
 .hint.done { background:none; color:var(--sec); }
 .win.nudge { animation:nudge 900ms var(--ease-in-out) 1600ms 2; } .win.drag { animation:none; }
