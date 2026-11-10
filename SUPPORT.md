@@ -6,7 +6,7 @@ Tiles is free and open source, a SOULSPCE Collective product. Support happens in
 
 - **Ask a question or report a bug:** <https://github.com/vannaenae/tiles/issues>
 - **Report a security problem privately:** <https://github.com/vannaenae/tiles/security/advisories/new> (see the [security policy](https://github.com/vannaenae/tiles/blob/main/SECURITY.md))
-- **Something you can't post in public:** [contact email]
+- **Something you can't post in public:** <info@soulspcecollective.com>
 
 Before you open an issue, search the existing ones. Someone may have already found the answer.
 
@@ -152,6 +152,6 @@ Finally, you can remove Tiles from **System Settings → Privacy & Security → 
 
 ## More
 
-- [Privacy Policy](https://vannaenae.github.io/tiles/privacy.html)
-- [Terms of Use](https://vannaenae.github.io/tiles/terms.html)
+- [Privacy Policy](https://i-tilesapp.vercel.app/privacy.html)
+- [Terms of Use](https://i-tilesapp.vercel.app/terms.html)
 - [Source code and documentation](https://github.com/vannaenae/tiles)

@@ -12,7 +12,7 @@ Use GitHub's private vulnerability reporting instead:
 
 **<https://github.com/vannaenae/tiles/security/advisories/new>**
 
-Only the maintainers can see your report there. If you can't use GitHub, email [contact email].
+Only the maintainers can see your report there. If you can't use GitHub, email <info@soulspcecollective.com>.
 
 Please include:
 
@@ -36,11 +36,11 @@ We fix security problems in the **latest release** only. Please update before yo
 - **The updater:** the update check, the download, and the code-signature check that makes sure an update is signed by the Tiles developer (team ID GQ638955FB) before it's installed.
 - **The install script** (`install.sh`), including its own signature check and its uninstall option.
 - **The Homebrew cask** in this repository.
-- **The website** at <https://vannaenae.github.io/tiles/>.
+- **The website** at <https://i-tilesapp.vercel.app/>.
 
 ## What's out of scope
 
-- Problems in macOS, GitHub, GitHub Pages or Homebrew themselves. Please report those to Apple, GitHub or Homebrew.
+- Problems in macOS, GitHub, Vercel or Homebrew themselves. Please report those to Apple, GitHub, Vercel or Homebrew.
 - Attacks that need someone to already control your Mac or your admin account.
 - Social engineering, phishing or physical attacks.
 - Denial-of-service attacks against GitHub or the website.

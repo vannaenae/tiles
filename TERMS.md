@@ -2,9 +2,9 @@
 
 # Tiles Terms of Use
 
-**Effective 9 November 2026**
+**Effective 10 November 2026**
 
-These terms cover the Tiles app and the Tiles website at <https://vannaenae.github.io/tiles/>. Tiles is a SOULSPCE Collective product. In these terms, "we" and "us" means SOULSPCE Collective, and "you" means anyone who uses Tiles or visits the website.
+These terms cover the Tiles app and the Tiles website at <https://i-tilesapp.vercel.app/>. Tiles is a SOULSPCE Collective product. In these terms, "we" and "us" means SOULSPCE Collective, and "you" means anyone who uses Tiles or visits the website.
 
 ## 1. Agreeing to these terms
 
@@ -83,13 +83,13 @@ We may change Tiles, release new versions, or stop working on it at any time. We
 
 ## 10. Ending use
 
-You can stop using Tiles at any time by quitting it and deleting it. The [Support page](https://vannaenae.github.io/tiles/support.html#uninstall-tiles) shows how to remove it fully.
+You can stop using Tiles at any time by quitting it and deleting it. The [Support page](https://i-tilesapp.vercel.app/support.html#uninstall-tiles) shows how to remove it fully.
 
 If you break these terms on the website or in project spaces, we may block or remove your access to them. This doesn't end the rights the MIT License gives you to the software.
 
-## 11. Governing law
+## 11. Disputes
 
-These terms are governed by the laws of [jurisdiction]. Disputes go to the courts of [jurisdiction], unless the law where you live gives you the right to bring a claim in your local courts.
+Nothing in these terms takes away rights you have under the consumer laws where you live. If there is a dispute, contact us first at <info@soulspcecollective.com> and we will try to resolve it.
 
 ## 12. Changes to these terms
 
@@ -97,8 +97,8 @@ We may update these terms. When we do, we will change the effective date at the 
 
 ## 13. Contact
 
-- Publisher: SOULSPCE Collective, [legal entity name and address]
-- Email: [contact email]
+- Publisher: SOULSPCE Collective
+- Email: <info@soulspcecollective.com>
 - Questions and issues: <https://github.com/vannaenae/tiles/issues>
 
-See also the [Privacy Policy](https://vannaenae.github.io/tiles/privacy.html) and [Support](https://vannaenae.github.io/tiles/support.html).
+See also the [Privacy Policy](https://i-tilesapp.vercel.app/privacy.html) and [Support](https://i-tilesapp.vercel.app/support.html).

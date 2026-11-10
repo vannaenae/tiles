@@ -2,9 +2,9 @@
 
 # Tiles Privacy Policy
 
-**Effective 9 November 2026**
+**Effective 10 November 2026**
 
-Tiles is a free, open-source window manager for Mac. It is a SOULSPCE Collective product. This policy covers the Tiles app and the Tiles website at <https://vannaenae.github.io/tiles/>. In this policy, "we" and "us" means SOULSPCE Collective.
+Tiles is a free, open-source window manager for Mac. It is a SOULSPCE Collective product. This policy covers the Tiles app and the Tiles website at <https://i-tilesapp.vercel.app/>. In this policy, "we" and "us" means SOULSPCE Collective.
 
 ## The short version
 
@@ -70,13 +70,13 @@ These requests go to GitHub, Inc. Like any website, GitHub receives your IP addr
 
 ## The website
 
-The Tiles website is hosted on GitHub Pages. GitHub may log visits, including your IP address, under the GitHub Privacy Statement. The site itself sets no cookies, has no analytics and loads nothing from other websites.
+The Tiles website is hosted on Vercel. Vercel may log visits, including your IP address, under the Vercel Privacy Policy. The site sets no cookies and has no analytics. To show the current version number, each page asks GitHub for the latest Tiles release, so GitHub also sees your IP address. Nothing else is loaded from other websites.
 
 ## Contacting us
 
 If you open an issue or start a discussion on GitHub, it is public and handled under GitHub's terms. Please don't post anything private. Check `tiles status` output and config files before you paste them.
 
-If you email us at [contact email], we receive your email address and whatever you write. We use it only to reply to you.
+If you email us at <info@soulspcecollective.com>, we receive your email address and whatever you write. We use it only to reply to you.
 
 ## Children
 
@@ -89,7 +89,7 @@ We hold no personal data about you, so there is nothing for us to access, correc
 - **Turn off update checks:** Settings → General → Updates, or `"checkForUpdates": false` in the config file.
 - **Remove Accessibility access:** System Settings → Privacy & Security → Accessibility.
 - **Delete your data:** delete `~/.config/tiles` and `~/Library/Application Support/Tiles`, and any settings files you exported.
-- **Remove Tiles completely:** see the uninstall steps on the [Support page](https://vannaenae.github.io/tiles/support.html#uninstall-tiles). If you used the install script, run `curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.sh | bash -s uninstall`, then delete the two folders above.
+- **Remove Tiles completely:** see the uninstall steps on the [Support page](https://i-tilesapp.vercel.app/support.html#uninstall-tiles). If you used the install script, run `curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.sh | bash -s uninstall`, then delete the two folders above.
 
 Depending on where you live, you may have legal rights over your personal data, such as the right to complain to your local data protection authority. Those rights still apply.
 
@@ -99,8 +99,8 @@ If Tiles changes how it handles data, we will update this policy first. We will 
 
 ## Contact
 
-- Publisher: SOULSPCE Collective, [legal entity name and address]
-- Email: [contact email]
+- Publisher: SOULSPCE Collective
+- Email: <info@soulspcecollective.com>
 - Questions and issues: <https://github.com/vannaenae/tiles/issues>
 - Security reports: <https://github.com/vannaenae/tiles/security/advisories/new>
 
@@ -113,8 +113,8 @@ For the Mac App Store listing ("App Privacy" in App Store Connect):
 | Data collection | **Data Not Collected.** Tiles does not collect any data from this app. |
 | Tracking | **No.** Tiles does not track you across apps or websites owned by other companies. |
 | Third-party SDKs | None. |
-| Privacy Policy URL | <https://vannaenae.github.io/tiles/privacy.html> |
-| Support URL | <https://vannaenae.github.io/tiles/support.html> |
+| Privacy Policy URL | <https://i-tilesapp.vercel.app/privacy.html> |
+| Support URL | <https://i-tilesapp.vercel.app/support.html> |
 
 Notes for whoever fills in the form:
 

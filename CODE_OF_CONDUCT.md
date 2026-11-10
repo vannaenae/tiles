@@ -28,7 +28,7 @@ This code applies in every Tiles project space: issues, pull requests, discussio
 
 If something happens that breaks this code, or makes you feel unsafe, please tell us.
 
-- Email [contact email], or
+- Email <info@soulspcecollective.com>, or
 - message a maintainer privately on GitHub, or use GitHub's **Report content** option on the comment or issue.
 
 Tell us what happened, where, and who was involved. Links or screenshots help. You can report something that happened to someone else.

@@ -7,7 +7,7 @@
 <p align="center"><b>A free, open-source auto-tiling window manager for macOS.</b><br>
 Every window snaps into place the moment it opens. Every screen gets the right layout. Your desk setup comes back when you dock.</p>
 
-<p align="center"><a href="https://vannaenae.github.io/tiles/">Website</a> · <a href="https://github.com/vannaenae/tiles/releases/latest">Download</a> · <a href="#keyboard-shortcuts">Shortcuts</a></p>
+<p align="center"><a href="https://i-tilesapp.vercel.app/">Website</a> · <a href="https://github.com/vannaenae/tiles/releases/latest">Download</a> · <a href="#keyboard-shortcuts">Shortcuts</a></p>
 
 <p align="center"><img src="docs/img/demo.gif" width="720" alt="Tiles arranging TextEdit and Finder windows through Dwindle, Columns, Grid, Centered Master and Scrolling on a real Mac"></p>
 

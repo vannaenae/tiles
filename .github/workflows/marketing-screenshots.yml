@@ -5,9 +5,6 @@ name: Marketing screenshots
 # and pushes the PNGs to the marketing-screenshots branch. Run it by hand from the Actions tab.
 on:
   workflow_dispatch:
-  push:
-    branches: [claude/marketing-screenshots]
-    paths: [scripts/marketing-shots.sh, scripts/marketing-keys.swift, .github/workflows/marketing-screenshots.yml]
 
 permissions:
   contents: write

@@ -688,7 +688,7 @@ private struct RulesPane: View {
 
 private struct AboutPane: View {
     /// The Tiles website, where the privacy policy and terms live.
-    static let site = URL(string: "https://vannaenae.github.io/tiles/")!
+    static let site = URL(string: "https://i-tilesapp.vercel.app/")!
 
     var body: some View {
         VStack(spacing: 12) {
