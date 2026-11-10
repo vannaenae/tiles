@@ -19,7 +19,7 @@ const SCREENS = [['MacBook 14″', 1512, 945], ['27″', 2560, 1415], ['34″ ul
 const LAYOUTS = [['dwindle', 'Dwindle'], ['master', 'Master & Stack'], ['centered', 'Center Stage'], ['columns', 'Columns'], ['thirds', 'Thirds'], ['grid', 'Grid'], ['scrolling', 'Scrolling'], ['monocle', 'Monocle']];
 // Real windows, cut from screenshots: [image, its width in points, background below the screenshot].
 const WINDOWS = [['github', 784, '#fff'], ['claude', 714, '#faf9f5'], ['google', 708, '#fff'], ['terminal', 714, '#fff'], ['appstore', 784, '#fff']];
-const MENU_BAR = 24;
+const MENU_BAR = 24, DOCK = 70; // points the menu bar and the Dock take from the screen
 let screen = 0, layout = 'dwindle', n = 4;
 let order = WINDOWS.map((_, i) => i); // order[slot] = which window sits in that tile
 let focused = 0, slots = [], tried = false; // tried: the visitor has moved a window, so the hint can go quiet
@@ -41,9 +41,9 @@ function render() {
   seg('screens', SCREENS.map(s => s[0]), i => i === screen, i => screen = i);
   seg('layouts', LAYOUTS.map(l => l[1]), i => LAYOUTS[i][0] === layout, i => layout = LAYOUTS[i][0]);
   const [, W, H] = SCREENS[screen], box = desk.parentElement, width = Math.min(box.clientWidth - 2 * parseFloat(getComputedStyle(box).paddingLeft), 980), s = width / W;
-  desk.style.width = width + 'px'; desk.style.height = Math.round(H * s) + 'px'; bar.style.height = MENU_BAR * s + 'px';
+  desk.style.width = width + 'px'; desk.style.height = Math.round(H * s) + 'px'; bar.style.height = MENU_BAR * s + 'px'; desk.style.setProperty('--s', s);
   if (order.indexOf(focused) >= n) focused = order[0];
-  slots = frames(layout, n, W, H - MENU_BAR).map(r => ({ x: r.x * s, y: (r.y + MENU_BAR) * s, w: r.w * s, h: r.h * s }));
+  slots = frames(layout, n, W, H - MENU_BAR - DOCK).map(r => ({ x: r.x * s, y: (r.y + MENU_BAR) * s, w: r.w * s, h: r.h * s }));
   order.forEach((w, slot) => {
     const d = wins[w];
     d.classList.toggle('focus', w === focused && slot < n);

@@ -1,5 +1,4 @@
-:root { --accent:#E8643C; --bg:#faf8f6; --card:#fff; --text:#1d1d1f; --sec:#6e6e73; --line:rgba(0,0,0,.08); --tile2:rgba(232,100,60,.28); --screen:rgba(0,0,0,.05); }
-@media (prefers-color-scheme: dark) { :root { --bg:#141416; --card:#1f1f22; --text:#f5f5f7; --sec:#a1a1a6; --line:rgba(255,255,255,.1); --tile2:rgba(232,100,60,.35); --screen:rgba(255,255,255,.06); } }
+:root { --accent:#E8643C; --bg:#C8347A; --card:rgba(255,255,255,.12); --text:#fff; --sec:rgba(255,255,255,.92); --line:rgba(255,255,255,.24); --tile2:rgba(232,100,60,.28); --screen:rgba(255,255,255,.14); }
 * { box-sizing:border-box; }
 body { margin:0; background:var(--bg); color:var(--text); font:17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
 a { color:var(--accent); text-decoration:none; } a:hover { text-decoration:underline; }
@@ -74,13 +73,20 @@ nav a.home { display:flex; align-items:center; gap:12px; margin:0; } nav a[aria-
 .win.drop::after { content:""; position:absolute; inset:0; background:color-mix(in srgb, var(--accent) 28%, transparent); }
 .desk:focus-visible { outline:3px solid var(--accent); outline-offset:3px; }
 .kinds { max-width:760px; margin:0 auto; } .kinds dt { font-weight:600; margin-top:14px; } .kinds dd { margin:2px 0 0; color:var(--sec); }
-/* The coloured panel behind a screen, like the App Store slides: flat colour with two soft blocks. */
-.backdrop { position:relative; overflow:hidden; margin:18px auto 0; padding:clamp(16px,5vw,56px); border-radius:24px; background:#E24E93; }
-.backdrop::before, .backdrop::after { content:""; position:absolute; background:rgba(255,255,255,.08); }
-.backdrop::before { inset:0 0 72% 38%; border-bottom-left-radius:80px; } .backdrop::after { inset:17% 65% 0 0; border-top-right-radius:80px; }
-.backdrop > * { position:relative; z-index:1; margin-top:0; }
+/* A Mac display around a screen: black bezel, silver stand. */
+.mac { position:relative; max-width:1000px; margin:18px auto 64px; padding:10px; border-radius:16px; background:#0c0c0e; }
+.mac::before, .mac::after { content:""; position:absolute; left:50%; transform:translateX(-50%); }
+.mac::before { top:100%; width:20%; height:48px; background:#c9cacf; } .mac::after { top:calc(100% + 48px); width:32%; height:8px; border-radius:6px 6px 0 0; background:#dcdde1; }
+.mac > * { margin-top:0; border-radius:6px; box-shadow:none; }
+.dock { position:absolute; z-index:3; left:50%; transform:translateX(-50%); bottom:calc(6px * var(--s)); display:flex; gap:calc(8px * var(--s)); padding:calc(6px * var(--s)); border-radius:calc(18px * var(--s)); background:rgba(245,245,247,.82); }
+.dock > * { display:block; width:calc(46px * var(--s)); height:calc(46px * var(--s)); border-radius:22%; } .dock svg { width:100%; height:100%; }
 .hint { display:inline-block; margin:14px 0 0; padding:10px 18px; border-radius:14px; background:var(--text); color:var(--bg); font-size:15px; transition:background-color 300ms ease, color 300ms ease; animation:rise 500ms var(--ease-out) 700ms backwards; }
 .hint.done { background:none; color:var(--sec); }
 .win.nudge { animation:nudge 900ms var(--ease-in-out) 1600ms 2; } .win.drag { animation:none; }
 @keyframes nudge { 40% { transform:translate(14px,-8px); } }
 @media (prefers-reduced-motion:reduce) { .win, .desk { transition:none; } .hint, .win.nudge { animation:none; } }
+/* The page sits on the pink from the App Store slides: flat colour with two soft blocks. */
+body::before, body::after { content:""; position:fixed; z-index:-1; background:rgba(255,255,255,.07); }
+body::before { inset:0 0 72% 38%; border-bottom-left-radius:80px; } body::after { inset:17% 65% 0 0; border-top-right-radius:80px; }
+a { color:#fff; text-decoration:underline; } nav a, .btn { text-decoration:none; } nav a[aria-current] { color:#fff; text-decoration:underline; text-underline-offset:6px; }
+.btn, .copy, .tabs button[aria-selected=true] { background:#fff; color:#1d1d1f; } .ghost { background:var(--screen); color:#fff; }
