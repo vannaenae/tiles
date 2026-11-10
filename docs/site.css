@@ -1,4 +1,4 @@
-:root { --accent:#E8643C; --bg:#C8347A; --card:rgba(255,255,255,.12); --text:#fff; --sec:rgba(255,255,255,.92); --line:rgba(255,255,255,.24); --tile2:rgba(232,100,60,.28); --screen:rgba(255,255,255,.14); }
+:root { --c:#C8347A; --accent:var(--c); --bg:var(--c); --card:rgba(255,255,255,.12); --text:#fff; --sec:rgba(255,255,255,.92); --line:rgba(255,255,255,.24); --tile2:rgba(232,100,60,.28); --screen:rgba(255,255,255,.14); }
 * { box-sizing:border-box; }
 body { margin:0; background:var(--bg); color:var(--text); font:17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
 a { color:var(--accent); text-decoration:none; } a:hover { text-decoration:underline; }
@@ -90,3 +90,20 @@ body::before, body::after { content:""; position:fixed; z-index:-1; background:r
 body::before { inset:0 0 72% 38%; border-bottom-left-radius:80px; } body::after { inset:17% 65% 0 0; border-top-right-radius:80px; }
 a { color:#fff; text-decoration:underline; } nav a, .btn { text-decoration:none; } nav a[aria-current] { color:#fff; text-decoration:underline; text-underline-offset:6px; }
 .btn, .copy, .tabs button[aria-selected=true] { background:#fff; color:#1d1d1f; } .ghost { background:var(--screen); color:#fff; }
+/* Visitors pick the colour and light or dark (site.js sets --c and data-theme, and remembers them). */
+:root[data-theme=dark] { --bg:color-mix(in srgb, var(--c) 26%, #0b0b0d); }
+body { transition:background-color 400ms ease; } nav { flex-wrap:wrap; }
+.pick { display:flex; align-items:center; gap:8px; margin-left:20px; }
+.pick button { width:26px; height:26px; padding:0; border-radius:50%; border:2px solid #fff; background:var(--d); transition:transform 140ms var(--ease-out); }
+.pick button[aria-pressed=true] { outline:2px solid #fff; outline-offset:2px; } .pick button:active { transform:scale(.9); }
+.pick .mode { width:auto; padding:0 12px; border:0; border-radius:999px; background:var(--screen); color:#fff; font-size:13px; font-weight:600; }
+/* The two background blocks drift in slowly. */
+body::before { animation:block-a 2.6s var(--ease-out) backwards; } body::after { animation:block-b 2.6s var(--ease-out) .3s backwards; }
+@keyframes block-a { from { opacity:0; transform:translate(30%,-60%); } } @keyframes block-b { from { opacity:0; transform:translate(-70%,30%); } }
+/* The playground: each screen at its relative size, centred in a fixed-height space so nothing below jumps. */
+.setup { display:flex; align-items:center; justify-content:center; margin-top:18px; }
+.setup .mac { flex:none; margin:0 0 56px; transition:width 350ms var(--ease-out); }
+.setup .desk { transition:width 350ms var(--ease-out), height 350ms var(--ease-out); background:color-mix(in srgb, var(--c) 45%, #101014); }
+.mac.laptop { border-radius:14px 14px 0 0; }
+.mac.laptop::before { top:100%; width:110%; height:12px; border-radius:0 0 12px 12px; } .mac.laptop::after { top:100%; width:16%; height:5px; border-radius:0 0 6px 6px; background:#a9aab0; }
+@media (prefers-reduced-motion:reduce) { body::before, body::after { animation:none; } .setup .mac, .setup .desk { transition:none; } }

@@ -15,7 +15,8 @@ function frames(kind,n,W,H){const g=Math.round(W/180),a={x:g,y:g,w:W-2*g,h:H-2*g
  case'grid':{let s=Math.ceil(Math.sqrt(n)),rc=a.w>=a.h?Math.ceil(n/s):s,o=[],rem=n;rows(a,rc,g).forEach((r,i)=>{let k=Math.ceil(rem/(rc-i));o.push(...cols(r,k,g));rem-=k});return o}
  case'scrolling':{let w=Math.round(.5*(a.w+g)-g),o=[];for(let i=0;i<n;i++){let x=a.x+i*(w+g);o.push(x+w<=a.x+a.w+1?{x,y:a.y,w,h:a.h}:{x:a.x+a.w-6,y:a.y,w,h:a.h})}return o}
  case'monocle':return Array(n).fill(a);}}
-const SCREENS = [['MacBook 14″', 1512, 945], ['27″', 2560, 1415], ['34″ ultrawide', 3440, 1415], ['49″', 5120, 1415]];
+// [name, width and height in points, how wide it is drawn next to the widest screen]
+const SCREENS = [['MacBook 14″', 1512, 945, .62], ['27″', 2560, 1415, .8], ['34″ ultrawide', 3440, 1415, .92], ['49″', 5120, 1415, 1]];
 const LAYOUTS = [['dwindle', 'Dwindle'], ['master', 'Master & Stack'], ['centered', 'Center Stage'], ['columns', 'Columns'], ['thirds', 'Thirds'], ['grid', 'Grid'], ['scrolling', 'Scrolling'], ['monocle', 'Monocle']];
 // Real windows, cut from screenshots: [image, its width in points, background below the screenshot].
 const WINDOWS = [['github', 784, '#fff'], ['claude', 714, '#faf9f5'], ['google', 708, '#fff'], ['terminal', 714, '#fff'], ['appstore', 784, '#fff']];
@@ -40,7 +41,11 @@ function seg(id, items, isOn, pick) {
 function render() {
   seg('screens', SCREENS.map(s => s[0]), i => i === screen, i => screen = i);
   seg('layouts', LAYOUTS.map(l => l[1]), i => LAYOUTS[i][0] === layout, i => layout = LAYOUTS[i][0]);
-  const [, W, H] = SCREENS[screen], box = desk.parentElement, width = Math.min(box.clientWidth - 2 * parseFloat(getComputedStyle(box).paddingLeft), 980), s = width / W;
+  const setup = document.getElementById('setup'), mac = desk.parentElement, avail = Math.min(setup.clientWidth - 20, 980);
+  const fit = f => avail * (avail < 600 ? (2 + f) / 3 : f); // on a phone the small screens stay usable
+  const [, W, H, F] = SCREENS[screen], width = fit(F), s = width / W;
+  setup.style.height = Math.max(...SCREENS.map(([, w, h, f]) => fit(f) * h / w)) + 76 + 'px'; // tallest screen plus bezel and stand
+  mac.style.width = width + 20 + 'px'; mac.classList.toggle('laptop', screen === 0);
   desk.style.width = width + 'px'; desk.style.height = Math.round(H * s) + 'px'; bar.style.height = MENU_BAR * s + 'px'; desk.style.setProperty('--s', s);
   if (order.indexOf(focused) >= n) focused = order[0];
   slots = frames(layout, n, W, H - MENU_BAR - DOCK).map(r => ({ x: r.x * s, y: (r.y + MENU_BAR) * s, w: r.w * s, h: r.h * s }));
