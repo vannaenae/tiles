@@ -7,9 +7,9 @@
 <p align="center"><b>A free, open-source auto-tiling window manager for macOS.</b><br>
 Every window snaps into place the moment it opens. Every screen gets the right layout. Your desk setup comes back when you dock.</p>
 
-<p align="center"><a href="https://i-tilesapp.vercel.app/">Website</a> · <a href="https://github.com/vannaenae/tiles/releases/latest">Download</a> · <a href="#keyboard-shortcuts">Shortcuts</a></p>
+<p align="center"><a href="https://the-tiles.vercel.app/">Website</a> · <a href="https://github.com/vannaenae/tiles/releases/latest">Download</a> · <a href="#keyboard-shortcuts">Shortcuts</a></p>
 
-<p align="center"><img src="docs/img/demo.gif" width="720" alt="Tiles arranging TextEdit and Finder windows through Dwindle, Columns, Grid, Centered Master and Scrolling on a real Mac"></p>
+<p align="center"><a href="https://the-tiles.vercel.app/"><img src="docs/img/demo.gif" width="800" alt="Four real app windows on a MacBook: dragging one onto another swaps them, then the layout changes through Master and Stack, Center Stage, Columns, Thirds and Grid"></a><br><sub>The interactive demo from the <a href="https://the-tiles.vercel.app/">website</a>: drag the windows yourself there.</sub></p>
 
 ```bash
 curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.sh | bash
@@ -24,7 +24,13 @@ curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.s
   <img src="docs/img/dashboard-dark.jpg" width="420" alt="Tiles dashboard in dark mode, purple theme">
 </p>
 
-<sub>All images are screenshots of Tiles running on a real Mac (GitHub's macOS test machine, 1024×768).</sub>
+<p align="center">
+  <img src="docs/img/slide-layouts.webp" width="840" alt="11 layouts, one shortcut: Master and Stack, Columns, Grid, Scrolling and more">
+  <img src="docs/img/slide-scrolling.webp" width="840" alt="Room for every window: the Scrolling layout lines windows up at their own width and slides to the one you focus">
+  <img src="docs/img/slide-dock.webp" width="840" alt="Your desk, back when you dock: Tiles remembers each display setup and puts every window back when you plug in">
+</p>
+
+<sub>The dashboard and the screenshots further down are Tiles running on a real Mac (GitHub's macOS test machine, 1024×768). The animation at the top is the website's demo, which runs the same layout maths as the app.</sub>
 
 ---
 
