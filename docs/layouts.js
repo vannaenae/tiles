@@ -22,7 +22,7 @@ const WINDOWS = [['github', 784, '#fff'], ['claude', 714, '#faf9f5'], ['google',
 const MENU_BAR = 24;
 let screen = 0, layout = 'dwindle', n = 4;
 let order = WINDOWS.map((_, i) => i); // order[slot] = which window sits in that tile
-let focused = 0, slots = [];
+let focused = 0, slots = [], tried = false; // tried: the visitor has moved a window, so the hint can go quiet
 const desk = document.getElementById('desk'), bar = desk.querySelector('.bar');
 const wins = WINDOWS.map(([name, , bg], w) => {
   const d = document.createElement('div');
@@ -47,6 +47,7 @@ function render() {
   order.forEach((w, slot) => {
     const d = wins[w];
     d.classList.toggle('focus', w === focused && slot < n);
+    d.classList.toggle('nudge', !tried && w === focused && slot < n);
     if (slot >= n) { d.style.opacity = 0; d.style.pointerEvents = 'none'; return; }
     const r = slots[slot];
     d.style.opacity = 1; d.style.pointerEvents = ''; d.style.zIndex = w === focused ? 2 : 1; d.style.borderRadius = Math.max(3, 10 * s) + 'px';
@@ -75,6 +76,7 @@ function startDrag(e, w) {
   const up = () => {
     d.removeEventListener('pointermove', move); d.removeEventListener('pointerup', up); d.removeEventListener('pointercancel', up);
     d.classList.remove('drag'); d.style.transform = ''; mark(-1);
+    tried = true; document.getElementById('hint').classList.add('done');
     if (moved && target >= 0) swap(from, target);
     // In Monocle every window fills the screen, so a click brings the next one forward.
     focused = !moved && layout === 'monocle' ? order[(from + 1) % n] : w;
