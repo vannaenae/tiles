@@ -35,6 +35,7 @@ final class SettingsModel: ObservableObject {
     @Published var profiles: [String] = []
 
     let perform: (Command) -> Void
+    let saveScene: (String) -> Void
     let setLayout: (LayoutKind, String) -> Void
     let showWorkspace: (Int, String) -> Void
     let updater: Updater
@@ -45,6 +46,7 @@ final class SettingsModel: ObservableObject {
 
     init(store: ConfigStore,
          perform: @escaping (Command) -> Void,
+         saveScene: @escaping (String) -> Void,
          setLayout: @escaping (LayoutKind, String) -> Void,
          showWorkspace: @escaping (Int, String) -> Void,
          status: @escaping () -> [TilingManager.DisplayStatus],
@@ -53,6 +55,7 @@ final class SettingsModel: ObservableObject {
         self.updater = updater
         self.showWorkspace = showWorkspace
         self.perform = perform
+        self.saveScene = saveScene
         self.setLayout = setLayout
         self.status = status
         self.config = store.config
@@ -145,7 +148,7 @@ final class SettingsModel: ObservableObject {
 
     struct SavedScene: Identifiable {
         let id: String
-        let scene: TilesCore.Scene
+        var scene: TilesCore.Scene
         var windowCount: Int { scene.displays.values.reduce(0) { $0 + $1.apps.count } }
     }
 
@@ -153,6 +156,13 @@ final class SettingsModel: ObservableObject {
         scenes = SceneStore.load(from: TilingManager.scenesURL).scenes
             .map { SavedScene(id: $0.key, scene: $0.value) }
             .sorted { $0.scene.savedAt > $1.scene.savedAt }
+    }
+
+    func renameScene(_ id: String, to name: String) {
+        var store = SceneStore.load(from: TilingManager.scenesURL)
+        store.rename(id, to: name)
+        try? store.write(to: TilingManager.scenesURL)
+        reloadScenes()
     }
 
     func deleteScene(_ id: String) {
@@ -533,38 +543,88 @@ private struct MousePane: View {
 
 private struct ScenesPane: View {
     @ObservedObject var model: SettingsModel
+    @State private var name = ""
 
     var body: some View {
         Form {
             Section {
                 Toggle("Restore scenes when displays change", isOn: $model.config.autoRestoreScenes)
                 HStack {
-                    Button("Save Current Scene") { model.perform(.saveScene); model.reloadScenes() }
+                    TextField("Scene name, e.g. Desk or Laptop", text: $name)
+                        .onSubmit(save)
+                    Button("Save Current Scene", action: save)
                     Button("Restore Now") { model.perform(.restoreScene) }
                 }
             } footer: {
                 Text("A scene is the layout and app order for one combination of displays. Tiles saves it as you work and brings it back when you dock. It stores app identifiers only, never window titles.")
             }
-            Section("Saved scenes") {
+            Section {
                 if model.scenes.isEmpty {
                     Text("None yet. Arrange some windows and Tiles saves the scene a few seconds later.").foregroundStyle(.secondary)
                 }
                 ForEach(model.scenes) { saved in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("\(saved.scene.displays.count) display\(saved.scene.displays.count == 1 ? "" : "s") · \(saved.windowCount) windows")
-                            Text(saved.scene.displays.values.map(\.layout.displayName).joined(separator: " + "))
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Text(saved.scene.savedAt, style: .relative).font(.caption).foregroundStyle(.secondary)
-                        Button(role: .destructive) { model.deleteScene(saved.id) } label: { Image(systemName: "trash") }
-                            .buttonStyle(.borderless)
-                    }
+                    SceneRow(model: model, saved: saved)
+                }
+            } header: {
+                Text("Saved scenes")
+            } footer: {
+                if !model.scenes.isEmpty {
+                    Text("Click a name to change it. Press Return to keep it.")
                 }
             }
         }
         .onAppear { model.reloadScenes() }
+    }
+
+    private func save() {
+        // A blank field keeps the scene's current name.
+        if name.trimmingCharacters(in: .whitespaces).isEmpty {
+            model.perform(.saveScene)
+        } else {
+            model.saveScene(name)
+        }
+        name = ""
+        model.reloadScenes()
+    }
+}
+
+/// One saved scene with an editable name. Saves on Return or when the field loses focus.
+private struct SceneRow: View {
+    @ObservedObject var model: SettingsModel
+    let saved: SettingsModel.SavedScene
+    @State private var draft = ""
+    @FocusState private var editing: Bool
+
+    private var summary: String {
+        "\(saved.scene.displays.count) display\(saved.scene.displays.count == 1 ? "" : "s") · \(saved.windowCount) windows"
+    }
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                TextField("Name", text: $draft, prompt: Text("Untitled · \(summary)"))
+                    .labelsHidden()
+                    .textFieldStyle(.plain)
+                    .font(.body.weight(.medium))
+                    .focused($editing)
+                    .onSubmit(commit)
+                    .onChange(of: editing) { if !$0 { commit() } }
+                Text(summary + " · " + saved.scene.displays.values.map(\.layout.displayName).joined(separator: " + "))
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Spacer()
+            Text(saved.scene.savedAt, style: .relative).font(.caption).foregroundStyle(.secondary)
+            Button(role: .destructive) { model.deleteScene(saved.id) } label: { Image(systemName: "trash") }
+                .buttonStyle(.borderless)
+                .help("Delete this scene")
+        }
+        .onAppear { draft = saved.scene.name ?? "" }
+        .onChange(of: saved.scene.name) { if !editing { draft = $0 ?? "" } }
+    }
+
+    private func commit() {
+        guard draft != (saved.scene.name ?? "") else { return }
+        model.renameScene(saved.id, to: draft)
     }
 }
 

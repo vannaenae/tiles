@@ -256,6 +256,36 @@ final class SceneTests: XCTestCase {
         try store.write(to: url)
         XCTAssertEqual(SceneStore.load(from: url), store)
     }
+
+    func testAutosaveKeepsTheNameTheUserGave() {
+        var store = SceneStore()
+        let display = SceneDisplay(layout: .dwindle, masterRatio: 0.5, masterCount: 1, apps: ["a"])
+        store.save(Scene(displays: ["x": display], name: "  Desk "), for: ["x"])
+        XCTAssertEqual(store.scene(for: ["x"])?.name, "Desk")
+        store.save(Scene(displays: ["x": display]), for: ["x"])
+        XCTAssertEqual(store.scene(for: ["x"])?.name, "Desk")
+        store.save(Scene(displays: ["x": display], name: "Studio"), for: ["x"])
+        XCTAssertEqual(store.scene(for: ["x"])?.name, "Studio")
+    }
+
+    func testRenameAndClearName() {
+        var store = SceneStore()
+        store.save(Scene(displays: [:]), for: ["x"])
+        let key = SceneStore.fingerprint(displayIDs: ["x"])
+        store.rename(key, to: "Home office")
+        XCTAssertEqual(store.scenes[key]?.name, "Home office")
+        store.rename(key, to: "   ")
+        XCTAssertNil(store.scenes[key]?.name)
+    }
+
+    func testScenesSavedBeforeNamesStillLoad() throws {
+        let json = #"{"scenes":{"x":{"displays":{},"savedAt":"2024-01-01T00:00:00Z"}}}"#
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".json")
+        try Data(json.utf8).write(to: url)
+        let store = SceneStore.load(from: url)
+        XCTAssertNotNil(store.scenes["x"])
+        XCTAssertNil(store.scenes["x"]?.name)
+    }
 }
 
 final class WorkspaceTests: XCTestCase {

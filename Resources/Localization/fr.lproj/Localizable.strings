@@ -80,6 +80,10 @@
 "Restore Defaults" = "Valeurs par défaut";
 "Restore Now" = "Rétablir maintenant";
 "Restore scenes when displays change" = "Rétablir les scènes quand les écrans changent";
+"Scene name, e.g. Desk or Laptop" = "Nom de la scène, ex. Bureau ou Portable";
+"Click a name to change it. Press Return to keep it." = "Cliquez sur un nom pour le modifier. Appuyez sur Entrée pour le garder.";
+"Untitled · %@" = "Sans nom · %@";
+"Delete this scene" = "Supprimer cette scène";
 "Save Current Scene" = "Enregistrer la scène";
 "Save Current Settings" = "Enregistrer les réglages";
 "Save your settings" = "Enregistrez vos réglages";
@@ -172,6 +176,14 @@
 "Restore Scenes When Displays Change" = "Rétablir les scènes quand les écrans changent";
 "Retile Now" = "Réorganiser maintenant";
 "Save Scene for This Setup" = "Enregistrer la scène pour cette configuration";
+"Save Scene for This Setup…" = "Enregistrer la scène pour cette configuration…";
+"Restore “%@”" = "Rétablir « %@ »";
+"Saved “%@”" = "« %@ » enregistrée";
+"Scene saved" = "Scène enregistrée";
+"e.g. Desk, Laptop, Studio" = "ex. Bureau, Portable, Studio";
+"Give it a name so you can tell your setups apart. Tiles brings it back whenever these displays are connected." = "Donnez-lui un nom pour distinguer vos configurations. Tiles la rétablit chaque fois que ces écrans sont connectés.";
+"Save" = "Enregistrer";
+"Cancel" = "Annuler";
 "Undo Scene Restore" = "Annuler le rétablissement de la scène";
 "Keyboard Shortcuts" = "Raccourcis clavier";
 "New Windows Open" = "Les nouvelles fenêtres s'ouvrent";

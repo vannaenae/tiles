@@ -305,9 +305,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         menu.addItem(.separator())
         menu.addItem(item("Retile Now", #selector(retile)))
         menu.addItem(item("Float / Tile Focused Window", #selector(toggleFloat)))
-        menu.addItem(item("Save Scene for This Setup", #selector(saveScene)))
+        menu.addItem(item("Save Scene for This Setup…", #selector(saveScene)))
+        let current = manager.sceneForCurrentDisplays
         let restore = item("Restore Scene", #selector(restoreScene))
-        restore.isEnabled = manager.hasSceneForCurrentDisplays
+        if let name = current?.name {
+            restore.title = String(format: NSLocalizedString("Restore “%@”", comment: "Menu item"), name)
+        }
+        restore.isEnabled = current != nil
         menu.addItem(restore)
 
         menu.addItem(.separator())
@@ -398,7 +402,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     @objc private func toggleTiling() { manager.perform(.toggleTiling); updateIcon() }
     @objc private func retile() { manager.perform(.retile) }
     @objc private func toggleFloat() { manager.perform(.toggleFloat) }
-    @objc private func saveScene() { manager.perform(.saveScene) }
+    /// Asks for a name, prefilled with the current one, then saves.
+    @objc private func saveScene() {
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 260, height: 24))
+        field.stringValue = manager.sceneForCurrentDisplays?.name ?? ""
+        field.placeholderString = NSLocalizedString("e.g. Desk, Laptop, Studio", comment: "Scene name placeholder")
+        let alert = NSAlert()
+        alert.messageText = NSLocalizedString("Save Scene for This Setup", comment: "Alert title")
+        alert.informativeText = NSLocalizedString("Give it a name so you can tell your setups apart. Tiles brings it back whenever these displays are connected.", comment: "Alert text")
+        alert.accessoryView = field
+        alert.addButton(withTitle: NSLocalizedString("Save", comment: "Button"))
+        alert.addButton(withTitle: NSLocalizedString("Cancel", comment: "Button"))
+        alert.window.initialFirstResponder = field
+        NSApp.activate(ignoringOtherApps: true)
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        manager.saveScene(named: field.stringValue)
+        settingsModel?.reloadScenes()
+        let name = manager.sceneForCurrentDisplays?.name
+        flash(name.map { String(format: NSLocalizedString("Saved “%@”", comment: "Menu bar message"), $0) }
+              ?? NSLocalizedString("Scene saved", comment: "Menu bar message"))
+    }
     @objc private func restoreScene() { manager.perform(.restoreScene) }
     @objc private func undoRestore() { manager.perform(.undoRestore) }
 
@@ -446,6 +469,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
             let model = SettingsModel(
                 store: configStore,
                 perform: { [weak self] in self?.manager.perform($0) },
+                saveScene: { [weak self] in self?.manager.saveScene(named: $0) },
                 setLayout: { [weak self] kind, display in self?.manager.setLayout(kind, for: display) },
                 showWorkspace: { [weak self] n, display in self?.manager.showWorkspace(n, on: display) },
                 status: { [weak self] in self?.manager.status() ?? [] },

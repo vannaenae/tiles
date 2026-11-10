@@ -80,6 +80,10 @@
 "Restore Defaults" = "Standardwerte";
 "Restore Now" = "Jetzt wiederherstellen";
 "Restore scenes when displays change" = "Szenen beim Bildschirmwechsel wiederherstellen";
+"Scene name, e.g. Desk or Laptop" = "Szenenname, z. B. Schreibtisch oder Laptop";
+"Click a name to change it. Press Return to keep it." = "Klicke auf einen Namen, um ihn zu ändern. Drücke Return, um ihn zu behalten.";
+"Untitled · %@" = "Unbenannt · %@";
+"Delete this scene" = "Diese Szene löschen";
 "Save Current Scene" = "Aktuelle Szene sichern";
 "Save Current Settings" = "Aktuelle Einstellungen sichern";
 "Save your settings" = "Einstellungen sichern";
@@ -172,6 +176,14 @@
 "Restore Scenes When Displays Change" = "Szenen beim Bildschirmwechsel wiederherstellen";
 "Retile Now" = "Jetzt neu kacheln";
 "Save Scene for This Setup" = "Szene für dieses Setup sichern";
+"Save Scene for This Setup…" = "Szene für dieses Setup sichern …";
+"Restore “%@”" = "„%@“ wiederherstellen";
+"Saved “%@”" = "„%@“ gesichert";
+"Scene saved" = "Szene gesichert";
+"e.g. Desk, Laptop, Studio" = "z. B. Schreibtisch, Laptop, Studio";
+"Give it a name so you can tell your setups apart. Tiles brings it back whenever these displays are connected." = "Gib ihr einen Namen, um deine Setups zu unterscheiden. Tiles stellt sie wieder her, sobald diese Bildschirme verbunden sind.";
+"Save" = "Sichern";
+"Cancel" = "Abbrechen";
 "Undo Scene Restore" = "Szenenwiederherstellung widerrufen";
 "Keyboard Shortcuts" = "Tastaturkurzbefehle";
 "New Windows Open" = "Neue Fenster öffnen";

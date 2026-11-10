@@ -1162,6 +1162,7 @@ final class TilingManager {
         return Scene(displays: saved)
     }
 
+    /// Saves the scene for the connected displays, keeping any name it has.
     func saveScene() {
         guard !displays.isEmpty else { return }
         var store = SceneStore.load(from: Self.scenesURL)
@@ -1169,9 +1170,20 @@ final class TilingManager {
         try? store.write(to: Self.scenesURL)
     }
 
-    var hasSceneForCurrentDisplays: Bool {
-        SceneStore.load(from: Self.scenesURL).scene(for: Display.current().map(\.id)) != nil
+    /// Saves the scene for the connected displays under `name`. Blank clears the name.
+    func saveScene(named name: String) {
+        saveScene()
+        var store = SceneStore.load(from: Self.scenesURL)
+        store.rename(SceneStore.fingerprint(displayIDs: displays.map(\.id)), to: name)
+        try? store.write(to: Self.scenesURL)
     }
+
+    /// The saved scene for the displays connected right now, if any.
+    var sceneForCurrentDisplays: Scene? {
+        SceneStore.load(from: Self.scenesURL).scene(for: Display.current().map(\.id))
+    }
+
+    var hasSceneForCurrentDisplays: Bool { sceneForCurrentDisplays != nil }
 
     func restoreScene(silently: Bool) {
         refresh()
@@ -1199,9 +1211,9 @@ final class TilingManager {
             }
         }
         refresh()
-        // e.g. "Restored LG UltraFine · 3 windows". Undo sits at the top of the menu.
+        // e.g. "Restored Desk · 3 windows". Unnamed scenes use the display names.
         let external = displays.map(\.name).filter { !$0.contains("Built-in") }
-        let name = external.isEmpty ? "laptop" : external.joined(separator: " + ")
+        let name = scene.name ?? (external.isEmpty ? "laptop" : external.joined(separator: " + "))
         onMessage?("Restored \(name) · \(sceneWindows.count) windows · ⌃⌥Z to undo")
     }
 }

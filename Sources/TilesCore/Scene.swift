@@ -22,10 +22,14 @@ public struct Scene: Codable, Equatable {
     /// Keyed by stable display identifier (the display's UUID).
     public var displays: [String: SceneDisplay]
     public var savedAt: Date
+    /// What the user calls this setup, e.g. "Desk". Nil until they name it.
+    /// Optional, so scene files saved before names existed still load.
+    public var name: String?
 
-    public init(displays: [String: SceneDisplay], savedAt: Date = Date()) {
+    public init(displays: [String: SceneDisplay], savedAt: Date = Date(), name: String? = nil) {
         self.displays = displays
         self.savedAt = savedAt
+        self.name = name
     }
 }
 
@@ -46,8 +50,23 @@ public struct SceneStore: Codable, Equatable {
         scenes[SceneStore.fingerprint(displayIDs: displayIDs)]
     }
 
+    /// Saves `scene` for this set of displays. An unnamed scene keeps the name
+    /// already saved there, so autosave never wipes what the user typed.
     public mutating func save(_ scene: Scene, for displayIDs: [String]) {
-        scenes[SceneStore.fingerprint(displayIDs: displayIDs)] = scene
+        let key = SceneStore.fingerprint(displayIDs: displayIDs)
+        var scene = scene
+        scene.name = SceneStore.clean(scene.name) ?? scenes[key]?.name
+        scenes[key] = scene
+    }
+
+    /// Names or renames the scene stored under `key`. A blank name removes it.
+    public mutating func rename(_ key: String, to name: String) {
+        scenes[key]?.name = SceneStore.clean(name)
+    }
+
+    private static func clean(_ name: String?) -> String? {
+        let trimmed = name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return trimmed.isEmpty ? nil : trimmed
     }
 
     public static func load(from url: URL) -> SceneStore {

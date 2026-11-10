@@ -39,7 +39,7 @@ curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.s
 | Full screen | Each display holds as many tiles as fit its size; further windows stack on the last tile |
 | Focus | One shortcut lets a window fill its display; press again to put it back |
 | Settings | Settings window with a live preview for laptop, 27", 34" and 49" displays, plus a focus outline in your colour |
-| Scenes | Saved automatically per set of displays, restored when that set reconnects, one-step undo |
+| Scenes | Saved automatically per set of displays, restored when that set reconnects, nameable, one-step undo |
 | Mouse | Drag a window onto another to swap. Drag to another display to move. Resize to change the split |
 | Keyboard | 50+ global shortcuts, all remappable |
 | Automation | `tiles://` URL scheme and a `tiles` CLI for Raycast, Alfred, Shortcuts, skhd |
@@ -175,6 +175,7 @@ A scene is the arrangement for one combination of displays: each display's layou
 - When you dock or undock, Tiles waits for the displays to settle and restores the scene saved for that exact set.
 - A notice like *Restored LG UltraFine · 3 windows* appears in the menu bar. `⌃⌥Z` or **Undo Scene Restore** puts things back.
 - `⌃⌥S` saves on demand; **Restore Scene** in the menu re-applies it.
+- Name a scene (*Desk*, *Laptop*, *Studio*) with **Save Scene for This Setup…** in the menu, or in Settings → Scenes, where you can rename any saved scene by clicking its name. The name shows in the menu and in the restore notice: *Restored Desk · 3 windows*. Autosave keeps the name.
 - Scenes store bundle identifiers (`com.apple.Safari`), never window titles. They live in `~/Library/Application Support/Tiles/scenes.json`.
 
 ## Configuration
