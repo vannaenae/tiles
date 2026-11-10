@@ -36,7 +36,7 @@ h2 { font-size:clamp(28px,4vw,40px); letter-spacing:-.015em; text-align:center; 
 .seg button { background:var(--screen); color:var(--text); padding:7px 12px; font-size:14px; }
 .seg button.on { background:var(--accent); color:#fff; }
 .screen { position:relative; margin:16px auto 0; background:var(--screen); border-radius:10px; overflow:hidden; transition:aspect-ratio .3s; }
-.tile { position:absolute; border-radius:6px; background:var(--tile2); border:1px solid rgba(0,0,0,.08); transition:all .35s cubic-bezier(.2,.8,.2,1); font-size:12px; font-weight:600; padding:6px 8px; color:var(--text); overflow:hidden; white-space:nowrap; }
+.tile { position:absolute; border-radius:6px; background:var(--tile2); border:1px solid rgba(0,0,0,.08); transition:left .35s var(--ease-out), top .35s var(--ease-out), width .35s var(--ease-out), height .35s var(--ease-out), opacity .2s ease; font-size:12px; font-weight:600; padding:6px 8px; color:var(--text); overflow:hidden; white-space:nowrap; }
 .tile.main { background:var(--accent); color:#fff; }
 .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
 .card { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; }
@@ -58,6 +58,20 @@ summary { font-weight:600; cursor:pointer; } details p { margin:10px 0 0; color:
 .cta { text-align:center; } .cta .icon { width:84px; height:84px; }
 footer a { margin:0 8px; }
 .wide { margin:0 0 16px; } .wide img { width:100%; border-radius:14px; border:1px solid var(--line); box-shadow:0 24px 60px rgba(0,0,0,.16); } .wide figcaption { text-align:center; color:var(--sec); font-size:14px; margin-top:8px; }
+.slides { display:grid; gap:28px; margin-bottom:28px; } .slides img { display:block; width:100%; height:auto; border-radius:18px; box-shadow:0 24px 60px rgba(0,0,0,.16); }
+:root { --ease-out:cubic-bezier(0.23,1,0.32,1); --ease-in-out:cubic-bezier(0.77,0,0.175,1); }
+.btn, .copy, .seg button { transition:transform 140ms var(--ease-out); } .btn:active, .copy:active, .seg button:active { transform:scale(.97); }
+.js .reveal { opacity:0; transform:translateY(12px); transition:opacity 500ms var(--ease-out), transform 500ms var(--ease-out); transition-delay:calc(var(--i,0) * 60ms); }
+.js .reveal[data-visible] { opacity:1; transform:none; }
+.js .wipe { clip-path:inset(0 0 100% 0 round 18px); transition:clip-path 600ms var(--ease-in-out); }
+.js .wipe[data-visible] { clip-path:inset(0 round 18px); }
+.hero > * { animation:rise 600ms var(--ease-out) backwards; } .hero > :nth-child(2) { animation-delay:60ms; } .hero > :nth-child(3) { animation-delay:120ms; } .hero > :nth-child(n+4) { animation-delay:180ms; }
+@keyframes rise { from { opacity:0; transform:translateY(12px); } }
+@media (prefers-reduced-motion:reduce) {
+  .js .reveal { transform:none; transition:opacity 200ms ease; transition-delay:0s; }
+  .js .wipe { clip-path:none; opacity:0; transition:opacity 200ms ease; } .js .wipe[data-visible] { opacity:1; }
+  .hero > * { animation:none; }
+}
 @media (max-width:600px) { nav a.hide { display:none; } .install code { font-size:12px; } }
 </style>
 </head>
@@ -164,8 +178,15 @@ footer a { margin:0 8px; }
 
   <section id="look">
     <h2>See it</h2>
-    <p class="center">Screenshots from Tiles running on a real Mac.</p>
-    <figure class="wide"><img src="img/real-apps.jpg" alt="The App Store, Safari on GitHub, Claude and Google, and Terminal, tiled side by side in the Dwindle layout"><figcaption>The App Store, three Safari windows and Terminal, tiled in Dwindle</figcaption></figure>
+    <p class="center">Tiles running on a real Mac.</p>
+    <div class="slides">
+      <img class="wipe" loading="lazy" width="2000" height="1250" src="img/slide-windows.webp" alt="Every window, in its place. Tiles arranges each window the moment it opens: the App Store, three Safari windows and Terminal tiled side by side.">
+      <img class="wipe" loading="lazy" width="2000" height="1250" src="img/slide-layouts.webp" alt="11 layouts, one shortcut. Master and Stack, Columns, Grid, Scrolling and more; press Control, Option, Space to switch.">
+      <img class="wipe" loading="lazy" width="2000" height="1250" src="img/slide-keyboard.webp" alt="Keyboard first: shortcuts to focus a window, fill the screen and switch desktops, shown over four tiled windows.">
+      <img class="wipe" loading="lazy" width="2000" height="1250" src="img/slide-scrolling.webp" alt="Room for every window. The Scrolling layout lines windows up at their own width and slides to the one you focus.">
+      <img class="wipe" loading="lazy" width="2000" height="1250" src="img/slide-dock.webp" alt="Your desk, back when you dock. Tiles remembers each display setup and puts every window back when you plug in.">
+      <img class="wipe" loading="lazy" width="2000" height="1250" src="img/slide-themes.webp" alt="Make it yours: five accent colours, light and dark, and a dashboard that shows every display live.">
+    </div>
     <div class="shots">
       <figure><img src="img/tour.png" alt="The Welcome to Tiles tour window"><figcaption>A short tour on first launch</figcaption></figure>
       <figure><img src="img/finder.png" alt="The window finder listing TextEdit windows after typing tex"><figcaption>Find any window by typing</figcaption></figure>
@@ -245,6 +266,16 @@ function render(){seg('screens',SCREENS.map(s=>[s[0]]),screen,i=>{screen=i;rende
  [...el.children].forEach((d,i)=>{if(i>=n){d.style.opacity=0;return}const r=f[i];d.style.opacity=1;d.className='tile'+(i==0?' main':'');d.textContent=APPS[i];Object.assign(d.style,{left:r.x*s+'px',top:r.y*s+'px',width:r.w*s+'px',height:r.h*s+'px'})})}
 function setN(v){n=Math.max(1,Math.min(10,v));render()}
 addEventListener('resize',render);render();
+</script>
+<script>
+// Scroll reveal, once per element. Without JS (or IntersectionObserver) everything is simply visible.
+if ('IntersectionObserver' in window) {
+  document.documentElement.classList.add('js');
+  document.querySelectorAll('section h2, section .center, .card, .shots figure, table, details, .demo, .cta .icon, .cta .btn').forEach(el => el.classList.add('reveal'));
+  document.querySelectorAll('.grid, .shots, .faq').forEach(g => [...g.children].forEach((el, i) => el.style.setProperty('--i', i % 4)));
+  const seen = new IntersectionObserver(entries => entries.forEach(e => { if (e.isIntersecting) { e.target.dataset.visible = ''; seen.unobserve(e.target); } }), { rootMargin: '0px 0px -80px 0px' });
+  document.querySelectorAll('.reveal, .wipe').forEach(el => seen.observe(el));
+}
 </script>
 <script src="version.js" defer></script>
 </body>
