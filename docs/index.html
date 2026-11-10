@@ -27,7 +27,6 @@ h1 { font-size:clamp(36px,6vw,60px); line-height:1.05; letter-spacing:-.02em; ma
 button { font:inherit; cursor:pointer; border:0; border-radius:8px; }
 .copy { background:var(--accent); color:#fff; padding:7px 14px; font-size:14px; font-weight:600; }
 .sub { margin-top:14px; font-size:14px; color:var(--sec); }
-.gif { display:block; width:100%; height:auto; max-width:980px; margin:36px auto 0; border-radius:14px; box-shadow:0 30px 70px rgba(0,0,0,.22); }
 section { padding:72px 0 0; }
 h2 { font-size:clamp(28px,4vw,40px); letter-spacing:-.015em; text-align:center; margin:0 0 10px; }
 .center { text-align:center; color:var(--sec); max-width:620px; margin:0 auto 32px; }
@@ -53,12 +52,23 @@ footer a { margin:0 8px; }
 .js .reveal[data-visible] { opacity:1; transform:none; }
 .js .wipe { clip-path:inset(0 0 100% 0 round 18px); transition:clip-path 600ms var(--ease-in-out); }
 .js .wipe[data-visible] { clip-path:inset(0 round 18px); }
+.switch { max-width:980px; margin:36px auto 0; }
+.tabs { display:inline-flex; flex-wrap:wrap; justify-content:center; gap:6px; padding:5px; margin-bottom:18px; background:var(--screen); border-radius:999px; }
+.tabs button { background:none; color:var(--sec); padding:8px 16px; border-radius:999px; font-size:15px; font-weight:600; transition:background-color 200ms ease, color 200ms ease, transform 140ms var(--ease-out); }
+.tabs button[aria-selected=true] { background:var(--card); color:var(--text); box-shadow:0 1px 3px rgba(0,0,0,.12); } .tabs button:active { transform:scale(.97); }
+.stage { position:relative; aspect-ratio:16/9; border-radius:14px; overflow:hidden; box-shadow:0 30px 70px rgba(0,0,0,.22); background:#000; }
+.stage img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0; transform:scale(.97); transition:opacity 500ms var(--ease-in-out), transform 500ms var(--ease-in-out); }
+.stage img.on { opacity:1; transform:none; }
+.strip { overflow:hidden; margin-top:56px; padding:14px 0; border-block:1px solid var(--line); color:var(--sec); font-weight:600; -webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent); mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent); }
+.strip > div { display:flex; width:max-content; animation:strip 40s linear infinite; } .strip span { padding:0 28px; white-space:nowrap; }
+@keyframes strip { to { transform:translateX(-50%); } }
+@media (hover:hover) and (pointer:fine) { .btn:hover { transform:scale(1.03); } .tabs button:hover { color:var(--text); } }
 .hero > * { animation:rise 600ms var(--ease-out) backwards; } .hero > :nth-child(2) { animation-delay:60ms; } .hero > :nth-child(3) { animation-delay:120ms; } .hero > :nth-child(n+4) { animation-delay:180ms; }
 @keyframes rise { from { opacity:0; transform:translateY(12px); } }
 @media (prefers-reduced-motion:reduce) {
   .js .reveal { transform:none; transition:opacity 200ms ease; transition-delay:0s; }
   .js .wipe { clip-path:none; opacity:0; transition:opacity 200ms ease; } .js .wipe[data-visible] { opacity:1; }
-  .hero > * { animation:none; }
+  .hero > * { animation:none; } .strip > div { animation:none; } .stage img { transform:none; transition:opacity 200ms ease; }
 }
 @media (max-width:600px) { nav a.hide { display:none; } .install code { font-size:12px; } }
 </style>
@@ -79,8 +89,27 @@ footer a { margin:0 8px; }
     <p class="sub" style="margin-bottom:10px">or install from Terminal:</p>
     <div class="install"><code id="cmd">curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.sh | bash</code><button class="copy" onclick="copyCmd(this)">Copy</button></div>
     <p class="sub">macOS 13 or later · Apple silicon and Intel · Free and open source</p>
-    <img class="gif" width="1600" height="900" src="img/real-apps.jpg" alt="The App Store, three Safari windows and Terminal on a Mac, tiled side by side by Tiles">
+    <div class="switch">
+      <div class="tabs" role="tablist" aria-label="Layouts">
+        <button role="tab" aria-selected="true" data-cap="Dwindle splits the screen as each window opens.">Dwindle</button>
+        <button role="tab" aria-selected="false" data-cap="Master &amp; Stack keeps one main window, with the rest stacked beside it.">Master &amp; Stack</button>
+        <button role="tab" aria-selected="false" data-cap="Grid gives every window an equal share.">Grid</button>
+        <button role="tab" aria-selected="false" data-cap="Scrolling keeps windows at their own width in a row you slide along.">Scrolling</button>
+      </div>
+      <div class="stage">
+        <img class="on" width="1600" height="900" src="img/real-apps.jpg" alt="Five windows on a Mac in the Dwindle layout">
+        <img loading="lazy" width="1552" height="872" src="img/layout-master.jpg" alt="Four windows in the Master and Stack layout">
+        <img loading="lazy" width="1552" height="872" src="img/layout-grid.jpg" alt="Four windows in a two by two grid">
+        <img loading="lazy" width="1600" height="900" src="img/scrolling.jpg" alt="Two Safari windows side by side in the Scrolling layout">
+      </div>
+      <p class="sub" id="cap" aria-live="polite">Dwindle splits the screen as each window opens.</p>
+    </div>
   </div>
+
+  <div class="strip" aria-hidden="true"><div>
+    <span>Dwindle</span><span>Master &amp; Stack</span><span>Wide Master</span><span>Center Stage</span><span>Columns</span><span>Thirds</span><span>Rows</span><span>Grid</span><span>Monocle</span><span>Scrolling</span><span>Snap</span>
+    <span>Dwindle</span><span>Master &amp; Stack</span><span>Wide Master</span><span>Center Stage</span><span>Columns</span><span>Thirds</span><span>Rows</span><span>Grid</span><span>Monocle</span><span>Scrolling</span><span>Snap</span>
+  </div></div>
 
   <section id="look">
         <div class="slides">
@@ -204,6 +233,18 @@ if ('IntersectionObserver' in window) {
   const seen = new IntersectionObserver(entries => entries.forEach(e => { if (e.isIntersecting) { e.target.dataset.visible = ''; seen.unobserve(e.target); } }), { rootMargin: '0px 0px -80px 0px' });
   document.querySelectorAll('.reveal, .wipe').forEach(el => seen.observe(el));
 }
+</script>
+<script>
+// Layout switcher: click a tab to see that layout. It plays through by itself until you touch it.
+(() => {
+  const tabs = [...document.querySelectorAll('.tabs button')], shots = [...document.querySelectorAll('.stage img')], cap = document.getElementById('cap');
+  let current = 0;
+  const show = i => { current = i; tabs.forEach((t, k) => t.setAttribute('aria-selected', k === i)); shots.forEach((im, k) => im.classList.toggle('on', k === i)); cap.textContent = tabs[i].dataset.cap; };
+  let auto = matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : setInterval(() => show((current + 1) % tabs.length), 4000);
+  const stop = () => { clearInterval(auto); auto = 0; };
+  tabs.forEach((t, i) => t.addEventListener('click', () => { stop(); show(i); }));
+  document.querySelector('.stage').addEventListener('pointerenter', stop);
+})();
 </script>
 <script src="version.js" defer></script>
 </body>
