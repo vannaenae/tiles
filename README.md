@@ -49,7 +49,9 @@ curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.s
 | Config | Also one plain JSON file, hot-reloaded on save |
 | Per-display | Different layout for each monitor, by name or by shape |
 | Rules | Float any app, or send its windows to a chosen display and the main tile |
-| Stacks | ⌥-drag a window onto another to stack them. A badge counts windows sharing a tile; click it to flip through |
+| Tabs | ⌥-drag a window onto another and they share a tile, with a strip of tabs on top: one per window, from any app. Click a tab to bring that window forward |
+| Nested tiles | `⌃⌥B` lays the windows sharing a tile side by side inside it, and back to tabs |
+| Zoom | Hold ⌥ and pinch to see every window in a grid; spread your fingers on one to open it, and again to fill the display. `⌃⌥O` and `⌃⌥I` do the same from the keyboard |
 | Workspaces | Up to 9 per display: `⌃⌥1`–`⌃⌥9` to switch, `⌃⌥⇧1`–`⌃⌥⇧9` to send a window. No need to turn off SIP |
 | Scroll to pan | In Scrolling, hold `⌃⌥` and swipe or scroll to slide the strip |
 | Animation | Optional: windows slide into place instead of jumping |
@@ -148,6 +150,8 @@ Every default is **⌃⌥ (Control + Option)** plus one key, which apps rarely c
 | `⌃⌥⇧1` … `⌃⌥⇧9` | Send the focused window to workspace 1–9 |
 | `⌃⌥/` | Pop up the cheat sheet of everyday shortcuts |
 | `⌃⌥G` | Find a window by name |
+| `⌃⌥O` / `⌃⌥I` | Zoom out / in one level: every window in a grid ← your layout → one window filling the display |
+| `⌃⌥B` | Windows sharing a tile: tabs, or side by side inside the tile |
 
 Remap anything in the config file (see below). Shortcuts use key positions on a US layout.
 
@@ -155,7 +159,8 @@ Remap anything in the config file (see below). Shortcuts use key positions on a 
 
 - **Drag a window onto another** to swap them.
 - **Drag a window to another display** to move it there.
-- **Hold ⌥ (Option) as you drop** to stack the window with the one underneath. A badge shows the count; click it to flip through. Drag it out to unstack.
+- **Hold ⌥ (Option) as you drop** to put the window in the same tile as the one underneath. A strip of tabs appears on top; click a tab to switch. Drag a window out to give it its own tile again.
+- **Hold ⌥ and pinch** on the trackpad to zoom out to every window; **spread your fingers** over a window to zoom back in on it, and once more to let it fill the display.
 - **Hold ⌃⌥ and scroll** (or swipe sideways) in the Scrolling layout to slide the strip.
 - **Resize a window** with the mouse and the split follows (master ratio in Master & Stack, Wide Master, Centered Master and Dwindle). Other resizes snap back.
 
@@ -241,6 +246,8 @@ A scene is the arrangement for one combination of displays: each display's layou
 | `mode` | `automatic` (tile everything) or `snap` (windows stay put; drag to a screen edge to snap) |
 | `workspaceNames` / `workspaceLayouts` | Name and starting layout per workspace number, e.g. `{"2": "Music"}` / `{"2": "columns"}` |
 | `animateWindows` | Slide windows into place instead of jumping (default off) |
+| `stackTabs` | Tabs above windows sharing a tile (default on). Off shows a count badge instead |
+| `pinchToZoom` | ⌥ + pinch zooms in and out (default on) |
 | `newWindowPlacement` | `end`, `master`, or `after-focused` |
 | `rules` | Match on `app` (bundle ID or name) and/or `titleContains`. Last match wins. Replaces the default list when set |
 | `hotkeys` | Merged over the defaults. Map a shortcut to `"none"` to remove it |

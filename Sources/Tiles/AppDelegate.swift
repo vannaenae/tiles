@@ -20,6 +20,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     private var lastStatus: Data?
     private let outline = FocusOutline()
     private let badges = StackBadges()
+    private let tabBars = TabBars()
     private let cheatSheet = CheatSheet()
     private let finder = WindowFinder()
     private let tour = Tour()
@@ -47,8 +48,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         manager.onMessage = { [weak self] text in self?.flash(text) }
         manager.onStacks = { [weak self] stacks in
             guard let self else { return }
-            self.badges.show(stacks, hex: self.configStore.config.theme.hex)
+            let hex = self.configStore.config.theme.hex
+            self.tabBars.show(stacks.filter { $0.tabs != nil }, hex: hex)
+            self.badges.show(stacks.filter { $0.tabs == nil }.map { (frame: $0.frame, ids: $0.ids) }, hex: hex)
         }
+        tabBars.onSelect = { [weak self] id in self?.manager.selectTab(id) }
         badges.onClick = { [weak self] ids in self?.manager.cycleStack(ids) }
         manager.onShowShortcuts = { [weak self] in
             guard let self else { return }
@@ -323,6 +327,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         optionsMenu.addItem(check("Restore Scenes When Displays Change", config.autoRestoreScenes, #selector(toggleAutoScenes)))
         optionsMenu.addItem(check("Mouse Follows Keyboard Focus", config.mouseFollowsFocus, #selector(toggleMouseFollows)))
         optionsMenu.addItem(check("Animate Windows", config.animateWindows, #selector(toggleAnimate)))
+        optionsMenu.addItem(check("Tabs on Windows Sharing a Tile", config.stackTabs, #selector(toggleStackTabs)))
+        optionsMenu.addItem(check("⌥-Pinch to Zoom", config.pinchToZoom, #selector(togglePinchToZoom)))
         optionsMenu.addItem(check("Snap Mode (No Automatic Tiling)", config.mode == .snap, #selector(toggleSnapMode)))
         let placement = NSMenuItem(title: NSLocalizedString("New Windows Open", comment: "Menu"), action: nil, keyEquivalent: "")
         let placementMenu = NSMenu()
@@ -454,6 +460,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     @objc private func toggleResizeRatio() { configStore.update { $0.resizeToAdjustRatio.toggle() } }
     @objc private func toggleAutoScenes() { configStore.update { $0.autoRestoreScenes.toggle() } }
     @objc private func toggleMouseFollows() { configStore.update { $0.mouseFollowsFocus.toggle() } }
+    @objc private func toggleStackTabs() { configStore.update { $0.stackTabs.toggle() } }
+    @objc private func togglePinchToZoom() { configStore.update { $0.pinchToZoom.toggle() } }
 
     @objc private func toggleLogin() {
         do {

@@ -17,6 +17,7 @@ next-layout  previous-layout  grow-master  shrink-master
 increase-master-count  decrease-master-count  increase-gaps  decrease-gaps
 toggle-float  toggle-tiling  toggle-zoom  cycle-width  center-window  retile
 save-scene  restore-scene  undo-restore  layout-thirds  layout-scrolling
+zoom-in  zoom-out  toggle-nest
 workspace-1 … workspace-9   move-to-workspace-1 … move-to-workspace-9
 HELP
   exit 0

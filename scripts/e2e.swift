@@ -270,6 +270,29 @@ func badges() -> [CGRect] {
     }
 }
 
+/// Tab strips: Tiles' own 30-point-high panels above tiles that hold several windows.
+func tabStrips() -> [CGRect] {
+    let info = CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []
+    return info.compactMap { w in
+        guard (w[kCGWindowOwnerName as String] as? String) == "Tiles",
+              let b = w[kCGWindowBounds as String] as? [String: Double], b["Height"] == 30, (b["Width"] ?? 0) > 100 else { return nil }
+        return CGRect(x: b["X"]!, y: b["Y"]!, width: b["Width"]!, height: 30)
+    }
+}
+
+/// Middle of tab `index` of `count` in a strip (tabs are equal widths with 4-point gaps).
+func tab(_ index: Int, of count: Int, in strip: CGRect) -> CGPoint {
+    let width = (strip.width - 4 * CGFloat(count + 1)) / CGFloat(count)
+    return CGPoint(x: strip.minX + 4 + CGFloat(index) * (width + 4) + width / 2, y: strip.midY)
+}
+
+func click(_ p: CGPoint) {
+    for type in [CGEventType.leftMouseDown, .leftMouseUp] {
+        CGEvent(mouseEventSource: nil, mouseType: type, mouseCursorPosition: p, mouseButton: .left)?.post(tap: .cghidEventTap)
+        usleep(80_000)
+    }
+}
+
 /// The stacked window drawn on top: the first of them in front-to-back order.
 func frontOf(_ ids: Set<Int>) -> Int? { windows().first { ids.contains($0.id) }?.id }
 
@@ -282,24 +305,37 @@ editConfig { c in
 tiles("layout-columns")
 let stacked = Set(Dictionary(grouping: windows(), by: { "\($0.frame)" }).values.first { $0.count > 1 }?.map(\.id) ?? [])
 check(stacked.count == 3, "extra windows stack on the last tile (\(stacked.count) stacked)")
-let shownBadges = badges()
-check(shownBadges.count == 1, "a badge shows on the stacked tile (\(shownBadges.count) badges)")
-snapshot("stack-badge")
-if let badge = shownBadges.first, let before = frontOf(stacked) {
-    let p = CGPoint(x: badge.midX, y: badge.midY)
-    for type in [CGEventType.leftMouseDown, .leftMouseUp] {
-        CGEvent(mouseEventSource: nil, mouseType: type, mouseCursorPosition: p, mouseButton: .left)?.post(tap: .cghidEventTap)
-        usleep(80_000)
+let shownStrips = tabStrips()
+check(shownStrips.count == 1, "a strip of tabs shows on the shared tile (\(shownStrips.count) strips)")
+check(badges().isEmpty, "tabs replace the count badge")
+snapshot("stack-tabs")
+if let strip = shownStrips.first, let before = frontOf(stacked) {
+    // One of the first two tabs belongs to a window that isn't in front.
+    click(tab(0, of: 3, in: strip))
+    settle()
+    if frontOf(stacked) == before {
+        click(tab(1, of: 3, in: strip))
+        settle()
     }
+    check(frontOf(stacked) != before, "clicking a tab brings that window forward")
+    snapshot("stack-tab-clicked")
+}
+// With tabs turned off, the count badge comes back and flips through the windows.
+editConfig { c in c["stackTabs"] = false }
+let shownBadges = badges()
+check(shownBadges.count == 1 && tabStrips().isEmpty, "with tabs off, a badge shows instead (\(shownBadges.count) badges)")
+if let badge = shownBadges.first, let before = frontOf(stacked) {
+    click(CGPoint(x: badge.midX, y: badge.midY))
     settle()
     check(frontOf(stacked) != before, "clicking the badge brings the next stacked window forward")
 }
+editConfig { c in c["stackTabs"] = true }
 editConfig { c in
     var layout = c["layout"] as? [String: Any] ?? [:]
     layout["maxTiles"] = 0
     c["layout"] = layout
 }
-check(badges().isEmpty, "the badge goes away when the windows no longer stack")
+check(badges().isEmpty && tabStrips().isEmpty, "the tabs go away when the windows no longer share a tile")
 
 // 8. App rule: new TextEdit windows open in the main tile.
 tiles("layout-master-stack")
@@ -372,7 +408,19 @@ if alone.count >= 2, let host = alone.first, let mover = alone.dropFirst().first
     snapshot("option-drag-stack")
     let f = frames()
     check(f[mover.id] != nil && f[mover.id] == f[host.id], "⌥-dragging a window onto another stacks them in one tile")
-    check(badges().count == 1, "the stack shows a badge (\(badges().count))")
+    check(tabStrips().count == 1, "the shared tile shows a strip of tabs (\(tabStrips().count))")
+    // Nested: the two windows split the tile instead of overlapping, then go back to tabs.
+    tiles("toggle-nest")
+    settle()
+    snapshot("nested")
+    let n = frames()
+    if let a = n[mover.id], let b = n[host.id] {
+        check(a != b && !a.intersects(b), "toggle-nest lays the two windows side by side in the tile")
+        check(tabStrips().isEmpty, "nested windows need no tabs")
+    }
+    tiles("toggle-nest")
+    settle()
+    check(frames()[mover.id] == frames()[host.id], "toggle-nest again goes back to tabs")
     if let now = windows().first(where: { $0.id == mover.id }) {
         dragWindow(now, to: CGPoint(x: now.frame.midX, y: now.frame.midY + 40))
         settle(2)
@@ -383,6 +431,30 @@ if alone.count >= 2, let host = alone.first, let mover = alone.dropFirst().first
 } else {
     check(false, "found two windows in separate tiles to stack (\(alone.count))")
 }
+
+// 10b. Zoom levels: out to an overview where every window has its own tile, in again to the layout,
+// in once more to one window filling the display.
+tiles("layout-monocle")
+settle()
+func distinctFrames() -> Int { Set(frames().values.map { "\($0)" }).count }
+let inMonocle = distinctFrames()
+tiles("zoom-out")
+settle()
+snapshot("zoom-overview")
+check(distinctFrames() > inMonocle, "zoom-out shows every window in its own tile (\(inMonocle) → \(distinctFrames()) frames)")
+tiles("zoom-in")
+settle()
+check(distinctFrames() == inMonocle, "zoom-in goes back to the layout")
+tiles("layout-columns")
+settle()
+let widest = frames().values.map(\.width).max() ?? 0
+tiles("zoom-in")
+settle()
+snapshot("zoom-focus")
+check((frames().values.map(\.width).max() ?? 0) > widest + 100, "zoom-in again lets the focused window fill the display")
+tiles("zoom-out")
+settle()
+check(abs((frames().values.map(\.width).max() ?? 0) - widest) < 3, "zoom-out puts it back in its tile")
 
 // 11. Scrolling: ⌃⌥ + scroll slides the strip, and it stays where you left it.
 tiles("layout-scrolling")

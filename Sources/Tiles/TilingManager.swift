@@ -52,8 +52,26 @@ final class TilingManager {
     var onSnapPreview: ((Rect?) -> Void)?
     /// Each workspace remembers its own layout: "display#number" → layout.
     private var workspaceLayouts: [String: LayoutKind] = [:]
-    /// Tiles holding more than one window, for the stack badges.
-    var onStacks: (([(frame: Rect, ids: [WindowID])]) -> Void)?
+    /// A tile holding more than one window. With `tabs`, `frame` is the strip above the windows
+    /// and each tab names one of them; without, `frame` is the tile and a count badge sits on it.
+    struct StackInfo: Equatable {
+        struct Tab: Equatable { let id: WindowID; let title: String; let pid: pid_t }
+        let frame: Rect
+        let ids: [WindowID]
+        var tabs: [Tab]?
+        var active: WindowID?
+    }
+    /// Tiles holding more than one window, for the tab strips and stack badges.
+    var onStacks: (([StackInfo]) -> Void)?
+    /// Height of the tab strip above windows sharing a tile.
+    static let tabHeight = 30.0
+    /// Tab strips from the last layout: where each is drawn and the windows it names.
+    private var strips: [(frame: Rect, ids: [WindowID])] = []
+    /// Hosts whose stack is laid out side by side inside the tile, instead of as tabs.
+    private var nested = Set<WindowID>()
+    /// Displays zoomed out to the overview: every window in a grid.
+    private var overview = Set<String>()
+    private var pinch = PinchGesture()
     private var mouseMonitor: Any?
     private var hovered: WindowID?
     /// Window temporarily filling its display (Focus).
@@ -112,6 +130,8 @@ final class TilingManager {
         } else {
             unparkAll()
             targetFrames = [:]
+            strips = []
+            overview = []
             onFocusFrame?(nil)
             onStacks?([])
         }
@@ -150,6 +170,8 @@ final class TilingManager {
         case .focusChanged:
             followFocusToWorkspace()
             updateOutline()
+            // The tab of the window now in front lights up.
+            if !strips.isEmpty { reportStacks() }
             // Scrolling follows focus: clicking a sliver or ⌘-Tabbing to a window brings it into view.
             if layouts.values.contains(.scrolling) { scheduleRefresh() }
         case .frameChanged(let element):
@@ -283,6 +305,8 @@ final class TilingManager {
         workspaces.keep(only: Set(found.keys))
         parked = parked.filter { found[$0.key] != nil }
         stackedOn = stackedOn.filter { found[$0.key] != nil && found[$0.value] != nil }
+        nested = nested.filter { found[$0] != nil }
+        overview.formIntersection(displayIDs)
         let structureChanged = newOrders != orders
         orders = newOrders
         apply(currentFrames: frames)
@@ -304,11 +328,13 @@ final class TilingManager {
         var targets: [WindowID: Rect] = [:]
         let focusedID = focusedWindow()?.id
         for display in displays {
-            let kind = effectiveLayout(display.id)
-            guard kind != .float else { continue }
+            guard effectiveLayout(display.id) != .float else { continue }
+            // Zoomed out, every window gets its own tile in a grid, stacked or not.
+            let showAll = overview.contains(display.id)
+            let kind = showAll ? LayoutKind.grid : effectiveLayout(display.id)
             let all = visibleOrder(display.id)
             // Option-dragged windows share their host's tile instead of taking one.
-            let ids = all.filter { id in stackedOn[id].map { !all.contains($0) } ?? true }
+            let ids = showAll ? all : all.filter { id in stackedOn[id].map { !all.contains($0) } ?? true }
             let p = parameters[display.id] ?? config.layout
             let rects: [Rect]
             if kind == .scrolling {
@@ -323,7 +349,27 @@ final class TilingManager {
                 rects = LayoutEngine.frames(count: ids.count, in: display.area, kind: kind, parameters: p)
             }
             for (id, rect) in zip(ids, rects) { targets[id] = rect }
+            // A nested stack splits its tile between its windows instead of overlapping them.
+            for host in ids where !showAll && nested.contains(host) {
+                let group = [host] + all.filter { stackedOn[$0] == host }
+                guard group.count > 1, let tile = targets[host] else { continue }
+                for (id, rect) in zip(group, Nesting.frames(count: group.count, in: tile, gap: p.innerGap)) {
+                    targets[id] = rect.integral
+                }
+            }
             for id in all where targets[id] == nil { targets[id] = stackedOn[id].flatMap { targets[$0] } }
+        }
+        // Windows left sharing a tile move down to make room for a strip of tabs.
+        strips = []
+        for display in displays where config.stackTabs && zoomed.flatMap({ displayID(of: $0) }) != display.id {
+            let a = display.area
+            let ids = visibleOrder(display.id).filter { id in
+                guard let f = targets[id] else { return false }
+                return f.minX >= a.minX - 1 && f.maxX <= a.maxX + 1
+            }
+            let carved = TabStrips.carve(ids.map { targets[$0]! }, height: Self.tabHeight)
+            for (id, frame) in zip(ids, carved.frames) { targets[id] = frame }
+            for strip in carved.strips { strips.append((strip.frame, strip.members.map { ids[$0] })) }
         }
         if let z = zoomed, targets[z] != nil, let d = displayID(of: z), let display = displays.first(where: { $0.id == d }) {
             targets[z] = display.area.inset(by: (parameters[d] ?? config.layout).outerGap).integral
@@ -382,7 +428,21 @@ final class TilingManager {
     /// Scrolling's off-screen windows share an edge frame but aren't a stack, so only
     /// frames fully on a display count.
     private func reportStacks() {
-        var stacks: [(frame: Rect, ids: [WindowID])] = []
+        var stacks: [StackInfo] = []
+        if config.stackTabs {
+            let front = onScreenWindowOrder()
+            for strip in strips {
+                let tabs = strip.ids.map { id -> StackInfo.Tab in
+                    let window = windows[id]
+                    let title = window?.title ?? ""
+                    return StackInfo.Tab(id: id, title: title.isEmpty ? (window?.appName ?? "") : title, pid: window?.pid ?? 0)
+                }
+                stacks.append(StackInfo(frame: strip.frame, ids: strip.ids, tabs: tabs,
+                                        active: front.first { strip.ids.contains($0) }))
+            }
+            onStacks?(stacks)
+            return
+        }
         for display in displays {
             let a = display.area
             let ids = visibleOrder(display.id).filter { id in
@@ -390,7 +450,7 @@ final class TilingManager {
                 return f.minX >= a.minX - 1 && f.maxX <= a.maxX + 1
             }
             for (_, group) in Dictionary(grouping: ids, by: { "\(targetFrames[$0]!)" }) where group.count > 1 {
-                stacks.append((targetFrames[group[0]]!, group))
+                stacks.append(StackInfo(frame: targetFrames[group[0]]!, ids: group))
             }
         }
         onStacks?(stacks)
@@ -481,6 +541,7 @@ final class TilingManager {
         let old = workspaces.active(on: d)
         guard old != number else { return }
         if let current = layouts[d] { workspaceLayouts["\(d)#\(old)"] = current }
+        overview.remove(d)
         workspaces.show(number, on: d)
         if let kind = workspaceLayouts["\(d)#\(number)"] ?? config.workspaceLayouts["\(number)"] { layouts[d] = kind }
         lastWorkspaceSwitch = Date()
@@ -598,13 +659,17 @@ final class TilingManager {
     /// An event tap rather than a monitor, so the app under the pointer doesn't scroll too.
     private func startScrollTap() {
         guard scrollTap == nil else { return }
-        let mask = CGEventMask(1 << CGEventType.scrollWheel.rawValue)
+        // 29 is the trackpad gesture event (pinch, rotate, swipe); CGEventType has no name for it.
+        let mask = CGEventMask(1 << CGEventType.scrollWheel.rawValue) | CGEventMask(1 << 29)
         let callback: CGEventTapCallBack = { _, type, event, info in
             guard let info else { return Unmanaged.passUnretained(event) }
             let manager = Unmanaged<TilingManager>.fromOpaque(info).takeUnretainedValue()
             if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
                 if let tap = manager.scrollTap { CGEvent.tapEnable(tap: tap, enable: true) }
                 return Unmanaged.passUnretained(event)
+            }
+            if type.rawValue == 29 {
+                return manager.handleGesture(event) ? nil : Unmanaged.passUnretained(event)
             }
             return manager.handleScroll(event) ? nil : Unmanaged.passUnretained(event)
         }
@@ -614,6 +679,57 @@ final class TilingManager {
         scrollTap = tap
         let source = CFMachPortCreateRunLoopSource(nil, tap, 0)
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
+    }
+
+    /// ⌥ + pinch zooms the display under the pointer in or out one level.
+    /// Returns true when the pinch was used, so the app under the pointer doesn't zoom too.
+    private func handleGesture(_ event: CGEvent) -> Bool {
+        let flags = event.flags
+        guard isEnabled, config.pinchToZoom, flags.contains(.maskAlternate),
+              !flags.contains(.maskControl), !flags.contains(.maskCommand),
+              let gesture = NSEvent(cgEvent: event), gesture.type == .magnify else { return false }
+        guard let step = pinch.feed(magnification: Double(gesture.magnification), at: gesture.timestamp) else { return true }
+        let p = Display.mouseLocation()
+        let display = Display.display(atX: p.x, y: p.y, in: displays)?.id
+        let under = topWindow(atX: p.x, y: p.y).flatMap { targetFrames[$0] != nil ? $0 : nil }
+        // Off the event tap: a retile talks to every app and must not hold up the trackpad.
+        DispatchQueue.main.async { [weak self] in self?.zoom(step, target: under, on: display) }
+        return true
+    }
+
+    // MARK: - Zoom
+
+    private func zoomLevel(on d: String) -> ZoomLevel {
+        if overview.contains(d) { return .overview }
+        if let z = zoomed, displayID(of: z) == d { return .focus }
+        return .tiles
+    }
+
+    /// One step in or out on a display: overview ← tiles → one window filling it.
+    /// `target` is the window to settle on when zooming in.
+    private func zoom(_ step: PinchGesture.Zoom, target: WindowID?, on display: String?) {
+        guard isEnabled, let d = display, effectiveLayout(d) != .float else { return }
+        let from = zoomLevel(on: d)
+        let to = from.stepped(zoomingIn: step == .zoomIn)
+        guard to != from else { return }
+        switch to {
+        case .overview:
+            overview.insert(d)
+            onMessage?("Overview · zoom in on a window to open it")
+        case .tiles:
+            overview.remove(d)
+            if let z = zoomed, displayID(of: z) == d { zoomed = nil }
+        case .focus:
+            guard let target, targetFrames[target] != nil, displayID(of: target) == d else { return }
+            zoomed = target
+        }
+        refresh()
+        if step == .zoomIn, let target, targetFrames[target] != nil { focus(target) }
+    }
+
+    /// Tab click: bring that window to the front of its tile.
+    func selectTab(_ id: WindowID) {
+        focus(id)
     }
 
     /// Returns true when the scroll was used to pan, so it isn't passed on.
@@ -823,7 +939,7 @@ final class TilingManager {
             order.insert(id, at: min(at + 1, order.count))
             orders[to] = order
         }
-        onMessage?("Stacked · click the badge to flip")
+        onMessage?(config.stackTabs ? "Tabbed together · ⌃⌥B puts them side by side" : "Stacked · click the badge to flip")
     }
 
     private func displayID(of id: WindowID) -> String? {
@@ -1015,7 +1131,23 @@ final class TilingManager {
         case .toggleZoom:
             guard let id = focusedID else { return }
             zoomed = zoomed == id ? nil : id
+            if let d = displayID(of: id) { overview.remove(d) }
             refresh()
+
+        case .zoomIn, .zoomOut:
+            zoom(command == .zoomIn ? .zoomIn : .zoomOut, target: focusedID,
+                 on: focusedID.flatMap { displayID(of: $0) } ?? activeDisplayID())
+
+        case .toggleNest:
+            guard let id = focusedID else { return }
+            let host = stackHost(of: id)
+            guard stackedOn.values.contains(host) else {
+                onMessage?("Nothing shares this tile yet · ⌥-drag a window onto it")
+                return
+            }
+            if nested.remove(host) == nil { nested.insert(host) }
+            refresh()
+            onMessage?(nested.contains(host) ? "Side by side" : "Tabs")
 
         case .undoRestore:
             guard let snapshot = undoSnapshot else {
@@ -1072,6 +1204,7 @@ final class TilingManager {
     func setLayout(_ kind: LayoutKind, for displayID: String?) {
         guard let d = displayID else { return }
         layouts[d] = kind
+        overview.remove(d)
         refresh()
         onMessage?(kind.displayName)
         scheduleAutosave()

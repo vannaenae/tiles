@@ -37,6 +37,12 @@ public enum Command: Equatable {
     case findWindow
     /// The welcome tour.
     case showTour
+    /// Zoom in a level: from the overview to the tiles, from the tiles to one window filling the display.
+    case zoomIn
+    /// Zoom out a level: from one window to the tiles, from the tiles to an overview of every window.
+    case zoomOut
+    /// Windows sharing a tile: show them as tabs, or side by side inside the tile.
+    case toggleNest
 
     /// Stable string form used in config files and URLs, e.g. `focus-left`, `layout-columns`.
     public var name: String {
@@ -71,6 +77,9 @@ public enum Command: Equatable {
         case .showShortcuts: return "show-shortcuts"
         case .findWindow: return "find-window"
         case .showTour: return "show-tour"
+        case .zoomIn: return "zoom-in"
+        case .zoomOut: return "zoom-out"
+        case .toggleNest: return "toggle-nest"
         }
     }
 
@@ -80,7 +89,7 @@ public enum Command: Equatable {
             .promote, .nextLayout, .previousLayout, .growMaster, .shrinkMaster,
             .increaseMasterCount, .decreaseMasterCount, .toggleFloat, .toggleTiling,
             .retile, .focusNextWindow, .focusPreviousWindow, .moveToNextDisplay,
-            .moveToPreviousDisplay, .increaseGaps, .decreaseGaps, .saveScene, .restoreScene, .undoRestore, .toggleZoom, .cycleWidth, .centerWindow, .showShortcuts, .findWindow, .showTour,
+            .moveToPreviousDisplay, .increaseGaps, .decreaseGaps, .saveScene, .restoreScene, .undoRestore, .toggleZoom, .cycleWidth, .centerWindow, .showShortcuts, .findWindow, .showTour, .zoomIn, .zoomOut, .toggleNest,
         ] + Workspaces.numbers.map(Command.workspace) + Workspaces.numbers.map(Command.moveToWorkspace)
 
     public static var allNames: [String] { all.map(\.name) }

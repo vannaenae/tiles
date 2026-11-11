@@ -477,3 +477,85 @@ final class SnapAndSearchTests: XCTestCase {
         XCTAssertEqual(Config.default.shortcuts(for: .findWindow).map(\.description), ["⌃⌥G"])
     }
 }
+
+final class TabStripTests: XCTestCase {
+    let tile = Rect(x: 0, y: 0, width: 400, height: 300)
+    let other = Rect(x: 410, y: 0, width: 400, height: 300)
+
+    func testWindowsSharingATileMakeRoomForAStrip() {
+        let result = TabStrips.carve([tile, other, tile], height: 28)
+        XCTAssertEqual(result.strips, [TabStrips.Strip(frame: Rect(x: 0, y: 0, width: 400, height: 28), members: [0, 2])])
+        XCTAssertEqual(result.frames[0], Rect(x: 0, y: 28, width: 400, height: 272))
+        XCTAssertEqual(result.frames[2], result.frames[0])
+        XCTAssertEqual(result.frames[1], other, "a window alone on its tile is untouched")
+    }
+
+    func testNoStripWhenNothingIsShared() {
+        let result = TabStrips.carve([tile, other], height: 28)
+        XCTAssertEqual(result.frames, [tile, other])
+        XCTAssertTrue(result.strips.isEmpty)
+    }
+
+    func testNoStripWhenTurnedOffOrTheTileIsTooShort() {
+        XCTAssertTrue(TabStrips.carve([tile, tile], height: 0).strips.isEmpty)
+        let short = Rect(x: 0, y: 0, width: 400, height: 80)
+        let result = TabStrips.carve([short, short], height: 28)
+        XCTAssertTrue(result.strips.isEmpty)
+        XCTAssertEqual(result.frames, [short, short])
+    }
+}
+
+final class NestingTests: XCTestCase {
+    func testSplitsAlongTheLongerSide() {
+        let wide = Nesting.frames(count: 2, in: Rect(x: 0, y: 0, width: 810, height: 300), gap: 10)
+        XCTAssertEqual(wide, [Rect(x: 0, y: 0, width: 400, height: 300), Rect(x: 410, y: 0, width: 400, height: 300)])
+        let tall = Nesting.frames(count: 2, in: Rect(x: 0, y: 0, width: 300, height: 810), gap: 10)
+        XCTAssertEqual(tall, [Rect(x: 0, y: 0, width: 300, height: 400), Rect(x: 0, y: 410, width: 300, height: 400)])
+    }
+
+    func testOneWindowKeepsTheTileAndNoneGetsNothing() {
+        let tile = Rect(x: 5, y: 5, width: 100, height: 100)
+        XCTAssertEqual(Nesting.frames(count: 1, in: tile, gap: 10), [tile])
+        XCTAssertTrue(Nesting.frames(count: 0, in: tile, gap: 10).isEmpty)
+    }
+}
+
+final class ZoomTests: XCTestCase {
+    func testLevelsStepInAndOutAndStopAtTheEnds() {
+        // (from, zooming in) → to
+        let table: [(ZoomLevel, Bool, ZoomLevel)] = [
+            (.overview, true, .tiles), (.tiles, true, .focus), (.focus, true, .focus),
+            (.focus, false, .tiles), (.tiles, false, .overview), (.overview, false, .overview),
+        ]
+        for (from, zoomingIn, to) in table {
+            XCTAssertEqual(from.stepped(zoomingIn: zoomingIn), to, "\(from) in:\(zoomingIn)")
+        }
+    }
+
+    func testOnePinchIsOneStep() {
+        var pinch = PinchGesture()
+        XCTAssertNil(pinch.feed(magnification: 0.1, at: 0))
+        XCTAssertEqual(pinch.feed(magnification: 0.1, at: 0.02), .zoomIn)
+        XCTAssertNil(pinch.feed(magnification: 0.5, at: 0.04), "the rest of the same gesture does nothing")
+        XCTAssertNil(pinch.feed(magnification: 0.5, at: 0.2))
+    }
+
+    func testANewGestureStartsAfterAPause() {
+        var pinch = PinchGesture()
+        XCTAssertEqual(pinch.feed(magnification: 0.3, at: 0), .zoomIn)
+        XCTAssertEqual(pinch.feed(magnification: -0.3, at: 1), .zoomOut)
+        // A small wobble that stops doesn't carry over into the next gesture.
+        XCTAssertNil(pinch.feed(magnification: 0.1, at: 2))
+        XCTAssertNil(pinch.feed(magnification: 0.1, at: 3))
+    }
+
+    func testNewSettingsDefaultOnAndOldFilesStillLoad() throws {
+        let old = try Config.decode(Data(#"{"animateWindows": true}"#.utf8))
+        XCTAssertTrue(old.stackTabs)
+        XCTAssertTrue(old.pinchToZoom)
+        let off = try Config.decode(Data(#"{"stackTabs": false, "pinchToZoom": false}"#.utf8))
+        XCTAssertFalse(off.stackTabs)
+        XCTAssertFalse(off.pinchToZoom)
+        XCTAssertEqual(Config.default.shortcuts(for: .zoomOut).map(\.description), ["⌃⌥O"])
+    }
+}

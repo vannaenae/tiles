@@ -123,6 +123,15 @@
 "Find Window" = "Buscar ventana";
 "Find Window…" = "Buscar ventana…";
 "Welcome Tour…" = "Visita de bienvenida…";
+"Tabs on Windows Sharing a Tile" = "Pestañas en ventanas que comparten espacio";
+"⌥-Pinch to Zoom" = "⌥ + pellizcar para ampliar";
+"Show tabs on windows sharing a tile" = "Mostrar pestañas en ventanas que comparten espacio";
+"⌥-drag a window onto another to put them in one tile" = "Arrastra una ventana sobre otra con ⌥ para que compartan espacio";
+"Hold ⌥ and pinch to zoom" = "Mantén ⌥ y pellizca para ampliar";
+"Pinch to see every window, spread your fingers on one to open it, spread again to fill the display" = "Pellizca para ver todas las ventanas, separa los dedos sobre una para abrirla y otra vez para que llene la pantalla";
+"Zoom out: see every window" = "Alejar: ver todas las ventanas";
+"Zoom in on this window" = "Acercar esta ventana";
+"Shared tile: tabs or side by side" = "Espacio compartido: pestañas o lado a lado";
 "How Tiles Works…" = "Cómo funciona Tiles…";
 "Snap Mode (No Automatic Tiling)" = "Modo ajustar (sin mosaico automático)";
 "Type an app or window name" = "Escribe una app o el nombre de una ventana";

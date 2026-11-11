@@ -323,6 +323,10 @@ private struct GeneralPane: View {
                 Toggle("Put windows back where they were when Tiles quits", isOn: $model.config.restoreWindowsOnQuit)
                 Toggle("Focus follows mouse", isOn: $model.config.focusFollowsMouse)
                     .help("Hovering over a tiled window focuses it")
+                Toggle("Show tabs on windows sharing a tile", isOn: $model.config.stackTabs)
+                    .help("⌥-drag a window onto another to put them in one tile")
+                Toggle("Hold ⌥ and pinch to zoom", isOn: $model.config.pinchToZoom)
+                    .help("Pinch to see every window, spread your fingers on one to open it, spread again to fill the display")
             }
             Section("Updates") {
                 Toggle("Check for updates automatically", isOn: $model.config.checkForUpdates)

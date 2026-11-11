@@ -123,6 +123,10 @@ public struct Config: Codable, Equatable {
     public var checkForUpdates: Bool
     /// Slide windows into place instead of jumping.
     public var animateWindows: Bool
+    /// Windows sharing a tile get a strip of tabs instead of a count badge.
+    public var stackTabs: Bool
+    /// Hold ⌥ and pinch on the trackpad to zoom in and out.
+    public var pinchToZoom: Bool
     public var rules: [WindowRule]
     /// Shortcut → command name. Merged on top of the defaults; map a shortcut
     /// to `"none"` to remove a default binding.
@@ -151,6 +155,8 @@ public struct Config: Codable, Equatable {
         focusFollowsMouse: Bool = false,
         checkForUpdates: Bool = true,
         animateWindows: Bool = false,
+        stackTabs: Bool = true,
+        pinchToZoom: Bool = true,
         rules: [WindowRule] = Config.defaultRules,
         hotkeys: [String: String] = [:]
     ) {
@@ -176,6 +182,8 @@ public struct Config: Codable, Equatable {
         self.focusFollowsMouse = focusFollowsMouse
         self.checkForUpdates = checkForUpdates
         self.animateWindows = animateWindows
+        self.stackTabs = stackTabs
+        self.pinchToZoom = pinchToZoom
         self.rules = rules
         self.hotkeys = hotkeys
     }
@@ -216,6 +224,7 @@ public struct Config: Codable, Equatable {
             "ctrl+alt+]": "move-to-next-display", "ctrl+alt+[": "move-to-previous-display",
             "ctrl+alt+s": "save-scene", "ctrl+alt+z": "undo-restore",
             "ctrl+alt+/": "show-shortcuts", "ctrl+alt+g": "find-window",
+            "ctrl+alt+i": "zoom-in", "ctrl+alt+o": "zoom-out", "ctrl+alt+b": "toggle-nest",
         ]
         // Numbers are desktops: ⌃⌥2 shows workspace 2, ⌃⌥⇧2 sends the window there.
         for n in Workspaces.numbers {
@@ -228,7 +237,7 @@ public struct Config: Codable, Equatable {
     enum CodingKeys: String, CodingKey {
         case configVersion, mode, workspaceNames, workspaceLayouts
         case enabled, defaultLayout, ultrawideLayout, displays, layout, newWindowPlacement
-        case dragToSwap, resizeToAdjustRatio, autoRestoreScenes, mouseFollowsFocus, outlineColor, theme, appearance, iconPlacement, restoreWindowsOnQuit, focusFollowsMouse, checkForUpdates, animateWindows, rules, hotkeys
+        case dragToSwap, resizeToAdjustRatio, autoRestoreScenes, mouseFollowsFocus, outlineColor, theme, appearance, iconPlacement, restoreWindowsOnQuit, focusFollowsMouse, checkForUpdates, animateWindows, stackTabs, pinchToZoom, rules, hotkeys
     }
 
     /// Every key is optional so a config file only needs the settings it changes.
@@ -257,6 +266,8 @@ public struct Config: Codable, Equatable {
         focusFollowsMouse = try c.decodeIfPresent(Bool.self, forKey: .focusFollowsMouse) ?? d.focusFollowsMouse
         checkForUpdates = try c.decodeIfPresent(Bool.self, forKey: .checkForUpdates) ?? d.checkForUpdates
         animateWindows = try c.decodeIfPresent(Bool.self, forKey: .animateWindows) ?? d.animateWindows
+        stackTabs = try c.decodeIfPresent(Bool.self, forKey: .stackTabs) ?? d.stackTabs
+        pinchToZoom = try c.decodeIfPresent(Bool.self, forKey: .pinchToZoom) ?? d.pinchToZoom
         rules = try c.decodeIfPresent([WindowRule].self, forKey: .rules) ?? d.rules
         hotkeys = try c.decodeIfPresent([String: String].self, forKey: .hotkeys) ?? d.hotkeys
     }
