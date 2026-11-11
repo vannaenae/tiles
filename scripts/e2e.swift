@@ -457,6 +457,37 @@ tiles("zoom-out")
 settle()
 check(abs((frames().values.map(\.width).max() ?? 0) - widest) < 3, "zoom-out puts it back in its tile")
 
+// 10c. ⌥ + pinch. No test machine has a trackpad, so this posts the gesture events a pinch sends
+// (type 29; field 110 = 8 for zoom, field 113 = the amount) and reports what Tiles made of them.
+func pinchStatus() -> String {
+    let json = (try? JSONSerialization.jsonObject(with: Data(contentsOf: statusFile))) as? [String: Any]
+    return json?["pinch"] as? String ?? "no pinch line in status.json"
+}
+tiles("layout-monocle")
+settle()
+let beforePinch = distinctFrames()
+CGEvent(mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: CGPoint(x: screen.midX, y: screen.midY), mouseButton: .left)?.post(tap: .cghidEventTap)
+holdOption(true)
+if let kind = CGEventField(rawValue: 110), let amount = CGEventField(rawValue: 113), let gestureType = CGEventType(rawValue: 29) {
+    for _ in 0..<6 {
+        guard let e = CGEvent(source: nil) else { break }
+        e.type = gestureType
+        e.setIntegerValueField(kind, value: 8)
+        e.setDoubleValueField(amount, value: -0.08)
+        e.flags = .maskAlternate
+        e.post(tap: .cghidEventTap)
+        usleep(30_000)
+    }
+}
+holdOption(false)
+settle(2)
+tiles("retile")
+print("INFO synthetic ⌥-pinch: frames \(beforePinch) → \(distinctFrames()); Tiles saw: \(pinchStatus())")
+snapshot("pinch-out")
+if distinctFrames() > beforePinch { tiles("zoom-in") }
+tiles("layout-columns")
+settle()
+
 // 11. Scrolling: ⌃⌥ + scroll slides the strip, and it stays where you left it.
 tiles("layout-scrolling")
 let strip = frames()

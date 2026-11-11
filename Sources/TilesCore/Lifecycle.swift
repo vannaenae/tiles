@@ -119,6 +119,8 @@ public struct StatusSnapshot: Codable, Equatable {
     public var mode: TilingMode
     public var update: UpdatePhase
     public var configError: String?
+    /// What the ⌥-pinch code has seen since launch, to explain a pinch that does nothing.
+    public var pinch: String?
     public var displays: [DisplayInfo]
     /// Plain-language answer to "why isn't Tiles moving my windows?", or nil when all is well.
     public var problem: String?

@@ -117,6 +117,7 @@ final class TilingManager {
         // Focus follows mouse: global mouse moves, only acted on when the option is on.
         mouseMonitor = NSEvent.addGlobalMonitorForEvents(matching: .mouseMoved) { [weak self] _ in self?.mouseMoved() }
         startScrollTap()
+        startMagnifyMonitor()
         refresh()
         if config.autoRestoreScenes { restoreScene(silently: true) }
         // Apps keep opening windows for a while after login; don't save half a scene.
@@ -660,7 +661,7 @@ final class TilingManager {
     private func startScrollTap() {
         guard scrollTap == nil else { return }
         // 29 is the trackpad gesture event (pinch, rotate, swipe); CGEventType has no name for it.
-        let mask = CGEventMask(1 << CGEventType.scrollWheel.rawValue) | CGEventMask(1 << 29)
+        let mask = CGEventMask(1 << CGEventType.scrollWheel.rawValue) | CGEventMask(1 << 29) | CGEventMask(1 << 30)
         let callback: CGEventTapCallBack = { _, type, event, info in
             guard let info else { return Unmanaged.passUnretained(event) }
             let manager = Unmanaged<TilingManager>.fromOpaque(info).takeUnretainedValue()
@@ -668,7 +669,7 @@ final class TilingManager {
                 if let tap = manager.scrollTap { CGEvent.tapEnable(tap: tap, enable: true) }
                 return Unmanaged.passUnretained(event)
             }
-            if type.rawValue == 29 {
+            if type.rawValue == 29 || type.rawValue == 30 {
                 return manager.handleGesture(event) ? nil : Unmanaged.passUnretained(event)
             }
             return manager.handleScroll(event) ? nil : Unmanaged.passUnretained(event)
@@ -681,19 +682,70 @@ final class TilingManager {
         CFRunLoopAddSource(CFRunLoopGetMain(), source, .commonModes)
     }
 
+    /// What the pinch code has seen since launch, for `tiles status`: there is no way to test a
+    /// trackpad on a build machine, so a pinch that does nothing has to explain itself.
+    private(set) var pinchDiagnostics = PinchDiagnostics()
+
+    struct PinchDiagnostics {
+        var gestureEvents = 0, magnifyEvents = 0, withOption = 0, zooms = 0, fromMonitor = 0
+        var summary: String {
+            "gesture events \(gestureEvents), pinches \(magnifyEvents) (\(fromMonitor) via monitor), with ⌥ held \(withOption), zooms \(zooms)"
+        }
+    }
+    /// When the event tap last recognised a pinch, so the monitor doesn't count the same one twice.
+    private var lastTapMagnify = 0.0
+    private var magnifyMonitor: Any?
+
+    /// How much a trackpad gesture event magnifies, or nil if it isn't a pinch.
+    /// Found on a real Mac: asking only NSEvent for `.magnify` recognised nothing, so the raw
+    /// fields are read too (110 is the gesture kind, 8 means zoom; 113 is the amount).
+    private func magnification(of event: CGEvent) -> Double? {
+        if let gesture = NSEvent(cgEvent: event), gesture.type == .magnify { return Double(gesture.magnification) }
+        guard let kind = CGEventField(rawValue: 110), let amount = CGEventField(rawValue: 113),
+              event.getIntegerValueField(kind) == 8 else { return nil }
+        return event.getDoubleValueField(amount)
+    }
+
     /// ⌥ + pinch zooms the display under the pointer in or out one level.
     /// Returns true when the pinch was used, so the app under the pointer doesn't zoom too.
     private func handleGesture(_ event: CGEvent) -> Bool {
-        let flags = event.flags
-        guard isEnabled, config.pinchToZoom, flags.contains(.maskAlternate),
-              !flags.contains(.maskControl), !flags.contains(.maskCommand),
-              let gesture = NSEvent(cgEvent: event), gesture.type == .magnify else { return false }
-        guard let step = pinch.feed(magnification: Double(gesture.magnification), at: gesture.timestamp) else { return true }
+        pinchDiagnostics.gestureEvents += 1
+        guard let amount = magnification(of: event) else { return false }
+        lastTapMagnify = ProcessInfo.processInfo.systemUptime
+        // Gesture events don't always carry the modifier keys, so ask the keyboard as well.
+        var option = event.flags.contains(.maskAlternate), other = event.flags.contains(.maskControl) || event.flags.contains(.maskCommand)
+        let held = NSEvent.modifierFlags
+        option = option || held.contains(.option)
+        other = other || held.contains(.control) || held.contains(.command)
+        return pinched(amount, option: option, other: other)
+    }
+
+    /// Backup route for the same pinch: a plain event monitor, in case the tap sees no gestures.
+    private func startMagnifyMonitor() {
+        guard magnifyMonitor == nil else { return }
+        magnifyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .magnify) { [weak self] event in
+            guard let self, ProcessInfo.processInfo.systemUptime - self.lastTapMagnify > 0.5 else { return }
+            self.pinchDiagnostics.fromMonitor += 1
+            let held = event.modifierFlags.union(NSEvent.modifierFlags)
+            _ = self.pinched(Double(event.magnification), option: held.contains(.option),
+                             other: held.contains(.control) || held.contains(.command))
+        }
+    }
+
+    private func pinched(_ amount: Double, option: Bool, other: Bool) -> Bool {
+        pinchDiagnostics.magnifyEvents += 1
+        guard isEnabled, config.pinchToZoom, option, !other else { return false }
+        pinchDiagnostics.withOption += 1
+        guard let step = pinch.feed(magnification: amount, at: ProcessInfo.processInfo.systemUptime) else { return true }
+        pinchDiagnostics.zooms += 1
         let p = Display.mouseLocation()
         let display = Display.display(atX: p.x, y: p.y, in: displays)?.id
         let under = topWindow(atX: p.x, y: p.y).flatMap { targetFrames[$0] != nil ? $0 : nil }
         // Off the event tap: a retile talks to every app and must not hold up the trackpad.
-        DispatchQueue.main.async { [weak self] in self?.zoom(step, target: under, on: display) }
+        DispatchQueue.main.async { [weak self] in
+            self?.zoom(step, target: under, on: display)
+            self?.onStateChange?()
+        }
         return true
     }
 

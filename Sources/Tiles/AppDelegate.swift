@@ -184,7 +184,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
                 displays: self.manager.status().map {
                     .init(name: $0.name, layout: $0.layout, workspace: $0.workspace, workspaces: $0.workspaces, windows: $0.tiles.count)
                 })
-            guard let data = try? snapshot.encoded(), data != self.lastStatus else { return }
+            var withPinch = snapshot
+            withPinch.pinch = self.manager.pinchDiagnostics.summary
+            guard let data = try? withPinch.encoded(), data != self.lastStatus else { return }
             self.lastStatus = data
             try? FileManager.default.createDirectory(at: Self.statusURL.deletingLastPathComponent(), withIntermediateDirectories: true)
             try? data.write(to: Self.statusURL, options: .atomic)
