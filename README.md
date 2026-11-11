@@ -57,7 +57,7 @@ curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.s
 | Animation | Optional: windows slide into place instead of jumping |
 | Snap mode | Prefer to place windows yourself? Windows stay put, and dragging one to a screen edge or corner snaps it to half, a quarter or the full screen |
 | Window finder | `⌃⌥G`, type a few letters, Return: you're in that window, even on another workspace |
-| Welcome tour | Five short pages on first launch that show how it all works |
+| Welcome tour | Six short pages on first launch that show how it all works |
 | Raycast | Ready-made script commands in `integrations/raycast` |
 | Languages | English, Spanish, French and German, following your Mac's language |
 | Updates | Checks GitHub daily and installs updates signed by the Tiles developer, in place |
@@ -126,6 +126,8 @@ Each display has its own layout. Pick one from the menu bar or cycle with `⌃�
 ## Keyboard shortcuts
 
 Every default is **⌃⌥ (Control + Option)** plus one key, which apps rarely claim. Add **⇧ Shift** to move the window instead of the focus. Forgot one? **`⌃⌥/`** pops up a cheat sheet.
+
+**Windows keyboard?** ⌃ is Ctrl, ⌥ is Alt, ⇧ is Shift and ⌘ is the Windows key, so every default is **Ctrl + Alt** plus one key.
 
 | Shortcut | Action |
 |---|---|

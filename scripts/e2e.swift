@@ -556,7 +556,7 @@ check(tilesWindows(width: 520, minHeight: 400).count == 1, "the welcome tour ope
 snapshot("tour-1")
 press(36, []); settle(0.6)
 snapshot("tour-2")
-for _ in 0..<4 { press(36, []); settle(0.4) }
+for _ in 0..<5 { press(36, []); settle(0.4) }
 check(tilesWindows(width: 520, minHeight: 400).isEmpty, "Return pages through the tour and Done closes it")
 
 // 17. The cheat sheet.

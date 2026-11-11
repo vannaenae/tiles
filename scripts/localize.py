@@ -221,6 +221,11 @@ T = {
  ("⌃⌥2 te da un segundo escritorio vacío para otras tareas y ⌃⌥1 te trae de vuelta. ⌃⌥⇧2 envía allí la ventana en la que estás.",
   "⌃⌥2 vous donne un second bureau vide pour autre chose, et ⌃⌥1 vous ramène. ⌃⌥⇧2 y envoie la fenêtre active.",
   "⌃⌥2 gibt dir einen zweiten, leeren Schreibtisch für anderes, ⌃⌥1 bringt dich zurück. ⌃⌥⇧2 schickt das aktuelle Fenster dorthin."),
+"Tabs and zoom": ("Pestañas y zoom", "Onglets et zoom", "Tabs und Zoom"),
+"Hold ⌥ Option and drop one window onto another: they share a tile, with a tab each. ⌃⌥O zooms out to show every window, and ⌃⌥I zooms back in.":
+ ("Mantén ⌥ Opción y suelta una ventana sobre otra: comparten espacio, con una pestaña cada una. ⌃⌥O aleja para mostrar todas las ventanas y ⌃⌥I vuelve a acercar.",
+  "Maintenez ⌥ Option et déposez une fenêtre sur une autre : elles partagent une zone, avec un onglet chacune. ⌃⌥O dézoome pour montrer toutes les fenêtres et ⌃⌥I zoome à nouveau.",
+  "Halte ⌥ Wahl und lege ein Fenster auf ein anderes: Sie teilen sich eine Kachel, jedes mit eigenem Tab. ⌃⌥O zoomt heraus und zeigt alle Fenster, ⌃⌥I zoomt wieder hinein."),
 "You're all set": ("Todo listo", "Tout est prêt", "Alles bereit"),
 "Forgot a shortcut? Press ⌃⌥/ any time for the list. Would rather place windows yourself? Choose Snap mode in Tiles → General.":
  ("¿Olvidaste un atajo? Pulsa ⌃⌥/ cuando quieras para ver la lista. ¿Prefieres colocar las ventanas tú? Elige el modo Ajustar en Tiles → General.",

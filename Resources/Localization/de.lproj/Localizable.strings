@@ -149,6 +149,8 @@
 "⌃⌥ + an arrow key jumps to the window on that side. Add ⇧ Shift to move the window itself. Or drag one window onto another and they swap." = "⌃⌥ + Pfeiltaste springt zum Fenster auf dieser Seite. Mit ⇧ Umschalt bewegst du das Fenster selbst. Oder zieh ein Fenster auf ein anderes, und sie tauschen.";
 "More room with desktops" = "Mehr Platz mit Schreibtischen";
 "⌃⌥2 gives you a second, empty desktop for other work, and ⌃⌥1 brings you back. ⌃⌥⇧2 sends the window you're in over there." = "⌃⌥2 gibt dir einen zweiten, leeren Schreibtisch für anderes, ⌃⌥1 bringt dich zurück. ⌃⌥⇧2 schickt das aktuelle Fenster dorthin.";
+"Tabs and zoom" = "Tabs und Zoom";
+"Hold ⌥ Option and drop one window onto another: they share a tile, with a tab each. ⌃⌥O zooms out to show every window, and ⌃⌥I zooms back in." = "Halte ⌥ Wahl und lege ein Fenster auf ein anderes: Sie teilen sich eine Kachel, jedes mit eigenem Tab. ⌃⌥O zoomt heraus und zeigt alle Fenster, ⌃⌥I zoomt wieder hinein.";
 "You're all set" = "Alles bereit";
 "Forgot a shortcut? Press ⌃⌥/ any time for the list. Would rather place windows yourself? Choose Snap mode in Tiles → General." = "Kurzbefehl vergessen? Drücke jederzeit ⌃⌥/ für die Liste. Möchtest du Fenster lieber selbst platzieren? Wähle den Modus Einrasten in Tiles → Allgemein.";
 "Show the shortcuts" = "Kurzbefehle anzeigen";

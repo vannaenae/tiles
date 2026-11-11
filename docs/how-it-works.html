@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>How Tiles works: five moves</title>
-<meta name="description" content="Learn Tiles in two minutes. Five moves, played out on a small desktop in your browser: open, change the layout, move around, focus, and switch desktops.">
+<title>How Tiles works: six moves</title>
+<meta name="description" content="Learn Tiles in two minutes. Six moves, played out on a small desktop in your browser: open, change the layout, move around, share a tile, zoom, and switch desktops.">
 <link rel="icon" href="img/icon.png">
-<meta property="og:title" content="How Tiles works: five moves">
+<meta property="og:title" content="How Tiles works: six moves">
 <meta property="og:description" content="Learn Tiles in two minutes, on a small desktop in your browser.">
 <meta property="og:image" content="img/dwindle.png">
 <style>
@@ -33,7 +33,7 @@ kbd { font:13px ui-monospace, Menlo, monospace; background:var(--screen); border
 #track { position:relative; }
 .stage { position:sticky; top:0; height:100vh; height:100svh; display:grid; grid-template-columns:minmax(260px,340px) 1fr; gap:44px; align-items:center; }
 .moves { list-style:none; margin:0; padding:0; }
-.moves li { border-left:2px solid var(--line); padding:7px 0 7px 18px; transition:border-color .3s; }
+.moves li { border-left:2px solid var(--line); padding:6px 0 6px 18px; transition:border-color .3s; }
 .moves li.done { border-color:var(--accent); }
 .moves li.on { border-color:var(--accent); }
 .moves .head { display:flex; gap:12px; align-items:baseline; width:100%; text-align:left; padding:0; font-size:20px; font-weight:600; letter-spacing:-.01em; color:var(--sec); transition:color .3s; }
@@ -74,6 +74,13 @@ kbd { font:13px ui-monospace, Menlo, monospace; background:var(--screen); border
 .term { background:#17171a; } .term .ln { background:rgba(255,255,255,.16); } .term .ln.a { background:#5ad17a; opacity:.9; }
 .art { align-self:center; width:min(46%, 16cqw); aspect-ratio:1; border-radius:1cqw; background:conic-gradient(from 200deg, #ff7a59, #ffd166, #7bdff2, #b388ff, #ff7a59); margin:auto 0 .6cqw; flex:none; }
 .cal { flex:1; display:grid; grid-template-columns:repeat(5,1fr); grid-auto-rows:1fr; gap:.5cqw; } .cal div { border-radius:.4cqw; background:var(--ink2); } .cal div.e { background:var(--tint); opacity:.75; }
+.tabs { position:absolute; left:0; top:0; z-index:4; display:flex; gap:.4cqw; padding:.35cqw; background:rgba(28,28,30,.9); border-radius:.8cqw; opacity:0; pointer-events:none;
+  transition:transform .55s cubic-bezier(.2,.8,.2,1), width .55s cubic-bezier(.2,.8,.2,1), height .55s cubic-bezier(.2,.8,.2,1), opacity .3s; }
+.tabs.show { opacity:1; }
+.tabs span { flex:1; display:flex; align-items:center; justify-content:center; gap:.5cqw; border-radius:.55cqw; font-size:1.15cqw; font-weight:500; color:rgba(255,255,255,.75); background:rgba(255,255,255,.1); white-space:nowrap; overflow:hidden; }
+.tabs span.on { background:var(--accent); color:#fff; font-weight:600; }
+.tabs i { width:.9cqw; height:.9cqw; border-radius:.25cqw; flex:none; }
+.winkeys { font-size:15px; margin-top:14px; }
 .keys { z-index:5; position:absolute; left:50%; bottom:5%; display:flex; gap:.7cqw; transform:translateX(-50%); opacity:0; transition:opacity .3s; pointer-events:none; }
 .keys.show { opacity:1; }
 .keys span { min-width:4.4cqw; height:4.4cqw; padding:0 1.3cqw; display:grid; place-items:center; font:600 1.8cqw -apple-system, system-ui, sans-serif; color:#fff; background:rgba(28,28,30,.86); border:1px solid rgba(255,255,255,.18); border-radius:.9cqw; box-shadow:0 .5cqw 1.4cqw rgba(0,0,0,.35); }
@@ -103,7 +110,7 @@ footer { padding:72px 0 48px; text-align:center; color:var(--sec); font-size:14p
   .pager button.on { background:var(--accent); color:#fff; }
   .hint { display:none; }
 }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior:auto; } .win, .cursor, .keys, .moves .lines { transition:none; } .keys.press span { animation:none; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior:auto; } .win, .cursor, .keys, .tabs, .moves .lines { transition:none; } .keys.press span { animation:none; } }
 </style>
 </head>
 <body>
@@ -116,8 +123,9 @@ footer { padding:72px 0 48px; text-align:center; color:var(--sec); font-size:14p
 
   <div class="hero">
     <p class="eyebrow">How it works</p>
-    <h1>Five moves.<br><span>That's all of it.</span></h1>
+    <h1>Six moves.<br><span>That's all of it.</span></h1>
     <p class="lede">Learn Tiles in two minutes. Scroll to watch each move on the small desktop below, or pick a step to jump to it.</p>
+    <p class="lede winkeys">On a Windows keyboard, <kbd>⌃</kbd> is Ctrl and <kbd>⌥</kbd> is Alt, so every shortcut is Ctrl + Alt + a key.</p>
   </div>
 
   <div id="track">
@@ -131,6 +139,7 @@ footer { padding:72px 0 48px; text-align:center; color:var(--sec); font-size:14p
           <div class="screen" id="screen" role="img" aria-label="A simulated Mac desktop showing Tiles arranging windows">
             <div class="menubar"><b>Tiles demo</b><span>File</span><span>Edit</span><span>Window</span><span class="sp"></span>
               <span class="status"><img src="img/icon.png" alt=""><span id="status"></span></span></div>
+            <div class="tabs" id="tabs"></div>
             <div class="keys" id="keys"></div>
             <svg class="cursor" id="cursor" viewBox="0 0 24 24"><path d="M5 2l14 11h-8l-3 8z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
           </div>
@@ -151,7 +160,7 @@ footer { padding:72px 0 48px; text-align:center; color:var(--sec); font-size:14p
   </section>
 
   <footer>
-    <strong>Tiles <span data-version>v0.9.0</span></strong> · A SOULSPCE Collective product<br>
+    <strong>Tiles <span data-version>v0.10.0</span></strong> · A SOULSPCE Collective product<br>
     Free and open source under the MIT License · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="support.html">Support</a> · <a href="https://github.com/vannaenae/tiles">Source on GitHub</a>
   </footer>
 </div>
@@ -197,13 +206,19 @@ const MOVES=[
   {text:'<kbd>⌃⌥</kbd> and an arrow key jumps to the window on that side. The outline shows where you are.', ws:[A], focus:'notes', layout:'columns', keys:['⌃','⌥','←']},
   {text:'Add <kbd>⇧</kbd> and the window itself moves.', ws:[['notes','safari','terminal']], focus:'notes', layout:'columns', keys:['⌃','⌥','⇧','←']},
   {text:'Prefer the mouse? Drag one window onto another and they swap.', ws:[['terminal','safari','notes']], focus:'terminal', layout:'columns', cursor:'terminal'}]},
- {title:'Give one window the whole screen.', beats:[
-  {text:'<kbd>⌃⌥M</kbd> lets the window you are in fill the display.', ws:[['terminal','safari','notes']], focus:'terminal', layout:'columns', full:'terminal', keys:['⌃','⌥','M']},
-  {text:'Press it again and everything goes back where it was.', ws:[['terminal','safari','notes']], focus:'terminal', layout:'columns', keys:['⌃','⌥','M']}]},
+ {title:'Put two windows in one tile.', beats:[
+  {text:'Hold <kbd>⌥</kbd> and drop one window onto another. They share the tile, with a tab each.', ws:[['terminal','safari']], stacks:{safari:['notes']}, front:'notes', focus:'notes', layout:'columns', cursor:'notes'},
+  {text:'Click a tab to switch. The windows can come from different apps.', ws:[['terminal','safari']], stacks:{safari:['notes']}, front:'safari', focus:'safari', layout:'columns', tab:0},
+  {text:'<kbd>⌃⌥B</kbd> lays them side by side inside the tile instead.', ws:[['terminal','safari']], stacks:{safari:['notes']}, nested:true, focus:'safari', layout:'columns', keys:['⌃','⌥','B']}]},
+ {title:'Zoom out. Zoom in.', beats:[
+  {text:'<kbd>⌃⌥O</kbd> zooms out: every window gets its own tile, so you can see them all.', ws:[['terminal','safari']], stacks:{safari:['notes']}, overview:true, focus:'safari', layout:'columns', keys:['⌃','⌥','O']},
+  {text:'<kbd>⌃⌥I</kbd> zooms back in to your layout.', ws:[['terminal','safari']], stacks:{safari:['notes']}, nested:true, focus:'terminal', layout:'columns', keys:['⌃','⌥','I']},
+  {text:'Press it once more and the window you are in fills the display.', ws:[['terminal','safari']], stacks:{safari:['notes']}, nested:true, focus:'terminal', layout:'columns', full:'terminal', keys:['⌃','⌥','I']},
+  {text:'<kbd>⌃⌥O</kbd> steps back out again.', ws:[['terminal','safari']], stacks:{safari:['notes']}, nested:true, focus:'terminal', layout:'columns', keys:['⌃','⌥','O']}]},
  {title:'A second desktop when you need it.', beats:[
-  {text:'<kbd>⌃⌥2</kbd> gives you a fresh, empty desktop. Your other windows wait on the first.', ws:[['terminal','safari','notes'],[]], at:1, layout:'columns', keys:['⌃','⌥','2']},
-  {text:'Open what you need here. It tiles the same way.', ws:[['terminal','safari','notes'],['music','calendar']], at:1, focus:'calendar', layout:'columns'},
-  {text:'<kbd>⌃⌥1</kbd> brings you back. Add <kbd>⇧</kbd> to send a window across instead.', ws:[['terminal','safari','notes'],['music','calendar']], at:0, focus:'terminal', layout:'columns', keys:['⌃','⌥','1']}]}];
+  {text:'<kbd>⌃⌥2</kbd> gives you a fresh, empty desktop. Your other windows wait on the first.', ws:[['terminal','safari'],[]], stacks:{safari:['notes']}, nested:true, at:1, layout:'columns', keys:['⌃','⌥','2']},
+  {text:'Open what you need here. It tiles the same way.', ws:[['terminal','safari'],['music','calendar']], stacks:{safari:['notes']}, nested:true, at:1, focus:'calendar', layout:'columns'},
+  {text:'<kbd>⌃⌥1</kbd> brings you back. Add <kbd>⇧</kbd> to send a window across instead.', ws:[['terminal','safari'],['music','calendar']], stacks:{safari:['notes']}, nested:true, at:0, focus:'terminal', layout:'columns', keys:['⌃','⌥','1']}]}];
 const BEATS=MOVES.flatMap((m,mi)=>m.beats.map((b,bi)=>({...b,move:mi,line:bi})));
 const FIRST=MOVES.map((_,mi)=>BEATS.findIndex(b=>b.move==mi));
 
@@ -219,17 +234,31 @@ function place(el,r){el.style.width=pct(r.w,W)+'%';el.style.height=pct(r.h,H)+'%
  // translate percentages are relative to the element itself, so convert screen fractions to them
  el.style.transform=`translate(${r.x/r.w*100}%,${r.y/r.h*100}%)`}
 let current=-1;
-function show(i){if(i==current)return;current=i;const b=BEATS[i],at=b.at||0,seen=new Set;
- b.ws.forEach((list,d)=>{const f=frames(b.layout,list.length);list.forEach((id,k)=>{seen.add(id);const el=wins[id];
-  let r=f[k];if(b.full)r=AREA;
-  // another desktop's windows wait just off the side of the screen, as they do in the app
-  if(d!=at)r={...r,x:r.x+(d<at?-W:W)};
-  place(el,r);el.classList.toggle('gone',d!=at||!!(b.full&&b.full!=id));el.classList.toggle('focus',d==at&&b.focus==id);el.style.zIndex=b.full==id||b.cursor==id?3:b.focus==id?2:1})});
+const TAB=46,nest=(t,n)=>t.w>=t.h?cols(t,n,G):rows(t,n,G);
+function show(i){if(i==current)return;current=i;const b=BEATS[i],at=b.at||0,seen=new Set,rects={};let strip=null;
+ b.ws.forEach((hosts,d)=>{const st=d==0&&b.stacks||{},all=hosts.flatMap(h=>[h,...(st[h]||[])]);
+  if(b.overview&&d==at){
+   // Zoomed out: every window gets its own tile in a grid, sharing a tile or not.
+   frames('grid',all.length).forEach((r,k)=>rects[all[k]]=r)
+  }else{const f=frames(b.layout,hosts.length);hosts.forEach((h,k)=>{const group=[h,...(st[h]||[])],t=f[k];
+   if(group.length==1)rects[h]=t;
+   else if(b.nested)nest(t,group.length).forEach((r,n)=>rects[group[n]]=r);
+   // Tabs: the windows overlap, moved down to make room for the strip.
+   else{group.forEach(id=>rects[id]={x:t.x,y:t.y+TAB,w:t.w,h:t.h-TAB});if(d==at&&!b.full)strip={r:{x:t.x,y:t.y,w:t.w,h:TAB-8},group}}})}
+  all.forEach(id=>{seen.add(id);const el=wins[id];let r=b.full&&d==at?AREA:rects[id];
+   // another desktop's windows wait just off the side of the screen, as they do in the app
+   if(d!=at)r={...r,x:r.x+(d<at?-W:W)};
+   place(el,r);el.classList.toggle('gone',d!=at||!!(b.full&&b.full!=id));el.classList.toggle('focus',d==at&&b.focus==id);
+   el.style.zIndex=b.full==id||b.cursor==id?3:(b.focus==id||b.front==id)?2:1})});
  for(const id in wins)if(!seen.has(id)){wins[id].classList.add('gone');wins[id].classList.remove('focus')}
- $('status').textContent=`${b.full?'Focus':NAMES[b.layout]} · ${at+1}`;
+ const tabs=$('tabs');tabs.classList.toggle('show',!!strip);
+ if(strip){place(tabs,strip.r);tabs.innerHTML=strip.group.map(id=>`<span class="${id==b.front?'on':''}"><i style="background:${APPS[id][1]}"></i>${APPS[id][0]}</span>`).join('')}
+ $('status').textContent=`${b.full?'Focus':b.overview?'Overview':NAMES[b.layout]} · ${at+1}`;
  const keys=$('keys');keys.classList.toggle('show',!!b.keys);if(b.keys){keys.innerHTML=b.keys.map(k=>`<span>${k}</span>`).join('');keys.classList.remove('press');void keys.offsetWidth;keys.classList.add('press')}
- const cur=$('cursor');cur.classList.toggle('show',!!b.cursor);if(b.cursor){const r=frames(b.layout,b.ws[at].length)[b.ws[at].indexOf(b.cursor)];
-  cur.style.transform=`translate(${pct(r.x+r.w/2,W)/100*screen.clientWidth}px,${pct(r.y+26,H)/100*screen.clientHeight}px)`}
+ // The pointer rests on a window's title bar, or on a tab.
+ const cur=$('cursor'),r=b.cursor&&rects[b.cursor],point=b.tab!=null&&strip?{x:strip.r.x+strip.r.w*(b.tab+.5)/strip.group.length,y:strip.r.y+strip.r.h/2}:r?{x:r.x+r.w/2,y:r.y+26}:null;
+ cur.classList.toggle('show',!!point);
+ if(point)cur.style.transform=`translate(${point.x/W*screen.clientWidth}px,${point.y/H*screen.clientHeight}px)`;
  document.querySelectorAll('#moves li').forEach((li,m)=>{li.classList.toggle('on',m==b.move);li.classList.toggle('done',m<b.move);
   li.querySelectorAll('p').forEach((p,l)=>p.classList.toggle('now',m==b.move&&l==b.line))});
  document.querySelectorAll('#pager button').forEach((p,m)=>p.classList.toggle('on',m==b.move))}

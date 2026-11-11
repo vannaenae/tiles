@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 import TilesCore
 
-/// The welcome tour: five short pages shown on first launch, and any time from the menu.
+/// The welcome tour: six short pages shown on first launch, and any time from the menu.
 final class Tour {
     private var window: NSWindow?
 
@@ -51,6 +51,8 @@ private struct TourView: View {
                  text: "⌃⌥ + an arrow key jumps to the window on that side. Add ⇧ Shift to move the window itself. Or drag one window onto another and they swap."),
         TourPage(symbol: "square.stack.3d.up.fill", title: "More room with desktops",
                  text: "⌃⌥2 gives you a second, empty desktop for other work, and ⌃⌥1 brings you back. ⌃⌥⇧2 sends the window you're in over there."),
+        TourPage(symbol: "rectangle.stack.fill", title: "Tabs and zoom",
+                 text: "Hold ⌥ Option and drop one window onto another: they share a tile, with a tab each. ⌃⌥O zooms out to show every window, and ⌃⌥I zooms back in."),
         TourPage(symbol: "checkmark.seal.fill", title: "You're all set",
                  text: "Forgot a shortcut? Press ⌃⌥/ any time for the list. Would rather place windows yourself? Choose Snap mode in Tiles → General.",
                  tryLabel: "Show the shortcuts", tryCommand: .showShortcuts),
