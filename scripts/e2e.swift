@@ -325,8 +325,15 @@ editConfig { c in c["stackTabs"] = false }
 let shownBadges = badges()
 check(shownBadges.count == 1 && tabStrips().isEmpty, "with tabs off, a badge shows instead (\(shownBadges.count) badges)")
 if let badge = shownBadges.first, let before = frontOf(stacked) {
-    click(CGPoint(x: badge.midX, y: badge.midY))
+    let p = CGPoint(x: badge.midX, y: badge.midY)
+    let under = (CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []).first { w in
+        guard let b = w[kCGWindowBounds as String] as? [String: Double] else { return false }
+        return CGRect(x: b["X"] ?? 0, y: b["Y"] ?? 0, width: b["Width"] ?? 0, height: b["Height"] ?? 0).contains(p)
+    }
+    print("  badge at \(badge), top window there: \(under?[kCGWindowOwnerName as String] ?? "none") \(under?[kCGWindowBounds as String] ?? "")")
+    click(p)
     settle()
+    print("  front before \(before), after \(frontOf(stacked) ?? -1)")
     check(frontOf(stacked) != before, "clicking the badge brings the next stacked window forward")
 }
 editConfig { c in c["stackTabs"] = true }
