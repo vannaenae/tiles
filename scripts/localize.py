@@ -47,6 +47,7 @@ T = {
 "Automatic": ("Automático", "Automatique", "Automatisch"),
 "Big and small screens": ("Pantallas grandes y pequeñas", "Grands et petits écrans", "Große und kleine Bildschirme"),
 "Both": ("Ambos", "Les deux", "Beides"),
+"Check for Updates": ("Buscar actualizaciones", "Rechercher les mises à jour", "Nach Updates suchen"),
 "Check Now": ("Comprobar ahora", "Vérifier maintenant", "Jetzt prüfen"),
 "Check for updates automatically": ("Buscar actualizaciones automáticamente", "Rechercher les mises à jour automatiquement", "Automatisch nach Updates suchen"),
 "Click a shortcut, then press the new keys. Esc cancels. Every command also works as a tiles:// link.":

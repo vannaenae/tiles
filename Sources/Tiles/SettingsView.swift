@@ -251,7 +251,7 @@ struct SettingsView: View {
                 case .scenes: ScenesPane(model: model)
                 case .shortcuts: ShortcutsPane(model: model)
                 case .rules: RulesPane(model: model)
-                case .about: AboutPane()
+                case .about: AboutPane(model: model)
                 }
             }
             .formStyle(.grouped)
@@ -751,6 +751,7 @@ private struct RulesPane: View {
 }
 
 private struct AboutPane: View {
+    @ObservedObject var model: SettingsModel
     /// The Tiles website, where the privacy policy and terms live.
     static let site = URL(string: "https://i-tilesapp.vercel.app/")!
 
@@ -758,8 +759,23 @@ private struct AboutPane: View {
         VStack(spacing: 12) {
             Image(nsImage: NSApp.applicationIconImage).resizable().frame(width: 96, height: 96)
             Text("Tiles").font(.largeTitle.bold())
-            Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "dev")")
+            Text("Version \(model.updater.current)")
                 .foregroundStyle(.secondary)
+            // The version you have, whether a newer one exists, and one button to get it.
+            VStack(spacing: 8) {
+                if !model.updater.status.isEmpty {
+                    Text(model.updater.status).font(.callout).foregroundStyle(.secondary)
+                }
+                if let version = model.updater.available {
+                    Button("Install Tiles \(version)") { model.updater.install() }
+                        .buttonStyle(.borderedProminent)
+                } else {
+                    Button("Check for Updates") { model.updater.check() }
+                        .disabled(!model.updater.phase.canCheck)
+                }
+            }
+            .controlSize(.large)
+            .padding(.vertical, 4)
             Text("A SOULSPCE Collective product")
                 .font(.callout.weight(.medium))
                 .foregroundStyle(.secondary)
@@ -775,6 +791,8 @@ private struct AboutPane: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Opening About looks for a newer version straight away.
+        .onAppear { model.updater.check() }
     }
 }
 

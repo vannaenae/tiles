@@ -60,7 +60,7 @@ curl -fsSL https://github.com/vannaenae/tiles/releases/latest/download/install.s
 | Welcome tour | Six short pages on first launch that show how it all works |
 | Raycast | Ready-made script commands in `integrations/raycast` |
 | Languages | English, Spanish, French and German, following your Mac's language |
-| Updates | Checks GitHub daily and installs updates signed by the Tiles developer, in place |
+| Updates | Checks GitHub daily and installs updates signed by the Tiles developer, in place. Settings → About shows your version, checks on opening, and has the button to update |
 | Privacy | Scenes store app identifiers only, never window titles |
 
 ## Install
