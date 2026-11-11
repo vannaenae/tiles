@@ -326,14 +326,17 @@ let shownBadges = badges()
 check(shownBadges.count == 1 && tabStrips().isEmpty, "with tabs off, a badge shows instead (\(shownBadges.count) badges)")
 if let badge = shownBadges.first, let before = frontOf(stacked) {
     let p = CGPoint(x: badge.midX, y: badge.midY)
-    let under = (CGWindowListCopyWindowInfo([.optionOnScreenOnly], kCGNullWindowID) as? [[String: Any]] ?? []).first { w in
-        guard let b = w[kCGWindowBounds as String] as? [String: Double] else { return false }
-        return CGRect(x: b["X"] ?? 0, y: b["Y"] ?? 0, width: b["Width"] ?? 0, height: b["Height"] ?? 0).contains(p)
-    }
-    print("  badge at \(badge), top window there: \(under?[kCGWindowOwnerName as String] ?? "none") \(under?[kCGWindowBounds as String] ?? "")")
+    print("  stacked windows: \(windows().filter { stacked.contains($0.id) }.map { "#\($0.id) \($0.frame)" })")
+    CGEvent(mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: p, mouseButton: .left)?.post(tap: .cghidEventTap)
+    usleep(300_000)
     click(p)
     settle()
-    print("  front before \(before), after \(frontOf(stacked) ?? -1)")
+    print("  front before \(before), after one click \(frontOf(stacked) ?? -1)")
+    if frontOf(stacked) == before {
+        click(p)
+        settle()
+        print("  after a second click \(frontOf(stacked) ?? -1), badges now \(badges())")
+    }
     check(frontOf(stacked) != before, "clicking the badge brings the next stacked window forward")
 }
 editConfig { c in c["stackTabs"] = true }
