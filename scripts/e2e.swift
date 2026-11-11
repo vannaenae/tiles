@@ -310,14 +310,15 @@ check(shownStrips.count == 1, "a strip of tabs shows on the shared tile (\(shown
 check(badges().isEmpty, "tabs replace the count badge")
 snapshot("stack-tabs")
 if let strip = shownStrips.first, let before = frontOf(stacked) {
-    // One of the first two tabs belongs to a window that isn't in front.
-    click(tab(0, of: 3, in: strip))
-    settle()
-    if frontOf(stacked) == before {
-        click(tab(1, of: 3, in: strip))
+    // Each tab brings its own window forward, including the one from another app (Finder).
+    var fronts = Set<Int>()
+    for index in [0, 1, 2, 1] {
+        click(tab(index, of: 3, in: strip))
         settle()
+        if let front = frontOf(stacked) { fronts.insert(front) }
     }
-    check(frontOf(stacked) != before, "clicking a tab brings that window forward")
+    check(frontOf(stacked) != before || fronts.count > 1, "clicking a tab brings that window forward")
+    check(fronts == stacked, "every tab works, across apps (\(fronts.count) of \(stacked.count) windows came forward)")
     snapshot("stack-tab-clicked")
 }
 // With tabs turned off, the count badge comes back and flips through the windows.
@@ -325,18 +326,8 @@ editConfig { c in c["stackTabs"] = false }
 let shownBadges = badges()
 check(shownBadges.count == 1 && tabStrips().isEmpty, "with tabs off, a badge shows instead (\(shownBadges.count) badges)")
 if let badge = shownBadges.first, let before = frontOf(stacked) {
-    let p = CGPoint(x: badge.midX, y: badge.midY)
-    print("  stacked windows: \(windows().filter { stacked.contains($0.id) }.map { "#\($0.id) \($0.frame)" })")
-    CGEvent(mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: p, mouseButton: .left)?.post(tap: .cghidEventTap)
-    usleep(300_000)
-    click(p)
+    click(CGPoint(x: badge.midX, y: badge.midY))
     settle()
-    print("  front before \(before), after one click \(frontOf(stacked) ?? -1)")
-    if frontOf(stacked) == before {
-        click(p)
-        settle()
-        print("  after a second click \(frontOf(stacked) ?? -1), badges now \(badges())")
-    }
     check(frontOf(stacked) != before, "clicking the badge brings the next stacked window forward")
 }
 editConfig { c in c["stackTabs"] = true }

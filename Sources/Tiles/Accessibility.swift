@@ -156,6 +156,10 @@ final class Window {
         element.set(kAXMainAttribute, kCFBooleanTrue)
         appElement.set(kAXFocusedWindowAttribute, element)
         AXUIElementPerformAction(element, kAXRaiseAction as CFString)
+        // Found on a real Mac: from a click on one of Tiles' own panels (a tab, a stack badge),
+        // macOS 14+ can refuse activate() for another app, so the window rose behind the app in
+        // front. Asking through Accessibility as well brings the app forward.
+        if app?.isActive == false { appElement.set(kAXFrontmostAttribute, kCFBooleanTrue) }
         if #available(macOS 14.0, *) {
             app?.activate()
         } else {
