@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Tiles works: five moves</title>
+<meta name="description" content="Learn Tiles in two minutes. Five moves, played out on a small desktop in your browser: open, change the layout, move around, focus, and switch desktops.">
+<link rel="icon" href="img/icon.png">
+<meta property="og:title" content="How Tiles works: five moves">
+<meta property="og:description" content="Learn Tiles in two minutes, on a small desktop in your browser.">
+<meta property="og:image" content="img/dwindle.png">
+<style>
+:root { --accent:#E8643C; --bg:#faf8f6; --card:#fff; --text:#1d1d1f; --sec:#6e6e73; --line:rgba(0,0,0,.08); --screen:rgba(0,0,0,.05);
+  --win:#fff; --winbar:#f1efed; --ink:rgba(0,0,0,.13); --ink2:rgba(0,0,0,.07); --wall1:#f6c9b6; --wall2:#f3e4d6; --wall3:#e9d5ea; --bezel:#1d1d1f; --menubar:rgba(255,255,255,.55); }
+@media (prefers-color-scheme: dark) { :root { --bg:#141416; --card:#1f1f22; --text:#f5f5f7; --sec:#a1a1a6; --line:rgba(255,255,255,.1); --screen:rgba(255,255,255,.06);
+  --win:#26262a; --winbar:#313136; --ink:rgba(255,255,255,.16); --ink2:rgba(255,255,255,.08); --wall1:#5a2a1a; --wall2:#22181c; --wall3:#2c2140; --bezel:#050506; --menubar:rgba(0,0,0,.35); } }
+* { box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body { margin:0; background:var(--bg); color:var(--text); font:17px/1.55 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
+a { color:var(--accent); text-decoration:none; } a:hover { text-decoration:underline; }
+.wrap { max-width:1180px; margin:0 auto; padding:0 20px; }
+nav { display:flex; align-items:center; gap:12px; padding:18px 0; }
+nav img { width:32px; height:32px; } nav b { font-size:18px; } nav .sp { flex:1; } nav a { color:var(--text); margin-left:20px; font-size:15px; } nav a.home { margin:0; display:flex; align-items:center; gap:12px; }
+nav a.here { color:var(--accent); }
+.hero { text-align:center; padding:48px 0 8px; }
+.eyebrow { color:var(--accent); font-weight:600; font-size:15px; margin:0; }
+h1 { font-size:clamp(36px,6vw,60px); line-height:1.05; letter-spacing:-.02em; margin:10px 0 14px; } h1 span { color:var(--sec); }
+.lede { font-size:clamp(17px,2.2vw,20px); color:var(--sec); max-width:600px; margin:0 auto; }
+button { font:inherit; cursor:pointer; border:0; background:none; color:inherit; }
+kbd { font:13px ui-monospace, Menlo, monospace; background:var(--screen); border:1px solid var(--line); border-radius:6px; padding:2px 6px; white-space:nowrap; }
+
+/* The scroll track: tall, with a pinned stage inside. Each beat is one stretch of scrolling. */
+#track { position:relative; }
+.stage { position:sticky; top:0; height:100vh; height:100svh; display:grid; grid-template-columns:minmax(260px,340px) 1fr; gap:44px; align-items:center; }
+.moves { list-style:none; margin:0; padding:0; }
+.moves li { border-left:2px solid var(--line); padding:7px 0 7px 18px; transition:border-color .3s; }
+.moves li.done { border-color:var(--accent); }
+.moves li.on { border-color:var(--accent); }
+.moves .head { display:flex; gap:12px; align-items:baseline; width:100%; text-align:left; padding:0; font-size:20px; font-weight:600; letter-spacing:-.01em; color:var(--sec); transition:color .3s; }
+.moves .head i { font:600 13px ui-monospace, Menlo, monospace; color:var(--sec); font-style:normal; }
+.moves li.on .head { color:var(--text); } .moves li.on .head i { color:var(--accent); }
+.moves .head:hover { color:var(--text); }
+.moves .head:focus-visible { outline:2px solid var(--accent); outline-offset:4px; border-radius:4px; }
+.moves .lines { display:grid; grid-template-rows:0fr; transition:grid-template-rows .35s ease; }
+.moves li.on .lines { grid-template-rows:1fr; }
+.moves .lines > div { overflow:hidden; }
+.moves p { margin:8px 0 0 31px; font-size:16px; color:var(--sec); opacity:.55; transition:opacity .3s, color .3s; }
+.moves p.now { color:var(--text); opacity:1; }
+.pager { display:none; }
+
+.mac { min-width:0; }
+.bezel { background:var(--bezel); border-radius:2.2% / 3.4%; padding:1.1%; box-shadow:0 30px 70px rgba(0,0,0,.25); }
+.screen { position:relative; aspect-ratio:1512 / 945; border-radius:1.2% / 1.9%; overflow:hidden; container-type:inline-size;
+  background:radial-gradient(120% 90% at 15% 10%, var(--wall1), transparent 60%), radial-gradient(90% 90% at 90% 90%, var(--wall3), transparent 65%), var(--wall2); }
+.menubar { position:absolute; inset:0 0 auto 0; height:3cqw; display:flex; align-items:center; gap:1.6cqw; padding:0 1.4cqw; font-size:1.25cqw; font-weight:500; background:var(--menubar); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
+.menubar b { font-weight:700; } .menubar .sp { flex:1; }
+.menubar .status { display:flex; align-items:center; gap:.6cqw; color:var(--text); }
+.menubar .status img { width:1.7cqw; height:1.7cqw; }
+.menubar .status span { transition:opacity .2s; }
+.win { position:absolute; left:0; top:0; display:flex; flex-direction:column; background:var(--win); border-radius:.9cqw; overflow:hidden; box-shadow:0 .5cqw 1.6cqw rgba(0,0,0,.18); outline:.28cqw solid transparent; outline-offset:-.05cqw;
+  transition:transform .55s cubic-bezier(.2,.8,.2,1), width .55s cubic-bezier(.2,.8,.2,1), height .55s cubic-bezier(.2,.8,.2,1), opacity .35s, outline-color .25s; will-change:transform; }
+.win.focus { outline-color:var(--accent); }
+.win.gone { opacity:0; pointer-events:none; }
+.bar { flex:none; height:2.5cqw; background:var(--winbar); display:flex; align-items:center; gap:.5cqw; padding:0 .9cqw; font-size:1.1cqw; font-weight:600; color:var(--sec); }
+.bar u { width:.85cqw; height:.85cqw; border-radius:50%; background:var(--ink); text-decoration:none; }
+.win.focus .bar u:nth-child(1) { background:#ff5f57; } .win.focus .bar u:nth-child(2) { background:#febc2e; } .win.focus .bar u:nth-child(3) { background:#28c840; }
+.bar span { flex:1; text-align:center; margin-right:3.5cqw; overflow:hidden; white-space:nowrap; }
+.body { flex:1; min-height:0; padding:1.2cqw; display:flex; gap:1cqw; overflow:hidden; }
+.body .col { flex:1; min-width:0; display:flex; flex-direction:column; gap:.8cqw; }
+.body .side { flex:0 0 26%; display:flex; flex-direction:column; gap:.7cqw; padding-right:1cqw; border-right:1px solid var(--ink2); }
+.ln { height:.8cqw; border-radius:.4cqw; background:var(--ink2); flex:none; } .ln.h { height:1.5cqw; background:var(--ink); width:60%; } .ln.s { width:45%; } .ln.m { width:75%; }
+.ln.a { background:var(--tint); opacity:.85; }
+.blk { flex:1; min-height:3cqw; border-radius:.7cqw; background:linear-gradient(135deg, var(--tint), transparent 140%); opacity:.8; }
+.term { background:#17171a; } .term .ln { background:rgba(255,255,255,.16); } .term .ln.a { background:#5ad17a; opacity:.9; }
+.art { align-self:center; width:min(46%, 16cqw); aspect-ratio:1; border-radius:1cqw; background:conic-gradient(from 200deg, #ff7a59, #ffd166, #7bdff2, #b388ff, #ff7a59); margin:auto 0 .6cqw; flex:none; }
+.cal { flex:1; display:grid; grid-template-columns:repeat(5,1fr); grid-auto-rows:1fr; gap:.5cqw; } .cal div { border-radius:.4cqw; background:var(--ink2); } .cal div.e { background:var(--tint); opacity:.75; }
+.keys { z-index:5; position:absolute; left:50%; bottom:5%; display:flex; gap:.7cqw; transform:translateX(-50%); opacity:0; transition:opacity .3s; pointer-events:none; }
+.keys.show { opacity:1; }
+.keys span { min-width:4.4cqw; height:4.4cqw; padding:0 1.3cqw; display:grid; place-items:center; font:600 1.8cqw -apple-system, system-ui, sans-serif; color:#fff; background:rgba(28,28,30,.86); border:1px solid rgba(255,255,255,.18); border-radius:.9cqw; box-shadow:0 .5cqw 1.4cqw rgba(0,0,0,.35); }
+.keys.press span { animation:press .45s ease; }
+@keyframes press { 40% { transform:translateY(.35cqw) scale(.96); background:var(--accent); } }
+.cursor { z-index:6; position:absolute; left:0; top:0; width:2.2cqw; height:2.2cqw; opacity:0; transition:transform .55s cubic-bezier(.2,.8,.2,1), opacity .3s; pointer-events:none; filter:drop-shadow(0 .2cqw .3cqw rgba(0,0,0,.4)); }
+.cursor.show { opacity:1; }
+.lip { height:1.3%; min-height:6px; margin:0 -6%; background:linear-gradient(#d9d9de, #9a9aa0); border-radius:0 0 40% 40% / 0 0 100% 100%; }
+.hint { text-align:center; color:var(--sec); font-size:14px; margin:14px 0 0; }
+
+.cta { text-align:center; padding:40px 0 0; }
+.cta .icon { width:84px; height:84px; }
+h2 { font-size:clamp(28px,4vw,40px); letter-spacing:-.015em; margin:8px 0 10px; }
+.cta p { color:var(--sec); max-width:560px; margin:0 auto 22px; }
+.btn { display:inline-block; background:var(--accent); color:#fff; font-weight:600; font-size:18px; padding:14px 28px; border-radius:12px; box-shadow:0 8px 20px rgba(232,100,60,.3); } .btn:hover { text-decoration:none; filter:brightness(1.06); }
+footer { padding:72px 0 48px; text-align:center; color:var(--sec); font-size:14px; } footer a { margin:0 8px; }
+
+@media (max-width:860px) {
+  nav a.hide { display:none; }
+  .stage { grid-template-columns:1fr; grid-template-rows:auto auto; gap:20px; align-content:center; }
+  .mac { order:-1; padding:0 3%; }
+  .moves li { display:none; border:0; padding:0; min-height:132px; }
+  .moves li.on { display:block; }
+  .moves .head { font-size:22px; } .moves p { margin-left:0; } .moves p:not(.now) { display:none; }
+  .pager { display:flex; justify-content:center; gap:8px; margin-top:6px; }
+  .pager button { width:30px; height:30px; border-radius:50%; background:var(--screen); font:600 13px ui-monospace, Menlo, monospace; color:var(--sec); }
+  .pager button.on { background:var(--accent); color:#fff; }
+  .hint { display:none; }
+}
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior:auto; } .win, .cursor, .keys, .moves .lines { transition:none; } .keys.press span { animation:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav>
+    <a class="home" href="./"><img src="img/icon.png" alt=""><b>Tiles</b></a><span class="sp"></span>
+    <a class="here" href="how-it-works.html">How it works</a><a class="hide" href="./#features">Features</a><a class="hide" href="./#faq">FAQ</a>
+    <a href="https://github.com/vannaenae/tiles">GitHub</a>
+  </nav>
+
+  <div class="hero">
+    <p class="eyebrow">How it works</p>
+    <h1>Five moves.<br><span>That's all of it.</span></h1>
+    <p class="lede">Learn Tiles in two minutes. Scroll to watch each move on the small desktop below, or pick a step to jump to it.</p>
+  </div>
+
+  <div id="track">
+    <div class="stage">
+      <div>
+        <ol class="moves" id="moves"></ol>
+        <div class="pager" id="pager"></div>
+      </div>
+      <div class="mac">
+        <div class="bezel">
+          <div class="screen" id="screen" role="img" aria-label="A simulated Mac desktop showing Tiles arranging windows">
+            <div class="menubar"><b>Tiles demo</b><span>File</span><span>Edit</span><span>Window</span><span class="sp"></span>
+              <span class="status"><img src="img/icon.png" alt=""><span id="status"></span></span></div>
+            <div class="keys" id="keys"></div>
+            <svg class="cursor" id="cursor" viewBox="0 0 24 24"><path d="M5 2l14 11h-8l-3 8z" fill="#111" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          </div>
+        </div>
+        <div class="lip"></div>
+        <p class="hint">A simulation in your browser, using the same layout maths as the app.</p>
+      </div>
+    </div>
+  </div>
+  <noscript><p class="lede">This page needs JavaScript to play the demo. The <a href="./#features">features list</a> covers the same ground.</p></noscript>
+
+  <section class="cta">
+    <img class="icon" src="img/icon.png" alt="">
+    <h2>Now try it on your own windows.</h2>
+    <p>Forgot a shortcut? <kbd>⌃⌥/</kbd> shows the list any time. Every shortcut can be changed in Settings.</p>
+    <p><a class="btn" href="https://github.com/vannaenae/tiles/releases/latest/download/Tiles.zip">Download for Mac</a></p>
+    <p style="font-size:14px">Free for macOS 13 or later.</p>
+  </section>
+
+  <footer>
+    <strong>Tiles <span data-version>v0.9.0</span></strong> · A SOULSPCE Collective product<br>
+    Free and open source under the MIT License · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a> · <a href="support.html">Support</a> · <a href="https://github.com/vannaenae/tiles">Source on GitHub</a>
+  </footer>
+</div>
+<script>
+// Same maths as Sources/TilesCore/Layout.swift (and the playground on the home page).
+const cols=(r,n,g)=>{let u=r.w-g*(n-1),o=[],c=r.x;for(let i=0;i<n;i++){let e=r.x+Math.round(u*(i+1)/n)+g*i;o.push({x:c,y:r.y,w:e-c,h:r.h});c=e+g}return o};
+const rows=(r,n,g)=>{let u=r.h-g*(n-1),o=[],c=r.y;for(let i=0;i<n;i++){let e=r.y+Math.round(u*(i+1)/n)+g*i;o.push({x:r.x,y:c,w:r.w,h:e-c});c=e+g}return o};
+const sc=(r,t,g)=>{let u=r.w-g,l=Math.round(u*t);return[{x:r.x,y:r.y,w:l,h:r.h},{x:r.x+l+g,y:r.y,w:u-l,h:r.h}]};
+const sr=(r,t,g)=>{let u=r.h-g,l=Math.round(u*t);return[{x:r.x,y:r.y,w:r.w,h:l},{x:r.x,y:r.y+l+g,w:r.w,h:u-l}]};
+const W=1512,H=945,BAR=46,G=10,AREA={x:G,y:BAR+G,w:W-2*G,h:H-BAR-2*G},T=.55;
+function frames(kind,n){const a=AREA,g=G;if(n<1)return[];
+ switch(kind){
+ case'dwindle':{let o=[],rem=a;for(let i=0;i<n;i++){if(i==n-1){o.push(rem);break}let[p,q]=rem.w>=rem.h?sc(rem,i?.5:T,g):sr(rem,i?.5:T,g);o.push(p);rem=q}return o}
+ case'master':{if(n<2)return[a];let[l,r]=sc(a,T,g);return[l,...rows(r,n-1,g)]}
+ case'columns':return cols(a,n,g);
+ case'grid':{let s=Math.ceil(Math.sqrt(n)),rc=a.w>=a.h?Math.ceil(n/s):s,o=[],rem=n;rows(a,rc,g).forEach((r,i)=>{let k=Math.ceil(rem/(rc-i));o.push(...cols(r,k,g));rem-=k});return o}}}
+const NAMES={dwindle:'Dwindle',master:'Master & Stack',columns:'Columns',grid:'Grid'};
+
+// The windows in the demo: id → title, tint, and a sketch of its contents.
+const ln=(c='')=>`<div class="ln ${c}"></div>`;
+const APPS={
+ safari:['Safari','#4a90e2',`<div class="col">${ln('h')}${ln('m')}<div class="blk"></div>${ln()}${ln('m')}${ln('s')}</div>`],
+ notes:['Notes','#f2b632',`<div class="side">${ln('a')}${ln()}${ln('m')}${ln()}</div><div class="col">${ln('h')}${ln()}${ln('m')}${ln()}${ln('s')}${ln('m')}</div>`],
+ terminal:['Terminal','#5ad17a',`<div class="col">${ln('a s')}${ln('m')}${ln('s')}${ln('a s')}${ln()}${ln('m')}${ln('a s')}</div>`,'term'],
+ mail:['Mail','#3ea6ff',`<div class="side">${ln('a')}${ln()}${ln()}${ln()}${ln()}</div><div class="col">${ln('h')}${ln('s')}${ln()}${ln('m')}${ln()}</div>`],
+ music:['Music','#ff5c7a',`<div class="col"><div class="art"></div>${ln('h')}${ln('s')}${ln('a m')}</div>`],
+ calendar:['Calendar','#b388ff',`<div class="col">${ln('h')}<div class="cal">${Array.from({length:20},(_,i)=>`<div class="${[2,6,8,13,15,19].includes(i)?'e':''}"></div>`).join('')}</div></div>`]};
+
+// One beat = one stretch of scrolling. Each is the whole desktop at that moment.
+// ws: windows on each desktop, in tiling order. at: which desktop is showing. full: a window filling the display.
+const A=['safari','notes','terminal'];
+const MOVES=[
+ {title:'Open a window. It finds its place.', beats:[
+  {text:'Open an app. It takes the whole screen.', ws:[['safari']], focus:'safari', layout:'dwindle'},
+  {text:'Open another and they share the space. No dragging, no resizing.', ws:[['safari','notes']], focus:'notes', layout:'dwindle'},
+  {text:'Keep going. Every window stays visible and nothing overlaps.', ws:[['safari','notes','terminal','mail']], focus:'mail', layout:'dwindle'},
+  {text:'Close one and the rest fill the gap.', ws:[A], focus:'terminal', layout:'dwindle'}]},
+ {title:'One shortcut changes the layout.', beats:[
+  {text:'Hold <kbd>⌃⌥</kbd> and press <kbd>Space</kbd>. Now there is one main window with the rest stacked beside it.', ws:[A], focus:'terminal', layout:'master', keys:['⌃','⌥','Space']},
+  {text:'Keep pressing to try the others, like a grid.', ws:[A], focus:'terminal', layout:'grid', keys:['⌃','⌥','Space']},
+  {text:'Or equal columns. Each display keeps its own layout.', ws:[A], focus:'terminal', layout:'columns', keys:['⌃','⌥','Space']}]},
+ {title:'Move without the mouse.', beats:[
+  {text:'<kbd>⌃⌥</kbd> and an arrow key jumps to the window on that side. The outline shows where you are.', ws:[A], focus:'notes', layout:'columns', keys:['⌃','⌥','←']},
+  {text:'Add <kbd>⇧</kbd> and the window itself moves.', ws:[['notes','safari','terminal']], focus:'notes', layout:'columns', keys:['⌃','⌥','⇧','←']},
+  {text:'Prefer the mouse? Drag one window onto another and they swap.', ws:[['terminal','safari','notes']], focus:'terminal', layout:'columns', cursor:'terminal'}]},
+ {title:'Give one window the whole screen.', beats:[
+  {text:'<kbd>⌃⌥M</kbd> lets the window you are in fill the display.', ws:[['terminal','safari','notes']], focus:'terminal', layout:'columns', full:'terminal', keys:['⌃','⌥','M']},
+  {text:'Press it again and everything goes back where it was.', ws:[['terminal','safari','notes']], focus:'terminal', layout:'columns', keys:['⌃','⌥','M']}]},
+ {title:'A second desktop when you need it.', beats:[
+  {text:'<kbd>⌃⌥2</kbd> gives you a fresh, empty desktop. Your other windows wait on the first.', ws:[['terminal','safari','notes'],[]], at:1, layout:'columns', keys:['⌃','⌥','2']},
+  {text:'Open what you need here. It tiles the same way.', ws:[['terminal','safari','notes'],['music','calendar']], at:1, focus:'calendar', layout:'columns'},
+  {text:'<kbd>⌃⌥1</kbd> brings you back. Add <kbd>⇧</kbd> to send a window across instead.', ws:[['terminal','safari','notes'],['music','calendar']], at:0, focus:'terminal', layout:'columns', keys:['⌃','⌥','1']}]}];
+const BEATS=MOVES.flatMap((m,mi)=>m.beats.map((b,bi)=>({...b,move:mi,line:bi})));
+const FIRST=MOVES.map((_,mi)=>BEATS.findIndex(b=>b.move==mi));
+
+const $=id=>document.getElementById(id), screen=$('screen'), track=$('track');
+const wins={};
+for(const[id,[title,tint,body,cls]]of Object.entries(APPS)){const d=document.createElement('div');d.className='win gone';d.style.setProperty('--tint',tint);
+ d.innerHTML=`<div class="bar"><u></u><u></u><u></u><span>${title}</span></div><div class="body ${cls||''}">${body}</div>`;screen.insertBefore(d,$('keys'));wins[id]=d}
+$('moves').innerHTML=MOVES.map((m,i)=>`<li><button class="head" data-move="${i}"><i>0${i+1}</i>${m.title}</button><div class="lines"><div>${m.beats.map(b=>`<p>${b.text}</p>`).join('')}</div></div></li>`).join('');
+$('pager').innerHTML=MOVES.map((_,i)=>`<button data-move="${i}" aria-label="Move ${i+1}">${i+1}</button>`).join('');
+
+const pct=(v,of)=>v/of*100;
+function place(el,r){el.style.width=pct(r.w,W)+'%';el.style.height=pct(r.h,H)+'%';
+ // translate percentages are relative to the element itself, so convert screen fractions to them
+ el.style.transform=`translate(${r.x/r.w*100}%,${r.y/r.h*100}%)`}
+let current=-1;
+function show(i){if(i==current)return;current=i;const b=BEATS[i],at=b.at||0,seen=new Set;
+ b.ws.forEach((list,d)=>{const f=frames(b.layout,list.length);list.forEach((id,k)=>{seen.add(id);const el=wins[id];
+  let r=f[k];if(b.full)r=AREA;
+  // another desktop's windows wait just off the side of the screen, as they do in the app
+  if(d!=at)r={...r,x:r.x+(d<at?-W:W)};
+  place(el,r);el.classList.toggle('gone',d!=at||!!(b.full&&b.full!=id));el.classList.toggle('focus',d==at&&b.focus==id);el.style.zIndex=b.full==id||b.cursor==id?3:b.focus==id?2:1})});
+ for(const id in wins)if(!seen.has(id)){wins[id].classList.add('gone');wins[id].classList.remove('focus')}
+ $('status').textContent=`${b.full?'Focus':NAMES[b.layout]} · ${at+1}`;
+ const keys=$('keys');keys.classList.toggle('show',!!b.keys);if(b.keys){keys.innerHTML=b.keys.map(k=>`<span>${k}</span>`).join('');keys.classList.remove('press');void keys.offsetWidth;keys.classList.add('press')}
+ const cur=$('cursor');cur.classList.toggle('show',!!b.cursor);if(b.cursor){const r=frames(b.layout,b.ws[at].length)[b.ws[at].indexOf(b.cursor)];
+  cur.style.transform=`translate(${pct(r.x+r.w/2,W)/100*screen.clientWidth}px,${pct(r.y+26,H)/100*screen.clientHeight}px)`}
+ document.querySelectorAll('#moves li').forEach((li,m)=>{li.classList.toggle('on',m==b.move);li.classList.toggle('done',m<b.move);
+  li.querySelectorAll('p').forEach((p,l)=>p.classList.toggle('now',m==b.move&&l==b.line))});
+ document.querySelectorAll('#pager button').forEach((p,m)=>p.classList.toggle('on',m==b.move))}
+
+// Scroll position → beat. The track is one viewport tall per beat, less on phones.
+const per=()=>innerWidth<=860?.55:.7;
+function size(){track.style.height=(innerHeight*(1+BEATS.length*per()))+'px'}
+function onScroll(){const span=track.offsetHeight-innerHeight,p=Math.max(0,Math.min(.9999,-track.getBoundingClientRect().top/span));show(Math.floor(p*BEATS.length))}
+function jump(move){const span=track.offsetHeight-innerHeight,top=track.getBoundingClientRect().top+scrollY;scrollTo({top:top+span*(FIRST[move]+.5)/BEATS.length})}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-move]');if(b)jump(+b.dataset.move)});
+addEventListener('scroll',onScroll,{passive:true});addEventListener('resize',()=>{size();current=-1;onScroll()});
+size();onScroll();
+</script>
+<script src="version.js" defer></script>
+</body>
+</html>

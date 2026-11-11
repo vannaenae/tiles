@@ -29,6 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     private var settingsModel: SettingsModel?
 
     static let repoURL = URL(string: "https://github.com/vannaenae/tiles")!
+    static let howItWorksURL = URL(string: "https://i-tilesapp.vercel.app/how-it-works.html")!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -342,6 +343,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
         menu.addItem(item("Find Window…", #selector(findWindow)))
         menu.addItem(item("Show Shortcuts", #selector(showShortcuts)))
         menu.addItem(item("Welcome Tour…", #selector(showTour)))
+        menu.addItem(item("How Tiles Works…", #selector(openHowItWorks)))
         menu.addItem(shortcutsMenu())
         menu.addItem(item("Open Tiles…", #selector(openSettings), key: ","))
         if let error = configStore.lastError {
@@ -520,5 +522,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSWind
     }
 
     @objc private func openRepo() { NSWorkspace.shared.open(Self.repoURL) }
+    @objc private func openHowItWorks() { NSWorkspace.shared.open(Self.howItWorksURL) }
     @objc private func quit() { NSApp.terminate(nil) }
 }

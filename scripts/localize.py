@@ -183,6 +183,7 @@ T = {
 "Find Window": ("Buscar ventana", "Trouver une fenêtre", "Fenster suchen"),
 "Find Window…": ("Buscar ventana…", "Trouver une fenêtre…", "Fenster suchen …"),
 "Welcome Tour…": ("Visita de bienvenida…", "Visite de bienvenue…", "Willkommenstour …"),
+"How Tiles Works…": ("Cómo funciona Tiles…", "Comment fonctionne Tiles…", "So funktioniert Tiles …"),
 "Snap Mode (No Automatic Tiling)": ("Modo ajustar (sin mosaico automático)", "Mode aimanté (sans rangement automatique)", "Einrastmodus (kein automatisches Kacheln)"),
 "Type an app or window name": ("Escribe una app o el nombre de una ventana", "Saisissez une app ou un nom de fenêtre", "App- oder Fensternamen eingeben"),
 "No matching windows": ("Ninguna ventana coincide", "Aucune fenêtre correspondante", "Keine passenden Fenster"),
